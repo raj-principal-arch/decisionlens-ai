@@ -1,0 +1,5 @@
+{
+  "version": "1.0",
+  "notice": "Recorded model output replayed offline. These are not live model results. Every response served from this file is labelled cached in the run trace. Empty at Phase 5: no skills or prompts exist yet, so there is nothing to record. Entries are added in Phases 6 to 8 as real calls are made. A request with no entry raises rather than returning a placeholder.",
+  "responses": {}
+}
