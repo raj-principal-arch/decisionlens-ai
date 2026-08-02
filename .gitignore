@@ -42,6 +42,9 @@ htmlcov/
 .nox/
 .coverage
 .coverage.*
+# macOS duplicates the data file as ".coverage 2" when one already exists.
+# Space-prefixed so .coveragerc stays tracked.
+.coverage *
 .cache
 nosetests.xml
 coverage.xml
