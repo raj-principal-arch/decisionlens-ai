@@ -150,8 +150,18 @@ class TestSharedRegistry:
         # Tripwire, updated at each phase. Skill prompts arrive in Phase 7; if this
         # fails, something registered ahead of its phase.
         import decision_lens.prompts.baseline  # noqa: F401  triggers registration
+        import decision_lens.prompts.decisionlens  # noqa: F401
 
-        assert REGISTRY.names() == ("baseline", "baseline-repair")
+        assert REGISTRY.names() == (
+            "alternatives",
+            "baseline",
+            "baseline-repair",
+            "classification",
+            "contradictions",
+            "missing_evidence",
+            "recommendation",
+            "relevance",
+        )
 
     def test_registered_prompts_are_retrievable_by_version(self) -> None:
         import decision_lens.prompts.baseline  # noqa: F401
