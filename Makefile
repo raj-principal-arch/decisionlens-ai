@@ -3,7 +3,7 @@ VENV   := .venv
 BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help setup check test lint typecheck format clean
+.PHONY: help setup check test coverage lint typecheck format clean
 
 help: ## Show available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -19,6 +19,11 @@ check: lint typecheck test ## Run every validation gate
 
 test: ## Run the test suite
 	$(BIN)/pytest
+
+# Kept out of `check` so the default gate stays fast. Run it when you want to
+# know what the suite does not exercise, not on every edit.
+coverage: ## Run the test suite with a line-coverage report
+	$(BIN)/pytest --cov=decision_lens --cov-report=term-missing
 
 lint: ## Check lint rules and formatting
 	$(BIN)/ruff check .
