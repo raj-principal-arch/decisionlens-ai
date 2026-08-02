@@ -45,10 +45,16 @@ from decision_lens.llm.base import (
 
 PROVIDER_ID = "anthropic"
 
-#: Caps thinking plus response text together on current models. Sized to leave
-#: adaptive thinking room while staying under the SDK's non-streaming timeout
-#: guidance, since every skill returns a single compact JSON object.
-DEFAULT_MAX_OUTPUT_TOKENS = 16_000
+#: Caps thinking plus response text together on current models.
+#:
+#: Raised from 16,000 after a real recording run: classifying 56 evidence records
+#: means emitting a verbatim quote per claim, and the response was truncated
+#: mid-JSON. A cut-off response is not partial output, it is unusable output — so
+#: the ceiling has to clear the largest honest answer, not the typical one.
+#:
+#: Only safe because requests stream (see `_call`). A non-streaming request this
+#: large risks an HTTP timeout, and the SDK refuses some outright.
+DEFAULT_MAX_OUTPUT_TOKENS = 48_000
 
 
 class AnthropicNotInstalled(ModelUnavailable):
@@ -156,9 +162,18 @@ class AnthropicProvider(BaseModelProvider):
         return payload
 
     def _call(self, request: ModelRequest) -> Any:
+        """Stream the response, then take the assembled message.
+
+        Streaming rather than a plain create for one reason: the output ceiling
+        has to be high enough for the largest honest answer, and a non-streaming
+        request with a ceiling that high can exceed the HTTP timeout — the SDK
+        refuses some outright. Nothing here consumes tokens as they arrive; the
+        stream exists so the request is allowed to be big.
+        """
         client = self._client.with_options(timeout=request.timeout_seconds)
         try:
-            return client.messages.create(**self._payload(request))
+            with client.messages.stream(**self._payload(request)) as stream:
+                return stream.get_final_message()
         except self._errors.timeout as exc:
             raise ModelTimeout(
                 f"anthropic/{self._model} did not answer within "

@@ -33,7 +33,12 @@ from decision_lens.llm import (
     ModelRequest,
     ModelResponse,
 )
-from decision_lens.models import DecisionRequest, EvidenceRecord, EvidenceRequest
+from decision_lens.models import (
+    DecisionBrief,
+    DecisionRequest,
+    EvidenceRecord,
+    EvidenceRequest,
+)
 from decision_lens.orchestrator import DecisionLens
 
 __all__ = [
@@ -137,6 +142,8 @@ class RecordingSummary:
     input_tokens: int = 0
     output_tokens: int = 0
     failures: list[str] = field(default_factory=list)
+    #: Cache keys discarded because the stage that produced them was rejected.
+    dropped: list[str] = field(default_factory=list)
 
     @property
     def succeeded(self) -> bool:
@@ -148,6 +155,9 @@ class RecordingSummary:
             f"Tokens: {self.input_tokens:,} in, {self.output_tokens:,} out (measured).",
         ]
         lines += [f"  + {key}" for key in self.keys]
+        if self.dropped:
+            lines.append(f"{len(self.dropped)} response(s) discarded as unusable:")
+            lines += [f"  - {key}" for key in self.dropped]
         if self.failures:
             lines.append(f"{len(self.failures)} stage(s) did not complete:")
             lines += [f"  ! {f}" for f in self.failures]
@@ -206,6 +216,7 @@ def record_case(
         summary.failures.extend(
             f"decisionlens/{s.name}: {s.error}" for s in brief.run_trace.failed_stages
         )
+        _discard_rejected(cache, recording, brief, request.id, summary)
 
     if include_baseline:
         evidence = brief.evidence
@@ -216,11 +227,52 @@ def record_case(
             baseline.run(request, evidence)
         except BaselineError as exc:
             summary.failures.append(f"baseline: {exc}")
+            # Same rule as the DecisionLens stages: a response its own arm
+            # rejected must not be cached. The baseline runs outside the
+            # orchestrator's trace, so it is dropped here rather than above.
+            for key in list(cache.responses):
+                if key.startswith(f"{request.id}::baseline"):
+                    del cache.responses[key]
+                    summary.dropped.append(key)
+                    if key in recording.recorded:
+                        recording.recorded.remove(key)
 
     summary.keys = list(recording.recorded)
     summary.input_tokens = recording.input_tokens
     summary.output_tokens = recording.output_tokens
     return summary
+
+
+def _discard_rejected(
+    cache: DemoCache,
+    recording: RecordingProvider,
+    brief: DecisionBrief,
+    case_id: str,
+    summary: RecordingSummary,
+) -> None:
+    """Remove responses whose own stage refused them.
+
+    The wrapper records every call that came back over HTTP, which is the right
+    place to sit — but a response can arrive intact and still be rejected by the
+    skill that asked for it, for citing text that is not in the evidence or for
+    naming a claim that does not exist. Caching one of those would ship a known
+    bad answer under the label of a recorded result, and every later replay would
+    fail the same check for the same reason.
+
+    Found the hard way: the first real recording run cached a challenger response
+    that had already been rejected for inventing claim ids.
+    """
+    if brief.run_trace is None:  # pragma: no cover - guarded by the caller
+        return
+
+    failed_skills = {stage.name.removesuffix("-retry") for stage in brief.run_trace.failed_stages}
+    for skill in sorted(failed_skills):
+        for key in list(cache.responses):
+            if key.startswith(f"{case_id}::{skill}::"):
+                del cache.responses[key]
+                summary.dropped.append(key)
+                if key in recording.recorded:
+                    recording.recorded.remove(key)
 
 
 def _retrieve_for_baseline(
@@ -244,15 +296,26 @@ def _retrieve_for_baseline(
     return tuple(records)
 
 
-def merge_into(cache: DemoCache, path: Path) -> tuple[int, int]:
+def merge_into(cache: DemoCache, path: Path, *, drop: Sequence[str] = ()) -> tuple[int, int, int]:
     """Write a cache to disk, preserving entries this run did not touch.
 
-    Returns ``(added, replaced)``. Recording one case must not silently discard
-    the recordings of another — a cache that loses entries every time it is
-    written would make the demo depend on the order someone happened to run
+    Returns ``(added, replaced, removed)``. Recording one case must not silently
+    discard the recordings of another — a cache that loses entries every time it
+    is written would make the demo depend on the order someone happened to run
     things in.
+
+    ``drop`` removes keys from the file as well as omitting them. A stage that
+    succeeded once and was rejected on a later run would otherwise leave the
+    older, known-bad response in place, and re-recording would look like it had
+    fixed something it had not.
     """
     existing = DemoCache.load(path) if path.is_file() else DemoCache()
+
+    removed = 0
+    for key in drop:
+        if existing.responses.pop(key, None) is not None:
+            removed += 1
+
     added = replaced = 0
     for key, entry in cache.responses.items():
         if key in existing.responses:
@@ -260,5 +323,6 @@ def merge_into(cache: DemoCache, path: Path) -> tuple[int, int]:
         else:
             added += 1
         existing.responses[key] = entry
+
     existing.save(path)
-    return added, replaced
+    return added, replaced, removed

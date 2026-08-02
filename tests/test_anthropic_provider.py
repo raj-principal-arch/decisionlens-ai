@@ -104,15 +104,36 @@ class Response:
         self.stop_details = stop_details
 
 
+class FakeStream:
+    """Mirrors the SDK's streaming context manager.
+
+    The adapter streams so it can request a large output ceiling without risking
+    an HTTP timeout; it does not consume tokens as they arrive, so the double
+    only needs the context-manager shape and `get_final_message`.
+    """
+
+    def __init__(self, response: Response) -> None:
+        self._response = response
+
+    def __enter__(self) -> FakeStream:
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        return None
+
+    def get_final_message(self) -> Response:
+        return self._response
+
+
 class FakeMessages:
     def __init__(self, client: FakeClient) -> None:
         self._client = client
 
-    def create(self, **kwargs: Any) -> Response:
+    def stream(self, **kwargs: Any) -> FakeStream:
         self._client.calls.append(kwargs)
         if self._client.raises is not None:
             raise self._client.raises
-        return self._client.response
+        return FakeStream(self._client.response)
 
 
 class FakeClient:

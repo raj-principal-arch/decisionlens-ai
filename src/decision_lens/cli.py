@@ -254,8 +254,8 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
         stream.write("Nothing was recorded, so the cache was left alone.\n")
         return EXIT_ERROR
 
-    added, replaced = merge_into(cache, Path(args.cache))
-    stream.write(f"\n{args.cache}: {added} added, {replaced} replaced\n")
+    added, replaced, removed = merge_into(cache, Path(args.cache), drop=summary.dropped)
+    stream.write(f"\n{args.cache}: {added} added, {replaced} replaced, {removed} removed\n")
     stream.write("The offline demo now works with no key. Run `make demo`.\n")
     return EXIT_OK if summary.succeeded else EXIT_BLOCKED
 
