@@ -21,7 +21,7 @@ setup: ## Create .venv and install the package with dev and UI dependencies
 # run replays recorded output, offline and free. This exists so the same workflow
 # can be pointed at a live model when someone wants to see it actually thinking.
 setup-live: ## Add the optional Anthropic SDK for live model runs
-	$(BIN)/pip install --quiet -e ".[dev,live]"
+	$(BIN)/pip install --quiet -e ".[dev,ui,live]"
 	@test -f .env || cp .env.example .env
 	@echo "Installed. Two lines in .env switch DecisionLens to a live model:"
 	@echo "  ANTHROPIC_API_KEY=sk-ant-..."
