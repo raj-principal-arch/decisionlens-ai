@@ -1,0 +1,19 @@
+period,segment,exception_category,ticket_count,share_of_segment_percent,note
+2026-Q2,all,access_issue,1842,31.1,gate code buzzer or building entry - synthetic
+2026-Q2,all,address_error,1510,25.5,incomplete or incorrect address - synthetic
+2026-Q2,all,recipient_unavailable,1205,20.3,no one available to receive - synthetic
+2026-Q2,all,driver_unable_to_locate,720,12.1,address found but unit not identifiable - synthetic
+2026-Q2,all,weather_or_route,410,6.9,synthetic
+2026-Q2,all,other,240,4.1,synthetic
+2026-Q2,apartment,address_error,921,37.3,missing or wrong unit number dominates - synthetic
+2026-Q2,apartment,access_issue,742,30.1,synthetic
+2026-Q2,apartment,driver_unable_to_locate,438,17.8,synthetic
+2026-Q2,apartment,recipient_unavailable,208,8.4,synthetic
+2026-Q2,apartment,other,90,3.6,synthetic
+2026-Q2,apartment,weather_or_route,68,2.8,synthetic
+2026-Q2,house,access_issue,1100,31.8,synthetic
+2026-Q2,house,recipient_unavailable,997,28.8,synthetic
+2026-Q2,house,address_error,589,17.0,synthetic
+2026-Q2,house,weather_or_route,342,9.9,synthetic
+2026-Q2,house,driver_unable_to_locate,282,8.2,synthetic
+2026-Q2,house,other,150,4.3,synthetic

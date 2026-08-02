@@ -1,0 +1,92 @@
+{
+  "case_id": "sample_delivery_exceptions",
+  "synthetic": true,
+  "notice": "All evidence in this directory is synthetic and fictional. It describes an invented retailer and an invented delivery organisation. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "question": "Which intervention should the team prioritize to reduce delivery exceptions?",
+  "desired_outcome": "Improve first-attempt delivery success while reducing support escalations, without creating unacceptable customer, driver, privacy, or operational risk.",
+  "product_area": "delivery",
+  "as_of": "2026-08-02",
+  "files": {
+    "business_objectives.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-01-15",
+      "updated_at": "2026-02-01",
+      "owner": "product-leadership",
+      "product_area": "delivery",
+      "permission_scope": "pm-delivery",
+      "labels": ["synthetic", "objectives", "okr"]
+    },
+    "product_metrics.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2026-04-01",
+      "updated_at": "2026-07-15",
+      "owner": "analytics",
+      "product_area": "delivery",
+      "permission_scope": "pm-delivery",
+      "labels": ["synthetic", "metrics"]
+    },
+    "support_ticket_summaries.csv": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-04-01",
+      "updated_at": "2026-07-10",
+      "owner": "support-ops",
+      "product_area": "delivery",
+      "permission_scope": "pm-delivery",
+      "labels": ["synthetic", "support"]
+    },
+    "customer_feedback.csv": {
+      "evidence_type": "qualitative_research",
+      "created_at": "2026-05-01",
+      "updated_at": "2026-07-01",
+      "owner": "research",
+      "product_area": "delivery",
+      "permission_scope": "pm-delivery",
+      "labels": ["synthetic", "voice-of-customer"]
+    },
+    "technical_constraints.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-06-01",
+      "updated_at": "2026-06-20",
+      "owner": "engineering",
+      "product_area": "delivery",
+      "permission_scope": "pm-delivery",
+      "labels": ["synthetic", "constraints", "technical"]
+    },
+    "governance_requirements.md": {
+      "evidence_type": "governance_policy",
+      "created_at": "2025-11-01",
+      "updated_at": "2026-03-15",
+      "owner": "legal-privacy",
+      "product_area": "delivery",
+      "permission_scope": "pm-delivery,legal",
+      "labels": ["synthetic", "governance", "privacy"]
+    },
+    "prior_experiments.md": {
+      "evidence_type": "experiment_result",
+      "created_at": "2024-11-05",
+      "updated_at": "2024-11-20",
+      "owner": "research",
+      "product_area": "delivery",
+      "permission_scope": "pm-delivery",
+      "labels": ["synthetic", "experiments", "stale"]
+    },
+    "stakeholder_notes.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-07-20",
+      "updated_at": "2026-07-28",
+      "owner": "delivery-ops",
+      "product_area": "delivery",
+      "permission_scope": "pm-delivery",
+      "labels": ["synthetic", "stakeholder", "opinion"]
+    },
+    "prior_decisions.md": {
+      "evidence_type": "prior_decision",
+      "created_at": "2025-08-10",
+      "updated_at": "2025-09-30",
+      "owner": "product-leadership",
+      "product_area": "delivery",
+      "permission_scope": "pm-delivery",
+      "labels": ["synthetic", "decisions"]
+    }
+  }
+}

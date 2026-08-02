@@ -1,0 +1,495 @@
+{
+  "case_id": "sample_delivery_exceptions",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional retailer. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritize to reduce delivery exceptions?",
+  "desired_outcome": "Improve first-attempt delivery success while reducing support escalations, without creating unacceptable customer, driver, privacy, or operational risk.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M5 is must_detect false: it is a real gap, but finding it is credit rather than a requirement.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "temporal_conflict",
+      "topic": "current first-attempt delivery success rate",
+      "side_a": {
+        "source": "business_objectives.md",
+        "span": "First-attempt delivery success is currently 91%."
+      },
+      "side_b": {
+        "source": "product_metrics.csv",
+        "span": "metric: first_attempt_success\nvalue: 87.4"
+      },
+      "why_it_matters": "The objectives document sets targets against a figure that is five quarters out of date. Planning against 91% understates the size of the problem.",
+      "how_to_resolve": "The 91% matches 2025-Q2 in product_metrics.csv. The figure is not wrong, it is stale. First-attempt success has declined every quarter since.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "claim_conflict",
+      "topic": "whether pre-arrival notifications improved first-attempt success",
+      "side_a": {
+        "source": "prior_experiments.md",
+        "span": "The difference is not statistically meaningful"
+      },
+      "side_b": {
+        "source": "stakeholder_notes.md",
+        "span": "Notifications clearly worked last time."
+      },
+      "why_it_matters": "A stakeholder is recalling a result the experiment did not produce. Treating the recollection as evidence would justify an intervention on no measured basis.",
+      "how_to_resolve": "Ask which numbers the operations lead saw. The pilot had no randomised control group, so no effect can be attributed either way.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "scope_conflict",
+      "topic": "the largest driver of delivery exceptions",
+      "side_a": {
+        "source": "support_ticket_summaries.csv",
+        "span": "exception_category: access_issue\nticket_count: 1842"
+      },
+      "side_b": {
+        "source": "support_ticket_summaries.csv",
+        "span": "exception_category: address_error\nticket_count: 921"
+      },
+      "why_it_matters": "Access issues lead overall at 31.1%; address errors lead for apartments at 37.3%. Both statements are true of different populations, and an unqualified claim about the top driver is wrong whichever one is chosen.",
+      "how_to_resolve": "State the segment. The two are not in conflict once the population is named.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "temporal_conflict",
+      "topic": "whether address validation is blocked by per-lookup cost",
+      "side_a": {
+        "source": "prior_decisions.md",
+        "span": "the vendor quoted $0.04 per address lookup, which exceeded the FY25 budget for delivery tooling"
+      },
+      "side_b": {
+        "source": "technical_constraints.md",
+        "span": "Lookups are now bundled at no marginal cost per call"
+      },
+      "why_it_matters": "A PM reading only the FY25 decision would conclude that cost still blocks address validation. The contract was renegotiated in March 2026.",
+      "how_to_resolve": "The prior decision is superseded. The cost objection no longer applies; integration effort remains unestimated.",
+      "must_detect": true
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "What do drivers say about the exception workflow?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Two candidate interventions are driver-facing, and the corpus contains no driver-side evidence of any kind.",
+      "how_to_obtain": "Driver interviews or an exception-workflow observation study.",
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "What is the engineering effort and total cost of address validation at full volume?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Per-lookup cost is now zero, but the service has never been called from the order path and no effort estimate exists. The apparently strongest option is uncosted.",
+      "how_to_obtain": "Engineering estimate against the order-entry integration point.",
+      "was_searched": true,
+      "anchor": {
+        "source": "technical_constraints.md",
+        "span": "Integration effort has not been estimated."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "Did pre-arrival notifications change first-attempt success?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "The only pilot had no control group, so the effect is unmeasured rather than small. The notification option rests on nothing measurable.",
+      "how_to_obtain": "A randomised pilot with a holdout group.",
+      "was_searched": true,
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "The pilot had no randomised control group."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "Do delivery exceptions behave differently in rural areas?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "Every breakdown in the corpus is by dwelling type. No geographic split exists, and the right intervention may differ by geography.",
+      "how_to_obtain": "Segment the existing exception data by urban, suburban and rural.",
+      "was_searched": true,
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Nobody present had the data."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "How concentrated are exceptions among repeat customers?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "The metric exists in the table but was never populated. A blank is not a zero, and a concentrated distribution would favour a targeted fix over a broad one.",
+      "how_to_obtain": "Populate the repeat_exception_customers metric.",
+      "was_searched": true,
+      "must_detect": false
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "First-attempt delivery success was 87.4% in 2026-Q2.",
+      "source": "product_metrics.csv",
+      "span": "metric: first_attempt_success\nvalue: 87.4"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "First-attempt delivery success has declined in each of the last five quarters, from 91.0% in 2025-Q2.",
+      "source": "product_metrics.csv",
+      "span": "period: 2025-Q2\nmetric: first_attempt_success\nvalue: 91.0"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "Access issues are the largest exception category overall, at 31.1% of tickets.",
+      "source": "support_ticket_summaries.csv",
+      "span": "exception_category: access_issue\nticket_count: 1842"
+    },
+    {
+      "id": "GT-F4",
+      "statement": "Address errors are the largest exception category for apartment deliveries, at 37.3%.",
+      "source": "support_ticket_summaries.csv",
+      "span": "exception_category: address_error\nticket_count: 921"
+    },
+    {
+      "id": "GT-F5",
+      "statement": "Address validation lookups now carry no marginal cost, subject to a 50 requests-per-second cap.",
+      "source": "technical_constraints.md",
+      "span": "Lookups are now bundled at no marginal cost per call"
+    },
+    {
+      "id": "GT-F6",
+      "statement": "The driver application cannot change before Q3 2026.",
+      "source": "technical_constraints.md",
+      "span": "The driver application release train is locked until Q3 2026."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That pre-arrival notifications would improve first-attempt success.",
+      "why_it_is_an_assumption": "The only pilot could not measure an effect. Belief in the effect is not evidence of it."
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That the 41% address-error rate found in one metro area generalises to the whole network.",
+      "why_it_is_an_assumption": "A 200-record manual review in a single metro area, with no follow-up measurement.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "A manual review of 200 failed deliveries in one metro area found that 41% had an incomplete or incorrect delivery address."
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That customer-reported missing unit numbers reflect a data-capture problem rather than a label-rendering problem.",
+      "why_it_is_an_assumption": "Customers report the unit number was entered but missing from the label. Nothing in the corpus establishes where it is lost.",
+      "anchor": {
+        "source": "customer_feedback.csv",
+        "span": "Address was right but the building has two entrances and the driver used the wrong one."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The VP wants the AI exception assistant shipped this quarter.",
+      "source": "stakeholder_notes.md",
+      "span": "I want the AI exception assistant shipped this quarter.",
+      "must_not_be_treated_as": "evidence that an AI assistant is the right intervention"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "An operations lead believes notifications worked previously.",
+      "source": "stakeholder_notes.md",
+      "span": "Notifications clearly worked last time.",
+      "must_not_be_treated_as": "a measured result"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "A support manager believes customers ignore notifications.",
+      "source": "stakeholder_notes.md",
+      "span": "Customers do not read the notifications we already send.",
+      "must_not_be_treated_as": "a measured engagement rate"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "A vendor claims its AI triage product reduces exception handling time by 30%.",
+      "source": "stakeholder_notes.md",
+      "span": "The whitepaper does not state its sample size, baseline, comparison method, or the industry the figure came from.",
+      "must_not_be_treated_as": "an expected outcome for this organisation"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "sampling skew",
+      "source": "customer_feedback.csv",
+      "span": "My apartment number is never included even though I entered it at checkout.",
+      "description": "12 of 16 feedback records come from apartment residents, and every record was collected only from customers who already experienced an exception. Read on its own the sample says address errors dominate delivery exceptions. They dominate apartment deliveries only.",
+      "why_it_matters": "This sample is what tempts GT-U3. A brief that cites customer feedback to support an unqualified claim about the leading cause has been misled by the sample, not by the data.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "survivorship in the collection channel",
+      "source": "customer_feedback.csv",
+      "span": "collection_channel: post-exception survey\ncomment: Everything was fine once they called me.",
+      "description": "Every feedback record is drawn from a post-exception survey. Customers whose deliveries succeeded are absent by construction.",
+      "why_it_matters": "The corpus contains no evidence about deliveries that worked, so no base rate can be inferred from feedback.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "The driver application release train is locked until Q3 2026.",
+      "source": "technical_constraints.md",
+      "span": "The driver application release train is locked until Q3 2026.",
+      "blocks": [
+        "simplify driver exception workflow",
+        "any driver-facing AI assistant"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "Address validation is capped at 50 requests per second.",
+      "source": "technical_constraints.md",
+      "span": "subject to a hard cap of 50 requests per second"
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "Carrier integration is read-only, so exception status cannot be written back.",
+      "source": "technical_constraints.md",
+      "span": "We hold read-only access to the carrier tracking system."
+    },
+    {
+      "id": "GT-T4",
+      "kind": "technical_constraint",
+      "statement": "Exception events reach the warehouse with up to 24 hours of lag, so same-day measurement is not possible.",
+      "source": "technical_constraints.md",
+      "span": "Delivery exception events land in the warehouse with a lag of up to 24 hours."
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "Cost per delivery is the binding constraint, and any cost-increasing proposal needs finance approval before a pilot.",
+      "source": "business_objectives.md",
+      "span": "Cost per delivery is the binding constraint this year."
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "AI-generated customer content requires human review before dispatch, with no volume exemption.",
+      "source": "governance_requirements.md",
+      "span": "Any AI-generated content sent to a customer requires human review before dispatch.",
+      "affects": [
+        "ai_assisted",
+        "ai_automated"
+      ],
+      "why_it_matters": "Removes most of the throughput argument for an AI assistant that messages customers."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "Delivery notifications require their own opt-in; marketing consent does not transfer.",
+      "source": "governance_requirements.md",
+      "span": "marketing opt-in does not authorise delivery notifications",
+      "affects": [
+        "pre-arrival notifications"
+      ],
+      "why_it_matters": "Coverage of any notification intervention is limited to customers who have separately opted in, which nothing in the corpus quantifies."
+    },
+    {
+      "id": "GT-G3",
+      "statement": "A new vendor processing customer data needs a data protection assessment taking six to eight weeks.",
+      "source": "governance_requirements.md",
+      "span": "Assessments currently take six to eight weeks.",
+      "affects": [
+        "buy",
+        "partner",
+        "ai_assisted"
+      ],
+      "why_it_matters": "Makes 'ship this quarter' infeasible for any new vendor-based option."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "Customer address data must remain in its region of origin.",
+      "source": "governance_requirements.md",
+      "span": "Customer address data must remain within its region of origin.",
+      "affects": [
+        "address validation",
+        "any external processing"
+      ]
+    },
+    {
+      "id": "GT-G5",
+      "statement": "Delivery photographs are personal data with a 90-day retention cap.",
+      "source": "governance_requirements.md",
+      "span": "Retention is capped at 90 days"
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "Pre-arrival notifications improve first-attempt delivery success.",
+      "why_forbidden": "The only pilot had no control group and found no statistically meaningful difference."
+    },
+    {
+      "id": "GT-U2",
+      "claim": "80% of customers want SMS alerts.",
+      "why_forbidden": "n=15, and every respondent had already opted into SMS marketing. The denominator does not support the claim.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "The survey was sent to 15 customers, all of whom had already opted into SMS marketing."
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "Address errors are the leading cause of delivery exceptions.",
+      "why_forbidden": "True for apartments only. Access issues lead overall. The claim is wrong without a segment qualifier.",
+      "anchor": {
+        "source": "customer_feedback.csv",
+        "span": "Please just include the apartment number on the label."
+      },
+      "tempted_by": "GT-H1"
+    },
+    {
+      "id": "GT-U4",
+      "claim": "First-attempt delivery success is 91%.",
+      "why_forbidden": "Stale by five quarters. The current figure is 87.4%."
+    },
+    {
+      "id": "GT-U5",
+      "claim": "An AI triage product would reduce exception handling time by 30%.",
+      "why_forbidden": "A vendor claim with no stated sample, baseline, or method, and no independent evaluation."
+    },
+    {
+      "id": "GT-U6",
+      "claim": "Address validation is blocked by per-lookup cost.",
+      "why_forbidden": "Superseded by the March 2026 contract renegotiation."
+    },
+    {
+      "id": "GT-U7",
+      "claim": "Any statement about what drivers experience, prefer, or would do.",
+      "why_forbidden": "The corpus contains no driver-side evidence whatsoever."
+    },
+    {
+      "id": "GT-U8",
+      "claim": "Any statement comparing rural and urban exception behaviour.",
+      "why_forbidden": "No geographic breakdown exists in the corpus."
+    },
+    {
+      "id": "GT-U9",
+      "claim": "Repeat-exception customers are rare, or account for zero exceptions.",
+      "why_forbidden": "The metric was never populated. A blank is not a zero."
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "prior_decisions.md",
+      "span": "approve the redesign of outer packaging for fragile goods",
+      "why_irrelevant": "Concerns in-transit damage, not failed delivery attempts. Retrievable and delivery-adjacent, but it should not appear in the analysis of this question."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Address validation at order entry",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Strongest evidence, but uncosted and resting on one non-randomised spot-check."
+      },
+      {
+        "name": "Pre-arrival customer notifications",
+        "option_kind": "ux_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "No measured effect. Requires separate opt-in, and coverage is unquantified."
+      },
+      {
+        "name": "Simplify the driver exception workflow",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Blocked by the Q3 driver app lock, and no driver evidence exists."
+      },
+      {
+        "name": "Rules-based routing for a single exception category",
+        "option_kind": "rules_based_automation",
+        "horizon": "core",
+        "support": "low"
+      },
+      {
+        "name": "Driver guidance for multi-unit buildings",
+        "option_kind": "training_or_documentation",
+        "horizon": "core",
+        "support": "low"
+      },
+      {
+        "name": "Limited AI exception triage",
+        "option_kind": "ai_assisted",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Supported only by executive preference and an unmethodical vendor claim, and constrained by the human-review requirement."
+      },
+      {
+        "name": "Measure the address correction effect before investing",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate"
+      },
+      {
+        "name": "Defer until driver and effort evidence exists",
+        "option_kind": "defer",
+        "horizon": "core",
+        "support": "moderate"
+      },
+      {
+        "name": "No change this quarter",
+        "option_kind": "no_change",
+        "horizon": "core",
+        "support": "low"
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "moderate",
+    "reason": "No option has strong support. The best-evidenced intervention rests on a single non-randomised 200-record review in one metro area, with no follow-up measurement and no effort estimate. A brief claiming strong support for any option is overconfident on this evidence.",
+    "defensible_next_steps": [
+      "Run an address-validation pilot with proper measurement, scoped to apartment deliveries where the evidence is strongest.",
+      "Gather the missing driver-side and integration-effort evidence before committing.",
+      "Apply rules-based routing to one well-understood exception category while better evidence is collected."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "ai_assisted",
+        "why": "Supported only by executive preference and an unmethodical vendor claim, and subject to a human-review requirement with no volume exemption."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The recommendation must acknowledge that the strongest evidence covers apartment deliveries specifically.",
+      "The recommendation must surface that integration effort is unestimated.",
+      "The recommendation must not present executive preference as evidence."
+    ]
+  }
+}
