@@ -143,7 +143,17 @@ class TestRegistry:
 
 
 class TestSharedRegistry:
-    def test_the_process_registry_is_empty_at_this_phase(self) -> None:
-        # Baseline prompts arrive in Phase 6 and skill prompts in Phase 7. If this
-        # starts failing, something registered a prompt ahead of its phase.
-        assert len(REGISTRY) == 0
+    """REGISTRY is process-global mutable state, so a test about its contents is
+    order-dependent unless it forces the imports it depends on. These do."""
+
+    def test_only_the_prompts_built_so_far_are_registered(self) -> None:
+        # Tripwire, updated at each phase. Skill prompts arrive in Phase 7; if this
+        # fails, something registered ahead of its phase.
+        import decision_lens.prompts.baseline  # noqa: F401  triggers registration
+
+        assert REGISTRY.names() == ("baseline", "baseline-repair")
+
+    def test_registered_prompts_are_retrievable_by_version(self) -> None:
+        import decision_lens.prompts.baseline  # noqa: F401
+
+        assert REGISTRY.get("baseline", "v1").version == "v1"
