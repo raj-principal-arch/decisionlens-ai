@@ -709,7 +709,9 @@ def test_a_failed_stage_is_distinguishable_from_a_stage_that_found_nothing() -> 
     """The distinction the whole partial-failure design exists to preserve."""
     brief = _run(_script(contradictions=ModelUnavailable("provider is down")))
     (issue,) = [i for i in brief.validation_issues if i.code == ValidationCode.STAGE_FAILED]
-    assert "because it failed, not because there was nothing to report" in issue.message
+    assert "absent because it failed" in issue.message
+    assert "not because there was nothing to report" in issue.message
+    assert "\n" not in issue.message, "issues render as one line each; a dump breaks the layout"
 
 
 def test_a_timeout_on_the_recommendation_leaves_a_brief_without_one() -> None:

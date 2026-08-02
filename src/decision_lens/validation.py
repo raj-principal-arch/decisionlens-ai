@@ -112,6 +112,18 @@ def _issue(
     return ValidationIssue(code=code.value, severity=severity, message=message, location=location)
 
 
+def _one_line(text: str, limit: int = 180) -> str:
+    """Flatten a message to a single line.
+
+    Issues are rendered as list items in Markdown, as rows in the interface, and
+    as one line each on a terminal. An embedded multi-line traceback — which is
+    what a provider error usually is — silently destroys all three, and a reader
+    skimming for the important failure loses it in the noise.
+    """
+    collapsed = " ".join(text.split())
+    return collapsed if len(collapsed) <= limit else collapsed[: limit - 1].rstrip() + "…"
+
+
 # --------------------------------------------------------------------------- #
 # Individual checks
 # --------------------------------------------------------------------------- #
@@ -268,8 +280,8 @@ def _check_stages(brief: DecisionBrief) -> list[ValidationIssue]:
         _issue(
             ValidationCode.STAGE_FAILED,
             ValidationSeverity.ERROR if base in CRITICAL_STAGES else ValidationSeverity.WARNING,
-            f"The {base} stage did not complete ({error}). Its section of this brief is "
-            "absent because it failed, not because there was nothing to report.",
+            f"The {base} stage did not complete, so its section is absent because it failed "
+            f"— not because there was nothing to report. {_one_line(error)}",
             f"stage {base}",
         )
         for base, error in last_error.items()
@@ -294,14 +306,21 @@ def _check_alternatives(brief: DecisionBrief) -> list[ValidationIssue]:
     """The two options a tool built to help AI adoption is most likely to skip."""
     criteria = brief.request.criteria
     issues: list[ValidationIssue] = []
+    # An empty option set fails both requirements, but for a different reason
+    # than a set that has options and no good ones. Saying "every alternative
+    # involves AI" when there are no alternatives states something untrue about
+    # the brief, and a check a reader catches lying is a check they stop reading.
+    none_at_all = not brief.alternatives
 
     if criteria.require_non_ai_alternative and not brief.has_non_ai_alternative:
         issues.append(
             _issue(
                 ValidationCode.NON_AI_ALTERNATIVE_MISSING,
                 ValidationSeverity.ERROR,
-                "Every alternative involves AI. A decision process that cannot produce a "
-                "non-AI option has assumed its answer.",
+                "No options were generated at all, so the required non-AI option is absent."
+                if none_at_all
+                else "Every alternative involves AI. A decision process that cannot produce "
+                "a non-AI option has assumed its answer.",
                 "alternatives",
             )
         )
@@ -310,8 +329,11 @@ def _check_alternatives(brief: DecisionBrief) -> list[ValidationIssue]:
             _issue(
                 ValidationCode.NO_BUILD_ALTERNATIVE_MISSING,
                 ValidationSeverity.ERROR,
-                "There is no no-change, defer, or further-research option. One is required, "
-                "and it is often the right answer.",
+                "No options were generated at all, so the required no-build, defer, or "
+                "further-research option is absent."
+                if none_at_all
+                else "There is no no-change, defer, or further-research option. One is "
+                "required, and it is often the right answer.",
                 "alternatives",
             )
         )
