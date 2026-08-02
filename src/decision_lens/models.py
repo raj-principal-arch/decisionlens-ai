@@ -376,9 +376,15 @@ class DecisionRequest(_Frozen):
 
 
 class EvidenceRequest(_Frozen):
-    """What a connector is asked to retrieve. Scope only — never a question to answer."""
+    """What a connector is asked to retrieve. Scope only — never a question to answer.
 
-    query: str = Field(min_length=1)
+    An empty `query` means "no keyword narrowing", which is the normal case for a
+    curated evidence directory: retrieve everything and let a relevance skill
+    decide. Requiring a query would push relevance judgment into the connector,
+    where it does not belong.
+    """
+
+    query: str = ""
     requested_by: UserContext
     source_systems: tuple[SourceSystem, ...] = ()
     product_area: str = ""

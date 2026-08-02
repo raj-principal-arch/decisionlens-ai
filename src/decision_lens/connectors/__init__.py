@@ -16,5 +16,17 @@ from decision_lens.connectors.base import (
     EvidenceSource,
     EvidenceSourceError,
 )
+from decision_lens.connectors.local_files import (
+    LocalFileEvidenceSource,
+    RetrievalDiagnostics,
+    SkippedFile,
+)
 
-__all__ = ["BaseEvidenceSource", "EvidenceSource", "EvidenceSourceError"]
+__all__ = [
+    "BaseEvidenceSource",
+    "EvidenceSource",
+    "EvidenceSourceError",
+    "LocalFileEvidenceSource",
+    "RetrievalDiagnostics",
+    "SkippedFile",
+]
