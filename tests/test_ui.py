@@ -63,9 +63,19 @@ def test_a_malformed_key_is_rejected_before_any_call() -> None:
 
 
 def test_a_well_formed_key_reaches_the_adapter() -> None:
-    """The SDK is an optional extra, so this is as far as it can get here."""
-    with pytest.raises(AnthropicNotInstalled):
-        build_provider(live=True, api_key=KEY, model="claude-opus-5")
+    """Either outcome is correct; which one depends on an optional extra.
+
+    With `anthropic` installed the adapter is constructed (no network call
+    happens at construction). Without it, the install instruction is raised.
+    Asserting only one of those would make the test depend on how the developer
+    happened to set their venv up.
+    """
+    try:
+        provider = build_provider(live=True, api_key=KEY, model="claude-opus-5")
+    except AnthropicNotInstalled:
+        return
+    assert provider.provider_id == "anthropic"
+    assert provider.model_id == "claude-opus-5"
 
 
 # --------------------------------------------------------------------------- #
@@ -398,3 +408,39 @@ def test_a_provider_failure_mid_run_is_reported_on_the_page(
     assert not app.exception
     assert any("unreachable" in e.value for e in app.error)
     assert any("decisionlens record" in c.value for c in app.caption)
+
+
+_BARE_BRIEF_DRIVER = """
+import os, sys
+from pathlib import Path
+
+sys.path.insert(0, "src")
+from decision_lens.case import load_case
+from decision_lens.llm import CachedDemoProvider
+from decision_lens.orchestrator import DecisionLens
+from decision_lens.ui import render
+
+loaded = load_case(Path(os.environ["DL_CASE"]))
+brief = DecisionLens(
+    CachedDemoProvider(Path(os.environ["DL_CACHE"])), loaded.sources, as_of=loaded.as_of
+).run(loaded.request)
+render(brief.model_copy(update={"contradictions": (), "recommendation": None}))
+"""
+
+
+def test_empty_sections_say_what_is_absent_rather_than_showing_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A blank section reads as 'nothing to report'. These have to say which."""
+    from tests.scripted import case_with_cache
+
+    directory, cache = case_with_cache(tmp_path)
+    monkeypatch.setenv("DL_CASE", str(directory))
+    monkeypatch.setenv("DL_CACHE", str(cache))
+    app = AppTest.from_string(_BARE_BRIEF_DRIVER, default_timeout=120).run()
+
+    assert not app.exception
+    captions = " ".join(c.value for c in app.caption)
+    assert "That is not the same as none existing" in captions
+    assert "No experiment was proposed" in captions
+    assert any("No recommendation was produced" in e.value for e in app.error)

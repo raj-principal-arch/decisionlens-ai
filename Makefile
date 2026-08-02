@@ -75,7 +75,7 @@ ui: ## Open the structured interface in a browser
 # The one command that costs money, and the only way the demo cache is ever
 # filled. Run it once with a key; every run after that is free and offline.
 record: ## Call a real model once and record its responses for offline replay
-	@$(DL) record
+	@$(DL) record || test $$? -eq 2
 
 clean: ## Remove the virtualenv and build artifacts
 	rm -rf $(VENV) build dist .pytest_cache .ruff_cache .mypy_cache

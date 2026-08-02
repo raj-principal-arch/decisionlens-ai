@@ -251,7 +251,7 @@ def test_merging_preserves_recordings_of_other_cases(tmp_path: Path) -> None:
             recorded_at=CLOCK,
         )
     )
-    added, replaced = merge_into(fresh, path)
+    added, replaced, removed = merge_into(fresh, path)
 
     reloaded = DemoCache.load(path)
     assert (added, replaced) == (1, 0)
@@ -282,9 +282,9 @@ def test_re_recording_replaces_rather_than_duplicates(tmp_path: Path) -> None:
             recorded_at=CLOCK,
         )
     )
-    added, replaced = merge_into(second, path)
+    added, replaced, removed = merge_into(second, path)
 
-    assert (added, replaced) == (0, 1)
+    assert (added, replaced, removed) == (0, 1, 0)
     assert DemoCache.load(path).responses["tiny_case::relevance::v1"].text == '{"new": true}'
 
 
@@ -301,8 +301,8 @@ def test_merging_into_a_missing_file_creates_it(tmp_path: Path) -> None:
             recorded_at=CLOCK,
         )
     )
-    added, replaced = merge_into(cache, path)
-    assert (added, replaced) == (1, 0)
+    added, replaced, removed = merge_into(cache, path)
+    assert (added, replaced, removed) == (1, 0, 0)
     assert path.is_file()
 
 
@@ -342,3 +342,85 @@ def test_a_case_with_no_evidence_still_records_the_baseline_arm(tmp_path: Path) 
     )
 
     assert "empty_case::baseline::v1" in summary.keys
+
+
+# --------------------------------------------------------------------------- #
+# A rejected response must never be cached
+# --------------------------------------------------------------------------- #
+
+
+def test_a_response_its_own_stage_rejected_is_not_cached(case: Path) -> None:
+    """Found on the first real recording run, not by reading the code.
+
+    A response can arrive intact over HTTP and still be refused by the skill that
+    asked for it. Caching one would ship a known-bad answer labelled as a
+    recorded result, and every later replay would fail the same check.
+    """
+    loaded = load_case(case)
+    cache = DemoCache()
+    # Valid JSON for the shape, but it answers none of the eight questions, so
+    # the challenger's own requirements reject it.
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case, challenger='{"findings": []}')),
+        cache=cache,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+
+    key = f"{CASE_ID}::challenger::v1"
+    assert key not in cache.responses, "the rejected response was discarded"
+    assert key in summary.dropped
+    assert key not in summary.keys
+    assert any("challenger" in f for f in summary.failures)
+    assert "discarded as unusable" in summary.describe()
+    assert f"  - {key}" in summary.describe()
+
+
+def test_a_rejected_baseline_is_not_cached_either(case: Path) -> None:
+    loaded = load_case(case)
+    cache = DemoCache()
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case, baseline="not json at all")),
+        cache=cache,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+
+    assert not [k for k in cache.responses if "baseline" in k]
+    assert any("baseline" in k for k in summary.dropped)
+
+
+def test_re_recording_removes_a_previously_cached_bad_response(case: Path, tmp_path: Path) -> None:
+    """The already-poisoned entry has to go, not merely be left in place."""
+    from decision_lens.llm import CachedResponse
+
+    path = tmp_path / "cache.json"
+    poisoned = DemoCache()
+    poisoned.add(
+        CachedResponse(
+            key=f"{CASE_ID}::challenger::v1",
+            text='{"findings": []}',
+            recorded_from_model="claude-opus-5",
+            recorded_at=CLOCK,
+        )
+    )
+    poisoned.save(path)
+
+    loaded = load_case(case)
+    cache = DemoCache()
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case, challenger='{"findings": []}')),
+        cache=cache,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+    added, replaced, removed = merge_into(cache, path, drop=summary.dropped)
+
+    assert removed == 1
+    assert f"{CASE_ID}::challenger::v1" not in DemoCache.load(path).responses
