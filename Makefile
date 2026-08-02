@@ -3,17 +3,31 @@ VENV   := .venv
 BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help setup check test coverage lint typecheck format clean
+.PHONY: help setup setup-live check test coverage lint typecheck format clean
 
 help: ## Show available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
-		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
+		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
 setup: ## Create .venv and install the package with dev dependencies
 	$(PYTHON) -m venv $(VENV)
 	$(BIN)/pip install --quiet --upgrade pip
 	$(BIN)/pip install --quiet -e ".[dev]"
+	@test -f .env || cp .env.example .env
 	@echo "Ready. Run 'make check'."
+	@echo "No API key needed — runs from recorded output. For live: make setup-live"
+
+# Optional. Everything DecisionLens demonstrates works without this: the default
+# run replays recorded output, offline and free. This exists so the same workflow
+# can be pointed at a live model when someone wants to see it actually thinking.
+setup-live: ## Add the optional Anthropic SDK for live model runs
+	$(BIN)/pip install --quiet -e ".[dev,live]"
+	@test -f .env || cp .env.example .env
+	@echo "Installed. Two lines in .env switch DecisionLens to a live model:"
+	@echo "  ANTHROPIC_API_KEY=sk-ant-..."
+	@echo "  MODEL_PROVIDER=anthropic"
+	@echo "Both are required. A key alone changes nothing, by design."
+	@echo "Blank them out at any time to return to the free recorded demo."
 
 check: lint typecheck test ## Run every validation gate
 
