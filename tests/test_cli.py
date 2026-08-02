@@ -392,6 +392,12 @@ def test_record_writes_the_cache_and_says_the_demo_now_works(
     monkeypatch.setattr(cli, "AnthropicProvider", lambda key, *, model: object())
 
     def fake_record(request: object, sources: object, provider: object, **kwargs: object) -> object:
+        # The CLI has to hand the recorder a working progress callback, or a run
+        # that takes tens of minutes shows nothing at all while it happens.
+        progress = kwargs["progress"]
+        assert callable(progress)
+        progress("  [1/8] relevance …")
+
         cache = kwargs["cache"]
         assert isinstance(cache, DemoCache)
         cache.add(
@@ -413,6 +419,7 @@ def test_record_writes_the_cache_and_says_the_demo_now_works(
     assert "1 added, 0 replaced" in out
     assert "make demo" in out
     assert KEY not in out
+    assert "[1/8] relevance" in out, "progress reached the operator"
 
 
 def test_record_reports_a_failure_without_writing_a_cache(
