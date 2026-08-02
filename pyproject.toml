@@ -17,13 +17,13 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
-# Intentionally empty at Phase 1. Dependencies are added in the phase that first
-# requires them, not in advance:
-#   Phase 2  pydantic>=2      typed domain models
+# Dependencies are added in the phase that first requires them, not in advance:
 #   Phase 5  (none)           the cached demo provider needs no SDK
 #   Phase 6  anthropic / openai — only with separate explicit approval
 #   Phase 9  streamlit        structured PM interface
-dependencies = []
+dependencies = [
+    "pydantic>=2.7",  # Phase 2 — typed domain models
+]
 
 [project.optional-dependencies]
 dev = [
@@ -46,6 +46,11 @@ include = ["decision_lens*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# Resolve the package from src/ directly rather than through the editable
+# install. Standard practice for a src/ layout, and it keeps `make test` working
+# from a fresh clone even before `make setup` runs. The editable install is still
+# what the console script will use, so Phase 12 must verify it independently.
+pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
@@ -57,9 +62,8 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.mypy]
 python_version = "3.11"
-# "tests" joins this list in Phase 2, when the first tests exist. mypy errors out
-# on a directory containing no .py files, so listing it now would fail the gate.
-files = ["src"]
+files = ["src", "tests"]
+plugins = ["pydantic.mypy"]
 strict = true
 warn_unreachable = true
 # Applies to third-party packages without type stubs, added in later phases.
