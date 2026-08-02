@@ -442,3 +442,106 @@ def test_the_live_deadline_allows_the_output_ceiling_to_be_reached() -> None:
         f"{LIVE_SKILL_TIMEOUT_SECONDS}s cannot deliver {DEFAULT_MAX_OUTPUT_TOKENS} tokens; "
         f"about {needed:.0f}s is needed. Raise the deadline or lower the ceiling."
     )
+
+
+# --------------------------------------------------------------------------- #
+# Progress
+# --------------------------------------------------------------------------- #
+
+
+def test_each_stage_is_announced_before_and_after(case: Path) -> None:
+    """A run writes nothing to disk until the end, so the only signal is this."""
+    loaded = load_case(case)
+    lines: list[str] = []
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        progress=lines.append,
+    )
+
+    assert any(line.endswith("relevance …") for line in lines), "announced before it runs"
+    assert any("relevance —" in line and "in /" in line for line in lines), "and after"
+    for stage in ("classification", "recommendation", "challenger", "baseline"):
+        assert any(stage in line for line in lines), stage
+
+
+def test_the_counter_shows_how_much_is_left(case: Path) -> None:
+    loaded = load_case(case)
+    lines: list[str] = []
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        progress=lines.append,
+    )
+    assert any("[1/8]" in line for line in lines)
+    assert any("[8/8]" in line for line in lines)
+
+
+def test_the_counter_knows_the_baseline_was_skipped(case: Path) -> None:
+    loaded = load_case(case)
+    lines: list[str] = []
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        include_baseline=False,
+        progress=lines.append,
+    )
+    assert any("[7/7]" in line for line in lines)
+    assert not any("[8/" in line for line in lines)
+
+
+def test_a_failing_stage_says_so_immediately(case: Path) -> None:
+    """Waiting twenty minutes to learn stage two died is not acceptable."""
+    loaded = load_case(case)
+    lines: list[str] = []
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case, contradictions=ModelUnavailable("overloaded"))),
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        progress=lines.append,
+    )
+    assert any("contradictions — failed after" in line for line in lines)
+    assert any("ModelUnavailable" in line for line in lines)
+
+
+def test_progress_is_optional(case: Path) -> None:
+    """Nothing may depend on someone listening."""
+    loaded = load_case(case)
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+    assert summary.succeeded
+
+
+def test_the_summary_reports_wall_clock_time(case: Path) -> None:
+    loaded = load_case(case)
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+    assert summary.elapsed_seconds > 0
+    assert "in 0m" in summary.describe()
