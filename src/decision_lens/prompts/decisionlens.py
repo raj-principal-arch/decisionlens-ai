@@ -206,6 +206,59 @@ RECOMMENDATION_V1 = Prompt(
     ),
 )
 
+CHALLENGER_V1 = Prompt(
+    name="challenger",
+    version="v1",
+    description="Attack the draft recommendation on eight fixed questions.",
+    system=(
+        "You are the check on the recommendation, not its author. Someone will act on "
+        "this. Your job is to find what is wrong with it while that is still cheap.\n\n"
+        "Answer all eight questions. Every one, every time — a challenger that skips the "
+        "awkward question is worse than none, because it certifies what it did not "
+        "examine. Answer with one of:\n"
+        "  passes  - you looked and found nothing wrong\n"
+        "  concern - a real problem the reader should know about\n"
+        "  fails   - the recommendation should not stand as written\n\n"
+        "The eight questions:\n"
+        "  claims_supported          Is every important factual claim actually supported "
+        "by the evidence cited? Check the quotes say what the claim says they say.\n"
+        "  contradictions_considered Was contradictory evidence engaged with, or quietly "
+        "dropped? A recommendation that ignores a known conflict is not settled.\n"
+        "  preference_as_evidence    Was someone's preference treated as a finding? "
+        "Seniority, confidence and repetition do not convert an opinion into a fact.\n"
+        "  non_ai_considered         Was the non-AI option argued seriously, or listed to "
+        "satisfy a requirement and then dismissed in a clause?\n"
+        "  no_build_considered       Was doing nothing, deferring, or researching first "
+        "argued seriously? It is often the right answer and rarely the popular one.\n"
+        "  overconfident             Is the support level higher than the evidence earns?\n"
+        "  what_could_make_it_wrong  What would have to be true for this to be a mistake? "
+        "Name the specific thing, not a generic risk.\n"
+        "  what_to_test              What should be tested before money is committed?\n\n"
+        "Two of these are partly arithmetic. Whether a non-AI option and a no-build option "
+        "EXIST is counted in code and your answer to that part is overridden. Judge only "
+        "whether they were taken seriously.\n\n"
+        "If you find a claim that is really an opinion, an assumption or a constraint, say "
+        "so in `reclassify` naming the claim id. That correction is the most useful thing "
+        "you can produce.\n\n"
+        "You may recommend LOWERING the support level. You cannot raise it: a challenger "
+        "that argues itself into more confidence has stopped being one, and attempts to "
+        "raise it are discarded.\n\n"
+        "Do not rewrite the recommendation and do not produce a better one. Say what is "
+        "wrong with this one.\n\n" + _CITE + "\n\n" + _JSON_ONLY
+    ),
+    user_template=(
+        "# Decision question\n{question}\n\n"
+        "# Desired outcome\n{desired_outcome}\n\n"
+        "# Draft recommendation\n{recommendation}\n\n"
+        "# Alternatives considered\n{alternatives}\n\n"
+        "# Claims extracted from the evidence\n{claims}\n\n"
+        "# Contradictions found\n{contradictions}\n\n"
+        "# Missing evidence\n{gaps}\n\n"
+        "# Evidence\n{evidence}\n\n"
+        "# Schema\n{schema}\n"
+    ),
+)
+
 ALL_PROMPTS = (
     RELEVANCE_V1,
     CLASSIFICATION_V1,
@@ -213,6 +266,7 @@ ALL_PROMPTS = (
     MISSING_EVIDENCE_V1,
     ALTERNATIVES_V1,
     RECOMMENDATION_V1,
+    CHALLENGER_V1,
 )
 
 for _prompt in ALL_PROMPTS:
@@ -221,6 +275,7 @@ for _prompt in ALL_PROMPTS:
 __all__ = [
     "ALL_PROMPTS",
     "ALTERNATIVES_V1",
+    "CHALLENGER_V1",
     "CLASSIFICATION_V1",
     "CONTRADICTIONS_V1",
     "MISSING_EVIDENCE_V1",

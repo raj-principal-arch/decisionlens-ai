@@ -21,6 +21,7 @@ from decision_lens.models import (
     DecisionRequest,
     EvidenceRecord,
     MissingEvidence,
+    Recommendation,
 )
 
 
@@ -78,6 +79,34 @@ def render_gaps(gaps: Sequence[MissingEvidence]) -> str:
     if not gaps:
         return "(none identified)"
     return "\n".join(f"- [{g.impact.value}] {g.question}" for g in gaps)
+
+
+def render_recommendation(recommendation: Recommendation | None) -> str:
+    """Format a draft recommendation for the challenger to attack.
+
+    Shows the support level and what it rests on, because the challenger's job is
+    partly to disagree with those two specifically.
+    """
+    if recommendation is None:
+        return "(no recommendation was produced)"
+
+    lines = [
+        f"Statement: {recommendation.statement}",
+        f"Option kind: {recommendation.option_kind.value}",
+        f"Selected alternative: {recommendation.selected_alternative_id or '(none named)'}",
+        f"Support level: {recommendation.support_level.value}",
+        f"Support rests on: {recommendation.support_basis or '(not stated)'}",
+    ]
+    if recommendation.claims:
+        lines.append("Supporting claims:")
+        lines.append(render_claims(recommendation.claims))
+    if recommendation.conditions:
+        lines.append("Conditions: " + "; ".join(recommendation.conditions))
+    if recommendation.what_would_change_it:
+        lines.append("What would change it: " + "; ".join(recommendation.what_would_change_it))
+    if recommendation.experiment:
+        lines.append(f"Proposed test: {recommendation.experiment.hypothesis}")
+    return "\n".join(lines)
 
 
 def render_alternatives(alternatives: Sequence[Alternative]) -> str:
