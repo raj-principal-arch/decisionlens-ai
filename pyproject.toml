@@ -17,13 +17,10 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
-# Dependencies are added in the phase that first requires them, not in advance:
-#   Phase 5  (none)           the cached demo provider needs no SDK
-#   Phase 9  streamlit        structured PM interface
-#
-# The runtime set stays empty of model SDKs on purpose. DecisionLens runs its
-# whole demo from recorded output, so a reviewer needs no credential, no network
-# and no vendor package. Live mode is the `live` extra below.
+# The runtime set stays free of model SDKs and UI frameworks on purpose.
+# DecisionLens runs its whole demo from recorded output, so the CLI needs no
+# credential, no network and no vendor package. Live mode is the `live` extra;
+# the Streamlit interface is the `ui` extra. `make setup` installs both.
 dependencies = [
     "pydantic>=2.7",  # Phase 2 — typed domain models
 ]
@@ -42,13 +39,17 @@ dev = [
 live = [
     "anthropic>=0.70",
 ]
+# Optional: the structured Streamlit interface. Kept out of the runtime set so
+# the CLI, the tests and the evaluation harness never depend on a UI framework.
+ui = [
+    "streamlit>=1.37",
+]
 
 [project.urls]
 Repository = "https://github.com/raj-principal-arch/decisionlens-ai"
 
-# A `decisionlens` console script is deliberately not registered yet. The CLI
-# arrives in Phase 9; declaring the entry point earlier would advertise a command
-# that does not exist.
+[project.scripts]
+decisionlens = "decision_lens.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -77,10 +78,24 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.mypy]
-python_version = "3.11"
+# 3.12 rather than the 3.11 project floor, for one external reason: the `ui`
+# extra pulls in numpy, whose bundled stubs use 3.12-only `type` statements, and
+# mypy cannot parse them under 3.11 no matter how the imports are configured.
+# The 3.11 floor is still enforced — by ruff's `target-version = "py311"` below,
+# which rejects newer syntax in this repository's own code. Only the type
+# checker's assumed runtime moved; `requires-python` did not.
+python_version = "3.12"
 files = ["src", "tests"]
 plugins = ["pydantic.mypy"]
 strict = true
 warn_unreachable = true
 # Applies to third-party packages without type stubs, added in later phases.
+ignore_missing_imports = true
+
+# Don't type-check inside the UI framework. `ui.py` is a thin wiring layer whose
+# correctness comes from the tested helpers it calls, not from Streamlit's own
+# annotations, and checking a third-party UI library is not this project's job.
+[[tool.mypy.overrides]]
+module = ["streamlit", "streamlit.*"]
+follow_imports = "skip"
 ignore_missing_imports = true

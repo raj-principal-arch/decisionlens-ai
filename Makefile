@@ -3,18 +3,18 @@ VENV   := .venv
 BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help setup setup-live check test coverage lint typecheck format clean
+.PHONY: help setup setup-live check test coverage lint typecheck format demo ui record clean
 
 help: ## Show available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
 		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-setup: ## Create .venv and install the package with dev dependencies
+setup: ## Create .venv and install the package with dev and UI dependencies
 	$(PYTHON) -m venv $(VENV)
 	$(BIN)/pip install --quiet --upgrade pip
-	$(BIN)/pip install --quiet -e ".[dev]"
+	$(BIN)/pip install --quiet -e ".[dev,ui]"
 	@test -f .env || cp .env.example .env
-	@echo "Ready. Run 'make check'."
+	@echo "Ready. Run 'make demo' for a brief, or 'make ui' for the interface."
 	@echo "No API key needed — runs from recorded output. For live: make setup-live"
 
 # Optional. Everything DecisionLens demonstrates works without this: the default
@@ -50,10 +50,32 @@ format: ## Apply formatting and safe lint fixes
 	$(BIN)/ruff format .
 	$(BIN)/ruff check --fix .
 
-# A `demo` target arrives in Phase 9, once the CLI and the structured Streamlit
-# interface exist. It will run the bundled synthetic case offline, with no API
-# key, against the problem-first question:
+# The bundled synthetic case, offline, with no API key, against the
+# problem-first question:
 #   "Which intervention should the team prioritize to reduce delivery exceptions?"
+# Exits 2 rather than 0 when the brief carries blocking errors — a run that
+# produced an unusable brief should not look like a clean run to a script.
+# These invoke the module rather than the `decisionlens` console script, and set
+# PYTHONPATH themselves. The console script depends on the editable install's
+# .pth file, which is fragile: a filesystem that duplicates files (iCloud sync
+# produces "name 2.pth" beside "name.pth") leaves the package silently
+# unimportable while everything looks installed. The same reasoning is already
+# why pytest sets `pythonpath = ["src"]`. `decisionlens ...` still works when the
+# install is healthy; these targets work either way.
+DL := PYTHONPATH=src $(BIN)/python -m decision_lens.cli
+
+# Exit 2 means the brief was produced but carries blocking errors — a real
+# outcome worth showing, not a broken target. A genuine failure still exits 1.
+demo: ## Produce a brief from the bundled case and write it to out/
+	@$(DL) run --out out --format both || test $$? -eq 2
+
+ui: ## Open the structured interface in a browser
+	PYTHONPATH=src $(BIN)/streamlit run src/decision_lens/ui.py
+
+# The one command that costs money, and the only way the demo cache is ever
+# filled. Run it once with a key; every run after that is free and offline.
+record: ## Call a real model once and record its responses for offline replay
+	@$(DL) record
 
 clean: ## Remove the virtualenv and build artifacts
 	rm -rf $(VENV) build dist .pytest_cache .ruff_cache .mypy_cache
