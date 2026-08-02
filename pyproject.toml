@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "decisionlens-ai"
+version = "0.1.0"
+description = "An evidence-grounded AI agent for verifiable product decision-making."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Raj Pasupathy" }]
+keywords = ["product-management", "evidence", "traceability", "decision-support"]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+# Intentionally empty at Phase 1. Dependencies are added in the phase that first
+# requires them, not in advance:
+#   Phase 2  pydantic>=2      typed domain models
+#   Phase 5  (none)           the cached demo provider needs no SDK
+#   Phase 6  anthropic / openai — only with separate explicit approval
+#   Phase 9  streamlit        structured PM interface
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[project.urls]
+Repository = "https://github.com/raj-principal-arch/decisionlens-ai"
+
+# A `decisionlens` console script is deliberately not registered yet. The CLI
+# arrives in Phase 9; declaring the entry point earlier would advertise a command
+# that does not exist.
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["decision_lens*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+# "tests" joins this list in Phase 2, when the first tests exist. mypy errors out
+# on a directory containing no .py files, so listing it now would fail the gate.
+files = ["src"]
+strict = true
+warn_unreachable = true
+# Applies to third-party packages without type stubs, added in later phases.
+ignore_missing_imports = true
