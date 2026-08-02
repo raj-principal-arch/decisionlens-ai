@@ -1188,10 +1188,16 @@ class TestRetrievalBoundaryIsStructural:
         for forbidden in ("retrieve", "source", "connector", "fetch", "load"):
             assert forbidden not in surface
 
-    def test_the_approved_skill_set_is_exactly_six(self) -> None:
+    def test_the_approved_skill_set_is_exactly_seven(self) -> None:
+        """Tripwire against skill sprawl, updated per phase.
+
+        Six analysis skills arrived in Phase 7; the challenger joined them in
+        Phase 8. It is a skill rather than orchestrator code because it is one:
+        a versioned prompt, a typed output, and deterministic requirements of
+        its own. Nothing else is a skill.
+        """
         from decision_lens.skills import SKILL_NAMES
 
-        assert len(SKILL_NAMES) == 6
         assert set(SKILL_NAMES) == {
             "relevance",
             "classification",
@@ -1199,4 +1205,6 @@ class TestRetrievalBoundaryIsStructural:
             "missing_evidence",
             "alternatives",
             "recommendation",
+            "challenger",
         }
+        assert len(SKILL_NAMES) == len(set(SKILL_NAMES))

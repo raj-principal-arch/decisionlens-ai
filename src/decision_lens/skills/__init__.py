@@ -15,6 +15,9 @@ The six skills map one-to-one onto the mechanisms the product hypothesis names:
     alternatives.py      options, including non-AI and no-build
     recommendation.py    a recommendation, never an approval
 
+A seventh, `challenger.py`, is not an analysis of the evidence but of the draft
+recommendation, so it runs last and only after one exists.
+
 Every skill is hybrid: it computes what is computable and asks the model only for
 judgment. Staleness is date arithmetic, citation resolution is string matching,
 and the mandatory non-AI and no-build options are enum checks. An instruction can
@@ -29,6 +32,14 @@ from decision_lens.skills.base import (
     SkillError,
     SkillRun,
     SkillViolation,
+)
+from decision_lens.skills.challenger import (
+    ChallengeFinding,
+    ChallengeOutput,
+    ChallengeQuestion,
+    ChallengerSkill,
+    ChallengeVerdict,
+    ClaimReclassification,
 )
 from decision_lens.skills.classification import ClassificationOutput, ClassificationSkill
 from decision_lens.skills.contradictions import ContradictionsOutput, ContradictionsSkill
@@ -47,6 +58,7 @@ SKILL_NAMES = (
     "missing_evidence",
     "alternatives",
     "recommendation",
+    "challenger",
 )
 
 __all__ = [
@@ -54,6 +66,12 @@ __all__ = [
     "SKILL_TIMEOUT_SECONDS",
     "AlternativesOutput",
     "AlternativesSkill",
+    "ChallengeFinding",
+    "ChallengeOutput",
+    "ChallengeQuestion",
+    "ChallengeVerdict",
+    "ChallengerSkill",
+    "ClaimReclassification",
     "ClassificationOutput",
     "ClassificationSkill",
     "ContradictionsOutput",
