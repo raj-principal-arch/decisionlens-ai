@@ -52,7 +52,17 @@ __all__ = [
 #: A live model reasoning over a full evidence corpus is far slower than replaying
 #: a recorded string. The cached-mode default is sized for replay; using it live
 #: would time out a call that was going to succeed.
-LIVE_SKILL_TIMEOUT_SECONDS = 300.0
+#:
+#: Sized against the output ceiling rather than guessed, and asserted by a test:
+#: a response near `DEFAULT_MAX_OUTPUT_TOKENS` needs roughly half an hour at a
+#: pessimistic 40 tokens per second, and a shorter deadline would convert a
+#: response that was going to arrive into a timeout. Raise both together or
+#: neither.
+#:
+#: This is a ceiling on a stage that has gone wrong, not an expectation. A
+#: healthy stage returns in single-digit minutes; this only decides how long a
+#: wedged one is tolerated before it is abandoned.
+LIVE_SKILL_TIMEOUT_SECONDS = 1_900.0
 
 #: Rough characters-per-token, used only for the pre-run size preview. Deliberately
 #: not presented as a token count: the real number comes back in the run summary,
