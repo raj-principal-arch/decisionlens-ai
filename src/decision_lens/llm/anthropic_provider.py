@@ -47,14 +47,17 @@ PROVIDER_ID = "anthropic"
 
 #: Caps thinking plus response text together on current models.
 #:
-#: Raised from 16,000 after a real recording run: classifying 56 evidence records
-#: means emitting a verbatim quote per claim, and the response was truncated
-#: mid-JSON. A cut-off response is not partial output, it is unusable output — so
-#: the ceiling has to clear the largest honest answer, not the typical one.
+#: Raised from 16,000 after a real recording run truncated three stages mid-JSON:
+#: classifying 56 evidence records means emitting a verbatim quote per claim. A
+#: cut-off response is not partial output, it is unusable output, so the ceiling
+#: has to clear the largest honest answer rather than the typical one.
 #:
-#: Only safe because requests stream (see `_call`). A non-streaming request this
-#: large risks an HTTP timeout, and the SDK refuses some outright.
-DEFAULT_MAX_OUTPUT_TOKENS = 48_000
+#: A ceiling costs nothing on its own — billing is for tokens generated, not for
+#: headroom — so it is set well above the largest response observed rather than
+#: tuned close to it. Two things do constrain it: requests must stream (see
+#: `_call`), and the per-stage deadline has to allow time to actually emit this
+#: much, which is why `LIVE_SKILL_TIMEOUT_SECONDS` moves with it.
+DEFAULT_MAX_OUTPUT_TOKENS = 75_000
 
 
 class AnthropicNotInstalled(ModelUnavailable):

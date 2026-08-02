@@ -424,3 +424,21 @@ def test_re_recording_removes_a_previously_cached_bad_response(case: Path, tmp_p
 
     assert removed == 1
     assert f"{CASE_ID}::challenger::v1" not in DemoCache.load(path).responses
+
+
+def test_the_live_deadline_allows_the_output_ceiling_to_be_reached() -> None:
+    """The two constants are coupled; a test so they cannot drift apart.
+
+    A deadline shorter than the time it takes to emit `max_tokens` converts a
+    response that was going to arrive into a timeout — swapping one failure for
+    another. 40 tokens/second is a deliberately pessimistic floor.
+    """
+    from decision_lens.llm.anthropic_provider import DEFAULT_MAX_OUTPUT_TOKENS
+    from decision_lens.recorder import LIVE_SKILL_TIMEOUT_SECONDS
+
+    slowest_plausible_tokens_per_second = 40
+    needed = DEFAULT_MAX_OUTPUT_TOKENS / slowest_plausible_tokens_per_second
+    assert needed <= LIVE_SKILL_TIMEOUT_SECONDS, (
+        f"{LIVE_SKILL_TIMEOUT_SECONDS}s cannot deliver {DEFAULT_MAX_OUTPUT_TOKENS} tokens; "
+        f"about {needed:.0f}s is needed. Raise the deadline or lower the ceiling."
+    )
