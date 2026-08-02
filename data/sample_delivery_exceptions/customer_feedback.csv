@@ -1,0 +1,17 @@
+feedback_id,received_on,dwelling_type,collection_channel,comment,rating,note
+CF-001,2026-06-03,apartment,post-exception survey,Driver said he could not find unit 4B. The address label only shows the street number.,2,synthetic
+CF-002,2026-06-05,apartment,post-exception survey,My apartment number is never included even though I entered it at checkout.,1,synthetic
+CF-003,2026-06-08,apartment,post-exception survey,Buzzer has been broken for months and nobody can get in.,2,synthetic
+CF-004,2026-06-11,apartment,post-exception survey,I got a text saying delivered but it was left at the wrong building.,1,synthetic
+CF-005,2026-06-14,apartment,post-exception survey,Third time the unit number was missing from the package.,1,synthetic
+CF-006,2026-06-17,house,post-exception survey,Nobody was home and there was no note about when they would return.,3,synthetic
+CF-007,2026-06-19,apartment,post-exception survey,Would be helpful to know the delivery window so I can be at the door.,3,synthetic
+CF-008,2026-06-22,apartment,post-exception survey,Concierge desk closes at 5pm and drivers arrive after that.,2,synthetic
+CF-009,2026-06-24,house,post-exception survey,Gate was locked and the driver did not have the code.,2,synthetic
+CF-010,2026-06-26,apartment,post-exception survey,Please just include the apartment number on the label.,1,synthetic
+CF-011,2026-06-28,apartment,post-exception survey,I never received any notification before the driver arrived.,2,synthetic
+CF-012,2026-07-01,house,post-exception survey,Package left in the rain. Would prefer a text first.,2,synthetic
+CF-013,2026-07-03,apartment,post-exception survey,Driver called but I was in a meeting and could not answer in time.,3,synthetic
+CF-014,2026-07-05,apartment,post-exception survey,Address was right but the building has two entrances and the driver used the wrong one.,2,synthetic
+CF-015,2026-07-08,apartment,post-exception survey,The notification arrived after the delivery attempt had already failed.,1,synthetic
+CF-016,2026-07-10,house,post-exception survey,Everything was fine once they called me.,4,synthetic

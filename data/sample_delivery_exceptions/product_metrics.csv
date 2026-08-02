@@ -1,0 +1,17 @@
+period,metric,value,unit,segment,note
+2026-Q2,first_attempt_success,87.4,percent,all,synthetic
+2026-Q1,first_attempt_success,87.9,percent,all,synthetic
+2025-Q4,first_attempt_success,89.2,percent,all,synthetic
+2025-Q3,first_attempt_success,90.1,percent,all,synthetic
+2025-Q2,first_attempt_success,91.0,percent,all,synthetic
+2026-Q2,delivery_exception_rate,12.6,percent,all,synthetic
+2026-Q1,delivery_exception_rate,12.1,percent,all,synthetic
+2025-Q2,delivery_exception_rate,9.0,percent,all,synthetic
+2026-Q2,support_contacts_per_1k_deliveries,38.2,count,all,synthetic
+2026-Q1,support_contacts_per_1k_deliveries,35.7,count,all,synthetic
+2025-Q2,support_contacts_per_1k_deliveries,27.4,count,all,synthetic
+2026-Q2,first_attempt_success,84.1,percent,apartment,synthetic
+2026-Q2,first_attempt_success,90.3,percent,house,synthetic
+2026-Q2,cost_per_delivery_index,100.0,index,all,synthetic
+2026-Q1,cost_per_delivery_index,99.4,index,all,synthetic
+2026-Q2,repeat_exception_customers,,count,all,synthetic - not measured; field exists but was never populated
