@@ -44,6 +44,11 @@ Repository = "https://github.com/raj-principal-arch/decisionlens-ai"
 where = ["src"]
 include = ["decision_lens*"]
 
+# The demo cache must ship with the package: the offline demo has to work from a
+# fresh install with no API key and no separate data download.
+[tool.setuptools.package-data]
+decision_lens = ["llm/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
