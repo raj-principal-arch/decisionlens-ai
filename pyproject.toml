@@ -19,8 +19,11 @@ classifiers = [
 
 # Dependencies are added in the phase that first requires them, not in advance:
 #   Phase 5  (none)           the cached demo provider needs no SDK
-#   Phase 6  anthropic / openai — only with separate explicit approval
 #   Phase 9  streamlit        structured PM interface
+#
+# The runtime set stays empty of model SDKs on purpose. DecisionLens runs its
+# whole demo from recorded output, so a reviewer needs no credential, no network
+# and no vendor package. Live mode is the `live` extra below.
 dependencies = [
     "pydantic>=2.7",  # Phase 2 — typed domain models
 ]
@@ -31,6 +34,13 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.6",
     "mypy>=1.11",
+]
+# Optional: run against a real model instead of the recorded demo.
+#   pip install -e ".[live]"
+# Nothing in the default install path imports this, and the test suite never
+# does — every live-adapter test drives an injected stand-in, offline.
+live = [
+    "anthropic>=0.70",
 ]
 
 [project.urls]
