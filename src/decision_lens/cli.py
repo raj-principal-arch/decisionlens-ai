@@ -235,6 +235,17 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
         stream.write("Nothing was sent.\n")
         return EXIT_OK
 
+    def report(line: str) -> None:
+        """Flush every line.
+
+        Without this the whole run buffers and prints at the end, which is the
+        same as having no progress at all — the point is to be readable while
+        the thing nobody can see is still happening.
+        """
+        stream.write(line + "\n")
+        stream.flush()
+
+    stream.write("\nRecording. Each stage is one call to the model.\n")
     cache = DemoCache()
     try:
         summary = record_case(
@@ -244,6 +255,7 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
             cache=cache,
             as_of=loaded.as_of,
             include_baseline=not args.no_baseline,
+            progress=report,
         )
     except (DecisionLensError, ModelError) as exc:
         stream.write(f"\nrecording failed: {exc}\n")

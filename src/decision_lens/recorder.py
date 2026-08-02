@@ -19,7 +19,8 @@ provenance of the demo unverifiable.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import time
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
@@ -42,10 +43,13 @@ from decision_lens.models import (
 from decision_lens.orchestrator import DecisionLens
 
 __all__ = [
+    "EXPECTED_STAGES",
     "LIVE_SKILL_TIMEOUT_SECONDS",
+    "ProgressFn",
     "RecordingProvider",
     "RecordingSummary",
     "estimate_run",
+    "merge_into",
     "record_case",
 ]
 
@@ -70,6 +74,23 @@ LIVE_SKILL_TIMEOUT_SECONDS = 1_900.0
 _CHARS_PER_TOKEN = 4
 
 
+#: Called with one line of progress. A callback rather than a stream so the
+#: recorder does not care whether it is writing to a terminal, a log, or nothing.
+ProgressFn = Callable[[str], None]
+
+#: The stages a full recording makes, in order, for the progress counter.
+EXPECTED_STAGES: tuple[str, ...] = (
+    "relevance",
+    "classification",
+    "contradictions",
+    "missing_evidence",
+    "alternatives",
+    "recommendation",
+    "challenger",
+    "baseline",
+)
+
+
 class RecordingProvider:
     """Delegates to a real provider and keeps a copy of every response.
 
@@ -78,6 +99,12 @@ class RecordingProvider:
         cache: Where responses accumulate. Mutated in place; the caller decides
             when and whether to write it to disk.
         clock: Fixed timestamp, so a recording is reproducible in tests.
+        progress: Called as each call starts and finishes. A live recording takes
+            tens of minutes with nothing written to disk until the end, so
+            without this the only honest thing anyone can say about a run in
+            flight is "it has not crashed".
+        total: How many calls are expected, for the counter. Retries push the
+            count past it, which is worth seeing rather than hiding.
     """
 
     def __init__(
@@ -86,13 +113,22 @@ class RecordingProvider:
         cache: DemoCache,
         *,
         clock: datetime | None = None,
+        progress: ProgressFn | None = None,
+        total: int = len(EXPECTED_STAGES),
     ) -> None:
         self.inner = inner
         self.cache = cache
         self._clock = clock
+        self._progress = progress
+        self._total = total
+        self._calls = 0
         self.recorded: list[str] = []
         self.input_tokens = 0
         self.output_tokens = 0
+
+    def _say(self, line: str) -> None:
+        if self._progress is not None:
+            self._progress(line)
 
     @property
     def provider_id(self) -> str:
@@ -103,7 +139,26 @@ class RecordingProvider:
         return self.inner.model_id
 
     def complete(self, request: ModelRequest) -> ModelResponse:
-        response = self.inner.complete(request)
+        self._calls += 1
+        started = time.perf_counter()
+        self._say(f"  [{self._calls}/{self._total}] {request.skill} …")
+
+        try:
+            response = self.inner.complete(request)
+        except Exception as exc:
+            elapsed = time.perf_counter() - started
+            self._say(
+                f"  [{self._calls}/{self._total}] {request.skill} — failed after "
+                f"{elapsed:.0f}s: {type(exc).__name__}"
+            )
+            raise
+
+        elapsed = time.perf_counter() - started
+        self._say(
+            f"  [{self._calls}/{self._total}] {request.skill} — {elapsed:.0f}s, "
+            f"{response.usage.input_tokens or 0:,} in / "
+            f"{response.usage.output_tokens or 0:,} out"
+        )
 
         # Only successful responses reach here, so a stage that needed a retry
         # records the attempt that worked. Replay therefore succeeds first time,
@@ -154,14 +209,16 @@ class RecordingSummary:
     failures: list[str] = field(default_factory=list)
     #: Cache keys discarded because the stage that produced them was rejected.
     dropped: list[str] = field(default_factory=list)
+    elapsed_seconds: float = 0.0
 
     @property
     def succeeded(self) -> bool:
         return bool(self.keys) and not self.failures
 
     def describe(self) -> str:
+        minutes, seconds = divmod(int(self.elapsed_seconds), 60)
         lines = [
-            f"Recorded {len(self.keys)} response(s) for {self.case_id}.",
+            f"Recorded {len(self.keys)} response(s) for {self.case_id} in {minutes}m {seconds}s.",
             f"Tokens: {self.input_tokens:,} in, {self.output_tokens:,} out (measured).",
         ]
         lines += [f"  + {key}" for key in self.keys]
@@ -199,6 +256,7 @@ def record_case(
     clock: datetime | None = None,
     include_baseline: bool = True,
     timeout_seconds: float = LIVE_SKILL_TIMEOUT_SECONDS,
+    progress: ProgressFn | None = None,
 ) -> RecordingSummary:
     """Run both arms against a live provider and capture every response.
 
@@ -211,8 +269,15 @@ def record_case(
     the responses that did come back are still worth keeping, and a partial cache
     with a named gap is more useful than none.
     """
-    recording = RecordingProvider(provider, cache, clock=clock)
+    recording = RecordingProvider(
+        provider,
+        cache,
+        clock=clock,
+        progress=progress,
+        total=len(EXPECTED_STAGES) - (0 if include_baseline else 1),
+    )
     summary = RecordingSummary(case_id=request.id)
+    started = time.perf_counter()
 
     lens = DecisionLens(
         recording,
@@ -250,6 +315,7 @@ def record_case(
     summary.keys = list(recording.recorded)
     summary.input_tokens = recording.input_tokens
     summary.output_tokens = recording.output_tokens
+    summary.elapsed_seconds = time.perf_counter() - started
     return summary
 
 
