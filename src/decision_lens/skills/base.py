@@ -88,8 +88,69 @@ class SkillContext(BaseModel):
         record = self.by_id().get(citation.evidence_id)
         return record is not None and record.contains(citation.quote)
 
+    def source_of(self, quote: str) -> str | None:
+        """The one record containing this quote verbatim, if there is exactly one.
+
+        Used to correct a citation that quotes accurately and labels wrongly.
+        Across dozens of records that is a common slip, and the correct id is
+        not a matter of opinion — it is wherever the text actually is. When the
+        quote appears in several records, or in none, this returns ``None`` and
+        the citation is rejected as before.
+        """
+        text = quote.strip()
+        if not text:
+            return None
+        found = {r.id for r in self.evidence if r.contains(text)}
+        return found.pop() if len(found) == 1 else None
+
     def unresolvable(self, citations: Sequence[Citation]) -> tuple[Citation, ...]:
         return tuple(c for c in citations if not self.resolves(c))
+
+
+def repair_citations(value: object, context: SkillContext, fixed: list[str]) -> object:
+    """Re-label citations that quote real text against the wrong record.
+
+    Walks any skill output and rewrites the ``evidence_id`` of a citation whose
+    quote appears verbatim in exactly one *other* record. Appends a line to
+    ``fixed`` for each correction, so nothing is changed silently.
+
+    This is a correction, not a guess, and the distinction matters. The quote is
+    already required to be verbatim and is checked against the text; all that is
+    being repaired is a label that points at the wrong place, and only when the
+    right place is unambiguous. A quote found in several records, or in none, is
+    left exactly as it came back and rejected downstream.
+
+    Added after a live run failed twice in a row on this and only this: the model
+    quoted a delivery comment correctly and attributed it to a neighbouring
+    record. Telling it not to did not work, and an instruction that has been
+    ignored is not a control.
+    """
+    if isinstance(value, Citation):
+        if context.resolves(value):
+            return value
+        correct = context.source_of(value.quote)
+        if correct is None or correct == value.evidence_id:
+            return value
+        fixed.append(
+            f"A quote attributed to {value.evidence_id} was found in {correct}; "
+            "the citation was re-pointed there."
+        )
+        return value.model_copy(update={"evidence_id": correct})
+
+    if isinstance(value, BaseModel):
+        updates = {}
+        for name in type(value).model_fields:
+            current = getattr(value, name)
+            repaired = repair_citations(current, context, fixed)
+            if repaired is not current:
+                updates[name] = repaired
+        return value.model_copy(update=updates) if updates else value
+
+    if isinstance(value, tuple):
+        items = [repair_citations(v, context, fixed) for v in value]
+        return tuple(items) if any(a is not b for a, b in zip(items, value, strict=True)) else value
+
+    return value
 
 
 @dataclass(frozen=True)
@@ -123,6 +184,7 @@ class Skill(ABC, Generic[T]):
         self.provider = provider
         self.allow_retry = allow_retry
         self.timeout_seconds = timeout_seconds
+        self._repairs: list[str] = []
 
     # -- subclass responsibilities ------------------------------------------ #
 
@@ -165,10 +227,13 @@ class Skill(ABC, Generic[T]):
 
     def run(self, context: SkillContext) -> SkillRun[T]:
         stages: list[RunStage] = []
+        self._repairs = []
         request = self._request(context)
         output = self._attempt(request, self.name, context, stages, attempt=1)
         refined, warnings = self.refine(output, context)
-        return SkillRun(output=refined, stages=tuple(stages), warnings=warnings)
+        return SkillRun(
+            output=refined, stages=tuple(stages), warnings=tuple(self._repairs) + warnings
+        )
 
     def _request(self, context: SkillContext, *, extra: str = "") -> ModelRequest:
         user = self.prompt.render(**self.render_values(context))
@@ -207,6 +272,13 @@ class Skill(ABC, Generic[T]):
             problem = str(exc)
 
         if output is not None:
+            # Mechanical corrections run before the requirements are checked.
+            # Rejecting a whole stage over a mislabelled citation, when the text
+            # is verifiably in the evidence and only one record contains it,
+            # discards good analysis for a clerical error.
+            repaired = repair_citations(output, context, self._repairs)
+            assert isinstance(repaired, self.output_model)  # noqa: S101 - walker preserves type
+            output = repaired
             broken = self.violations(output, context)
             if broken:
                 problem = "The response broke these requirements:\n- " + "\n- ".join(broken)
