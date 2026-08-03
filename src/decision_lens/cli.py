@@ -223,7 +223,7 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
     settings = Settings.load()
     _report_settings_warnings(settings, stream)
 
-    key = settings.require_anthropic_key()
+    api_key = settings.require_anthropic_key()
     model = args.model or settings.model_name or DEFAULT_MODEL
     total_calls = 7 if args.no_baseline else 8
     resume_from: DemoCache | None = None
@@ -239,8 +239,11 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
         stream.write(
             f"\nResuming: {len(already)} stage(s) already recorded will be reused, not called.\n"
         )
-        for key in already:
-            stream.write(f"  ~ {key}\n")
+        # Not `key` — that name holds the API key, and rebinding it here sent a
+        # cache key as the credential. Cost two failed runs and an accusation
+        # that Anthropic had revoked a working key.
+        for cached_key in already:
+            stream.write(f"  ~ {cached_key}\n")
         stream.write("  Delete an entry from the cache to force it to be recorded again.\n")
     stream.write("\nThis calls a real model and will be billed to that key.\n")
 
@@ -264,7 +267,7 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
         summary = record_case(
             loaded.request,
             loaded.sources,
-            AnthropicProvider(key, model=model),
+            AnthropicProvider(api_key, model=model),
             cache=cache,
             as_of=loaded.as_of,
             include_baseline=not args.no_baseline,
