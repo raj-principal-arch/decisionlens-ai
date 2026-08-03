@@ -116,6 +116,16 @@ The third is the one worth remembering. The detection was never missing; the pat
 
 Tests cover each layer, and a test compares every shipped recording's fingerprint against the live prompt, so this class of drift now fails the build rather than surviving in a cache.
 
+### D15. The audit trail records which prompt text ran, not only its label — **adopted**
+
+D14 established that a prompt version is a claim a human makes and forgets, and that a content fingerprint cannot be forgotten because it is derived from the text. The fix at the time made *resume* compare fingerprints. It did not change what the brief itself records.
+
+So `RunStage` went on pinning `prompt_version` alone. The fingerprint was computed, compared at record and replay time, and then discarded before reaching the artifact a reader actually holds. Reconstructing a run from its trace still rested on the label being honest — the exact assumption D14 had disproved.
+
+Found while writing [03 — Architecture and Governance](03-architecture-and-governance.md), which had listed it as a known gap. `RunStage.prompt_fingerprint` now carries the hash from request through response into the trace, the rendered brief and the JSON artifact, and a test fails if it is dropped at any boundary.
+
+Third instance of one pattern in this repository, and the reason it is worth naming: a check whose output nobody receives is indistinguishable from no check. The provider's staleness warning was built and thrown away (D14). The fingerprint was compared and thrown away (here). The connector's retrieval diagnostics are recorded and still thrown away — documented in §1.11 of 03 as an open limitation rather than quietly left. Detection is the easy half; the path from detection to a human reading it is where these keep failing.
+
 ---
 
 ## Part 2 — How AI was used to build this

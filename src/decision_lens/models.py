@@ -705,6 +705,14 @@ class RunStage(_Frozen):
     provider: str = ""
     model: str = ""
     prompt_version: str = ""
+    #: Content hash of the prompt that ran, alongside the version it declared.
+    #: D14 established that a version is a claim a human makes and forgets — two
+    #: prompts were edited with their versions left alone and the cache went on
+    #: replaying answers to wording that no longer existed. Recording only the
+    #: version reproduces exactly that weakness in the audit trail: it says which
+    #: label was attached, not which text ran. The fingerprint is derived from
+    #: the text, so a brief can be checked against the prompt that produced it.
+    prompt_fingerprint: str = ""
     input_tokens: int | None = None
     output_tokens: int | None = None
     latency_ms: int | None = None

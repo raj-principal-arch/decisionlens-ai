@@ -120,6 +120,9 @@ class ModelResponse(_Frozen):
     provider: str = Field(min_length=1)
     model: str = Field(min_length=1)
     prompt_version: str = Field(min_length=1)
+    #: Carried from the request so the trace can record which text ran, not only
+    #: which label it claimed. See RunStage.prompt_fingerprint.
+    prompt_fingerprint: str = ""
     skill: str = Field(min_length=1)
     latency_ms: int = Field(ge=0)
     usage: ModelUsage = ModelUsage()
@@ -141,6 +144,7 @@ class ModelResponse(_Frozen):
             provider=self.provider,
             model=self.model,
             prompt_version=self.prompt_version,
+            prompt_fingerprint=self.prompt_fingerprint,
             input_tokens=self.usage.input_tokens,
             output_tokens=self.usage.output_tokens,
             latency_ms=self.latency_ms,
@@ -220,6 +224,7 @@ class BaseModelProvider(ABC):
             provider=self.provider_id,
             model=self.model_id,
             prompt_version=request.prompt_version,
+            prompt_fingerprint=request.prompt_fingerprint,
             skill=request.skill,
             latency_ms=latency_ms,
             usage=usage,
