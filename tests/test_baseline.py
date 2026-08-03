@@ -10,6 +10,7 @@ the difference being measured.
 from __future__ import annotations
 
 import json
+import re
 from datetime import date, datetime
 from pathlib import Path
 
@@ -36,7 +37,7 @@ from decision_lens.models import (
     SupportLevel,
     UserContext,
 )
-from decision_lens.prompts.baseline import BASELINE_REPAIR_V1, BASELINE_V1
+from decision_lens.prompts.baseline import BASELINE_REPAIR_V1, BASELINE_V2
 from decision_lens.rendering import render_criteria, render_evidence
 
 CLOCK = datetime(2026, 8, 2, 10, 0, 0)
@@ -155,12 +156,29 @@ class TestPromptStrength:
         ],
     )
     def test_the_prompt_asks_for_everything_decisionlens_does(self, instruction: str) -> None:
-        assert instruction in BASELINE_V1.system
+        assert instruction in BASELINE_V2.system
+
+    def test_the_rules_are_numbered_contiguously_from_one(self) -> None:
+        """Inserting a rule and forgetting to renumber produced two rule 10s once.
+
+        A duplicated or skipped number is not cosmetic: the prompt refers to its
+        own rules by number ("check ... against rule 3"), so a mangled sequence
+        points the model at the wrong instruction.
+        """
+        numbers = [int(n) for n in re.findall(r"^(\d+)\. [A-Z]", BASELINE_V2.system, re.M)]
+        assert numbers == list(range(1, len(numbers) + 1))
+        assert len(numbers) == 11
+
+    def test_every_internal_rule_reference_points_at_a_rule_that_exists(self) -> None:
+        numbers = {int(n) for n in re.findall(r"^(\d+)\. [A-Z]", BASELINE_V2.system, re.M)}
+        referenced = {int(n) for n in re.findall(r"\brule (\d+)\b", BASELINE_V2.system)}
+        assert referenced, "the cross-reference this guards has gone; drop the test or restore it"
+        assert referenced <= numbers
 
     def test_the_prompt_demands_a_non_ai_and_a_no_build_option(self) -> None:
         # Withholding these would hand DecisionLens an unearned win on the two
         # deterministic checks it is proudest of.
-        system = BASELINE_V1.system.lower()
+        system = BASELINE_V2.system.lower()
         assert "does not involve ai" in system
         assert "no-change, defer, or further-research" in system
 
@@ -168,19 +186,19 @@ class TestPromptStrength:
         # Asking for a field the model was never told about would hand
         # DecisionLens that dimension by default. priority_exceptions was exactly
         # that until rule 10 was added.
-        system = BASELINE_V1.system.lower()
+        system = BASELINE_V2.system.lower()
         assert "priority exceptions" in system
         for obligation in ("security", "compliance", "contractual", "critical-reliability"):
             assert obligation in system
 
     def test_the_prompt_demands_verbatim_quotes(self) -> None:
-        assert "VERBATIM" in BASELINE_V1.system
-        assert "Never paraphrase inside a quote" in BASELINE_V1.system
+        assert "VERBATIM" in BASELINE_V2.system
+        assert "Never paraphrase inside a quote" in BASELINE_V2.system
 
     def test_both_prompts_are_registered_and_versioned(self) -> None:
         from decision_lens.prompts import REGISTRY
 
-        assert REGISTRY.get("baseline", "v1") is BASELINE_V1
+        assert REGISTRY.get("baseline", BASELINE_V2.version) is BASELINE_V2
         assert REGISTRY.get("baseline-repair", "v1") is BASELINE_REPAIR_V1
 
 
@@ -213,7 +231,7 @@ class TestPromptAssembly:
         assert request_.question in sent.user
         assert QUOTE in sent.user
         assert '"claims"' in sent.user  # the schema
-        assert sent.system == BASELINE_V1.system
+        assert sent.system == BASELINE_V2.system
 
     def test_the_call_is_traceable_to_a_prompt_version(
         self, request_: DecisionRequest, evidence: tuple[EvidenceRecord, ...]
@@ -221,8 +239,8 @@ class TestPromptAssembly:
         provider = FakeProvider(_valid_output())
         StrongBaseline(provider, clock=CLOCK).run(request_, evidence)
         sent = provider.requests[0]
-        assert sent.prompt_version == BASELINE_V1.version
-        assert sent.prompt_fingerprint == BASELINE_V1.fingerprint
+        assert sent.prompt_version == BASELINE_V2.version
+        assert sent.prompt_fingerprint == BASELINE_V2.fingerprint
 
 
 class TestSingleCall:
@@ -375,7 +393,7 @@ class TestRunTrace:
         stage = brief.run_trace.stages[0]
         assert stage.provider == "fake"
         assert stage.model == "fake-1"
-        assert stage.prompt_version == "v1"
+        assert stage.prompt_version == BASELINE_V2.version
 
     def test_usage_and_latency_are_captured(
         self, request_: DecisionRequest, evidence: tuple[EvidenceRecord, ...]

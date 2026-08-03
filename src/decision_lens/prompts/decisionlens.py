@@ -13,20 +13,21 @@ structure, and more about judgment.
 from __future__ import annotations
 
 from decision_lens.prompts import REGISTRY, Prompt
+from decision_lens.prompts.heuristics import (
+    ASSESSMENT_STATES,
+    CITING,
+    FINDING_GAPS,
+    READING_EVIDENCE,
+    SPOTTING_CONFLICTS,
+    STATING_SUPPORT,
+)
 
 _JSON_ONLY = (
     "Return ONLY a JSON object matching the schema. No prose before or after, no markdown fences."
 )
 
-_CITE = (
-    "Every citation must name an evidence id from the list and quote text VERBATIM from "
-    "that record. Never paraphrase inside a quote. A citation that cannot be found in the "
-    "evidence will be rejected, so omit a claim rather than invent support for it.\n\n"
-    "The id and the quote must come from the SAME block. Copy the id from the header of "
-    "the block the quoted line actually appears in — with dozens of records it is easy to "
-    "quote one record accurately and label it with a neighbour's id, and that is rejected "
-    "just as an invented quote would be."
-)
+#: Shared with the baseline. See prompts/heuristics.py for why.
+_CITE = CITING
 
 RELEVANCE_V1 = Prompt(
     name="relevance",
@@ -62,15 +63,7 @@ CLASSIFICATION_V1 = Prompt(
         "  technical_constraint   - a limit imposed by systems\n"
         "  business_constraint    - a limit imposed by budget, policy or commitment\n"
         "  governance_constraint  - a limit imposed by law, privacy or regulation\n\n"
-        "Judgment you must apply:\n"
-        "- A stakeholder recalling a result confidently is an opinion, not a fact. If the "
-        "underlying measurement disagrees with them, they are still an opinion.\n"
-        "- An executive's preference is an opinion. Seniority does not convert it.\n"
-        "- A vendor figure with no stated method, sample or baseline is an opinion.\n"
-        "- A percentage from a small or self-selected sample is not a fact about the "
-        "population. Check the denominator before labelling it.\n"
-        "- A figure from an older document may have been a fact when written and not now. "
-        "Prefer the dated measurement over the prose that quotes it.\n\n"
+        "Judgment you must apply:\n" + READING_EVIDENCE + "\n\n"
         "Do not assess staleness or compute ages. That is calculated separately from the "
         "record dates, and your guess would be overridden.\n\n" + _CITE + "\n\n" + _JSON_ONLY
     ),
@@ -94,10 +87,11 @@ CONTRADICTIONS_V1 = Prompt(
         "  temporal_conflict  - both true, at different times\n"
         "  scope_conflict     - both true, of different populations\n\n"
         "Two cases matter most and are easy to miss:\n"
-        "- A figure quoted in prose that matches an older row in a data series is not "
-        "wrong, it is stale. Say which period it belongs to.\n"
-        "- Two statements about a 'largest' or 'leading' cause may both be true of "
-        "different segments. Say which segment each describes.\n\n" + _CITE + "\n\n" + _JSON_ONLY
+        + SPOTTING_CONFLICTS
+        + "\n\n"
+        + _CITE
+        + "\n\n"
+        + _JSON_ONLY
     ),
     user_template=(
         "# Decision question\n{question}\n\n# Evidence\n{evidence}\n\n# Schema\n{schema}\n"
@@ -119,13 +113,7 @@ MISSING_EVIDENCE_V1 = Prompt(
         "  would_change_recommendation - a different answer becomes plausible\n"
         "  would_change_support_level  - the same answer, held less firmly\n"
         "  would_refine_scope          - the same answer, aimed more precisely\n\n"
-        "Look especially for:\n"
-        "- A population with no evidence at all, when options depend on it.\n"
-        "- A study or pilot that could not measure its own effect. That is an unmeasured "
-        "result, not a small one.\n"
-        "- A cost, effort or volume figure nobody has produced.\n"
-        "- A breakdown that exists along one dimension but not another that matters.\n"
-        "- A field that exists but was never populated. Blank is not zero.\n\n"
+        "Look especially for:\n" + FINDING_GAPS + "\n\n"
         "A gap is about absence, so do not cite evidence as proof of it.\n\n" + _JSON_ONLY
     ),
     user_template=(
@@ -152,12 +140,7 @@ ALTERNATIVES_V1 = Prompt(
         "partner, ai_assisted, ai_automated.\n\n"
         "Place each option on a horizon: core, adjacent, or innovation.\n\n"
         "Assess each option on the dimensions given. Two states, and the rule between "
-        "them is enforced automatically:\n"
-        "  assessed      - you MUST include at least one citation. No exceptions: an\n"
-        "                  assessment with nothing behind it is rejected outright and\n"
-        "                  the whole option set is thrown away.\n"
-        "  cannot_assess - use this whenever you cannot cite evidence, and say what is\n"
-        "                  missing. It is the correct answer far more often than it looks.\n"
+        "them is enforced automatically:\n" + ASSESSMENT_STATES + "\n"
         "Do not guess, and do not treat absence of evidence as evidence of low value — "
         "that systematically defunds anything new, because a bet has no track record by "
         "definition. A confident support_level does not substitute for a citation.\n\n"
@@ -189,15 +172,7 @@ RECOMMENDATION_V1 = Prompt(
         "State support as low, moderate or strong. These are qualitative judgments, never "
         "probabilities. Say what the level rests on, and name what would change it — a "
         "support level a reader cannot act on is decoration.\n\n"
-        "Be restrained where the evidence is thin:\n"
-        "- If the strongest support is a single small or non-randomised study, that is not "
-        "strong support.\n"
-        "- If a key input has not been measured or costed, say so in the recommendation "
-        "rather than only in the gaps section.\n"
-        "- If the evidence supports the option only for one segment, say which. A claim "
-        "that is true of apartments and asserted of everything is wrong.\n"
-        "- Stakeholder preference is not support. If the only backing for an option is that "
-        "somebody senior wants it, say that plainly.\n\n"
+        "Be restrained where the evidence is thin:\n" + STATING_SUPPORT + "\n\n"
         "Give an experiment that would test the recommendation, with success metrics and "
         "guardrail metrics, so the reader knows what would prove it wrong.\n\n"
         + _CITE

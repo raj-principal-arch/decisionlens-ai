@@ -24,11 +24,16 @@ from decision_lens.llm import (
 )
 from decision_lens.models import EvidenceRecord, EvidenceRequest, UserContext
 from decision_lens.orchestrator import DecisionLens
+from decision_lens.prompts.baseline import BASELINE_V2
 from decision_lens.recorder import (
+    CHAINED_STAGES,
+    EXPECTED_STAGES,
     RecordingProvider,
+    current_stage_versions,
     estimate_run,
     merge_into,
     record_case,
+    stages_worth_reusing,
 )
 from decision_lens.report import to_markdown
 from tests.scripted import CASE_ID, evidence_ids, write_case
@@ -140,7 +145,7 @@ def test_recording_both_arms_captures_both(case: Path) -> None:
     )
 
     assert summary.succeeded
-    assert f"{CASE_ID}::baseline::v1" in summary.keys
+    assert f"{CASE_ID}::baseline::{BASELINE_V2.version}" in summary.keys
     assert f"{CASE_ID}::recommendation::v1" in summary.keys
     assert len(summary.keys) == 8
     assert summary.input_tokens == 8000
@@ -159,7 +164,7 @@ def test_the_baseline_arm_can_be_skipped(case: Path) -> None:
         clock=CLOCK,
         include_baseline=False,
     )
-    assert not any(k.endswith("::baseline::v1") for k in summary.keys)
+    assert not any("::baseline::" in k for k in summary.keys)
     assert len(summary.keys) == 7
 
 
@@ -341,7 +346,7 @@ def test_a_case_with_no_evidence_still_records_the_baseline_arm(tmp_path: Path) 
         clock=CLOCK,
     )
 
-    assert "empty_case::baseline::v1" in summary.keys
+    assert f"empty_case::baseline::{BASELINE_V2.version}" in summary.keys
 
 
 # --------------------------------------------------------------------------- #
@@ -789,4 +794,238 @@ def test_the_baseline_is_still_reused_when_the_chain_is_re_recorded(case: Path) 
         resume_from=complete,
     )
     assert "baseline" not in live.calls
-    assert f"{CASE_ID}::baseline::v1" in summary.reused
+    assert f"{CASE_ID}::baseline::{BASELINE_V2.version}" in summary.reused
+
+
+# --------------------------------------------------------------------------- #
+# What the cache that actually ships can replay
+# --------------------------------------------------------------------------- #
+
+
+def _shipped_keys() -> set[str]:
+    import json
+
+    from decision_lens.llm.cached_provider import DEFAULT_CACHE_PATH
+
+    if not DEFAULT_CACHE_PATH.exists():
+        pytest.skip("no cache has been recorded yet")
+    payload = json.loads(DEFAULT_CACHE_PATH.read_text(encoding="utf-8"))
+    keys = set(payload.get("responses", {}))
+    if not keys:
+        pytest.skip("the shipped cache is empty")
+    return keys
+
+
+def test_the_shipped_cache_replays_the_whole_decisionlens_chain() -> None:
+    """The offline demo is the only thing most readers will run. It must be whole."""
+    stages = {k.split("::")[1] for k in _shipped_keys()}
+    assert set(CHAINED_STAGES) <= stages
+
+
+def test_the_shipped_cache_has_no_key_stranded_by_a_version_bump() -> None:
+    """A recording keyed to a superseded prompt can never be read again.
+
+    It is not corrupt, but it must never be mistaken for coverage, and it is
+    dead weight in a file that ships with the repository — dropping the one
+    stranded `baseline::v1` entry took the cache from 326 KB to 228 KB.
+
+    The accepted set is deliberately empty. A prompt version bump is allowed at
+    any time; what is not allowed is leaving the cache behind, because the
+    result is a demo that silently loses a stage or a resumed run that costs
+    money nobody previewed. `make record-resume` re-records only what moved.
+    """
+    from decision_lens.prompts import REGISTRY
+
+    accepted: set[str] = set()
+    stranded = set()
+    for key in _shipped_keys():
+        _, stage, version = key.split("::")
+        name = "baseline" if stage == "baseline" else stage
+        try:
+            current = REGISTRY.latest(name).version
+        except KeyError:  # pragma: no cover - a stage with no registered prompt
+            continue
+        if version != current:
+            stranded.add(stage)
+
+    assert stranded == accepted
+
+
+# --------------------------------------------------------------------------- #
+# The version a resumed run will actually ask for
+# --------------------------------------------------------------------------- #
+
+
+def test_stage_versions_cover_every_stage_a_run_records() -> None:
+    assert set(current_stage_versions()) == set(EXPECTED_STAGES)
+
+
+def test_stage_versions_match_the_prompt_each_stage_really_uses() -> None:
+    """`current_stage_versions` trusts the registry's `latest`. This is why.
+
+    It is only correct while every stage runs its newest registered prompt. The
+    moment a skill pins an older version while a newer one is also registered,
+    `latest` starts answering a question nobody asked and the resume preview
+    goes back to lying about cost. Restating the mapping independently here is
+    the point: if the two disagree, the assumption has expired.
+    """
+    from decision_lens.prompts.baseline import BASELINE_V2
+    from decision_lens.prompts.decisionlens import (
+        ALTERNATIVES_V1,
+        CHALLENGER_V1,
+        CLASSIFICATION_V1,
+        CONTRADICTIONS_V1,
+        MISSING_EVIDENCE_V1,
+        RECOMMENDATION_V1,
+        RELEVANCE_V1,
+    )
+
+    assert current_stage_versions() == {
+        "relevance": RELEVANCE_V1.version,
+        "classification": CLASSIFICATION_V1.version,
+        "contradictions": CONTRADICTIONS_V1.version,
+        "missing_evidence": MISSING_EVIDENCE_V1.version,
+        "alternatives": ALTERNATIVES_V1.version,
+        "recommendation": RECOMMENDATION_V1.version,
+        "challenger": CHALLENGER_V1.version,
+        "baseline": BASELINE_V2.version,
+    }
+
+
+def test_a_stage_recorded_under_a_superseded_prompt_is_not_reusable() -> None:
+    """The bug this guards printed "$0.00" and then billed a real call.
+
+    Matching on the stage name alone treats any recording of `baseline` as
+    coverage, whatever prompt produced it. Reuse has to be judged on the whole
+    key, because that is what the recorder looks up.
+    """
+    versions = current_stage_versions()
+    prefix = f"{CASE_ID}::"
+    # Every stage recorded, but the baseline under the prompt it no longer uses.
+    responses: dict[str, object] = {f"{prefix}{stage}::{v}": {} for stage, v in versions.items()}
+    del responses[f"{prefix}baseline::{versions['baseline']}"]
+    responses[f"{prefix}baseline::v0"] = {}
+
+    cached = set()
+    for entry in responses:
+        stage, _, version = entry[len(prefix) :].partition("::")
+        if versions.get(stage) == version:
+            cached.add(stage)
+
+    assert "baseline" not in cached
+    assert "baseline" not in stages_worth_reusing(cached)
+    assert set(CHAINED_STAGES) <= stages_worth_reusing(cached)
+
+
+@pytest.mark.parametrize(
+    ("calls", "expected"),
+    [(1, "1 model call over"), (0, "0 model calls over"), (8, "8 model calls over")],
+)
+def test_the_estimate_counts_calls_in_readable_english(calls: int, expected: str) -> None:
+    assert expected in estimate_run((), calls=calls).describe()
+
+
+def _without_moments(value: object) -> object:
+    """Replace every datetime with a sentinel, wherever it sits in the tree.
+
+    Deliberately not a list of field names. Comparing two runs by hand-listing
+    `retrieved_at, generated_at, ...` misses one the moment a model grows a
+    field, and the comparison then reports a difference that is only a clock —
+    which is exactly how a determinism check first came back False here.
+    Matching on the type cannot go stale.
+    """
+    if isinstance(value, datetime):
+        return "<moment>"
+    if isinstance(value, dict):
+        return {k: _without_moments(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_without_moments(v) for v in value]
+    return value
+
+
+def test_the_shipped_cache_replays_the_same_brief_every_time() -> None:
+    """The demo is the artifact most readers will actually run.
+
+    Two runs off the same recording must agree on every conclusion. Anything
+    else means a reviewer and the author can look at the same command and see
+    different recommendations, which would undo the point of recording at all.
+    """
+    from decision_lens.case import bundled_case_dir
+    from decision_lens.llm.cached_provider import DEFAULT_CACHE_PATH
+
+    _shipped_keys()  # skips when nothing has been recorded yet
+    loaded = load_case(bundled_case_dir())
+
+    def once() -> dict[str, object]:
+        provider = CachedDemoProvider(DEFAULT_CACHE_PATH)
+        brief = DecisionLens(provider, loaded.sources, as_of=loaded.as_of).run(loaded.request)
+        stripped = _without_moments(brief.model_dump())
+        assert isinstance(stripped, dict)
+        return stripped
+
+    first, second = once(), once()
+    assert first == second
+    # Two empty briefs are also equal. Pin that a real one was compared.
+    assert first["recommendation"] is not None
+    claims, options = first["claims"], first["alternatives"]
+    assert isinstance(claims, list) and isinstance(options, list)
+    assert len(claims) > 1 and len(options) > 1
+
+
+def test_the_determinism_check_would_notice_a_real_difference() -> None:
+    """Guards the guard: a comparison that strips too much always passes."""
+    a = {"support": "low", "at": datetime(2026, 8, 2, 9, 0)}
+    b = {"support": "strong", "at": datetime(2026, 8, 2, 10, 30)}
+    assert _without_moments(a) != _without_moments(b)
+    assert _without_moments(a) == _without_moments({**a, "at": datetime(2020, 1, 1)})
+
+
+def test_every_shipped_recording_answers_the_prompt_that_is_still_asked() -> None:
+    """Version matching is not enough. The fingerprint is the real check.
+
+    A version is a human declaration and humans forget to bump it; the
+    fingerprint is derived from the prompt text itself. If someone edits a
+    prompt and leaves the version alone, the cache keeps serving an answer to
+    the question that used to be asked and the demo quietly stops meaning what
+    it says. This is the whole reason `Prompt.fingerprint` exists.
+    """
+    import json
+
+    from decision_lens.llm.cached_provider import DEFAULT_CACHE_PATH
+    from decision_lens.prompts import REGISTRY
+
+    _shipped_keys()  # skips when nothing has been recorded yet
+    payload = json.loads(DEFAULT_CACHE_PATH.read_text(encoding="utf-8"))
+
+    # Known stale, pending one re-record. `classification` and `contradictions`
+    # were captured at 18:53 and 18:54 on 2026-08-02; both prompts were then
+    # edited later that evening to fix citation targeting and claim-id echoing,
+    # and neither version was bumped. Every `--resume` after that reused the old
+    # recordings, because resume matches on version and version had not moved.
+    #
+    # The demo they produce is coherent, but two of its eight stages answer
+    # prompts that no longer exist, which is not a claim this repository can
+    # make about traceability and then quietly break. Fixing it costs six live
+    # calls: both stages sit early in the chain, so everything downstream of
+    # them is re-recorded too.
+    known_stale = {"classification", "contradictions"}
+
+    mismatched = set()
+    for key, entry in payload["responses"].items():
+        _, stage, version = key.split("::")
+        recorded = entry.get("prompt_fingerprint")
+        if not recorded:
+            continue
+        if recorded != REGISTRY.get(stage, version).fingerprint:
+            mismatched.add(stage)
+
+    unexpected = mismatched - known_stale
+    assert not unexpected, (
+        f"prompt text changed without a version bump for: {sorted(unexpected)}. "
+        "Bump the version and re-record with `make record-resume`."
+    )
+    healed = known_stale - mismatched
+    assert not healed, (
+        f"{sorted(healed)} now matches its prompt — drop it from known_stale so the "
+        "exception cannot outlive the problem."
+    )

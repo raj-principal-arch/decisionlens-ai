@@ -40,6 +40,7 @@ from decision_lens.models import (
 from decision_lens.orchestrator import DecisionLens, DecisionLensError
 from decision_lens.recorder import (
     LIVE_SKILL_TIMEOUT_SECONDS,
+    current_stage_versions,
     estimate_run,
     merge_into,
     record_case,
@@ -234,11 +235,24 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
         # Only what the recorder will actually reuse. Listing every cached
         # entry would promise savings the run then does not deliver, because
         # anything downstream of a gap is re-recorded.
+        #
+        # The version is part of that judgment, not decoration. An entry
+        # recorded under a superseded prompt is a miss: the recorder looks up
+        # the whole key. This once dropped the version and matched on the stage
+        # name alone, so a cache holding `baseline::v1` previewed as "8 reused,
+        # nothing to record, $0.00" and then billed a call for `baseline::v2`.
         prefix = f"{loaded.case_id}::"
-        cached = {
-            k[len(prefix) :].split("::")[0] for k in resume_from.responses if k.startswith(prefix)
-        }
-        already = sorted(f"{prefix}{stage}::v1" for stage in stages_worth_reusing(cached))
+        versions = current_stage_versions()
+        cached = set()
+        for entry in resume_from.responses:
+            if not entry.startswith(prefix):
+                continue
+            stage, _, version = entry[len(prefix) :].partition("::")
+            if versions.get(stage) == version:
+                cached.add(stage)
+        already = sorted(
+            f"{prefix}{stage}::{versions[stage]}" for stage in stages_worth_reusing(cached)
+        )
     estimate = estimate_run(_evidence_of(loaded), calls=max(0, total_calls - len(already)))
 
     stream.write(f"\ncase:  {loaded.case_id}\nmodel: {model}\nkey:   {settings.masked_key}\n")

@@ -47,7 +47,7 @@ from decision_lens.models import (
     RunStage,
     RunTrace,
 )
-from decision_lens.prompts.baseline import BASELINE_REPAIR_V1, BASELINE_V1
+from decision_lens.prompts.baseline import BASELINE_REPAIR_V1, BASELINE_V2
 from decision_lens.rendering import render_criteria, render_evidence
 
 #: Generous by design. The baseline does in one call what DecisionLens spreads
@@ -126,11 +126,11 @@ class StrongBaseline:
     ) -> ModelRequest:
         return ModelRequest(
             skill=SKILL,
-            prompt_version=BASELINE_V1.version,
-            prompt_fingerprint=BASELINE_V1.fingerprint,
+            prompt_version=BASELINE_V2.version,
+            prompt_fingerprint=BASELINE_V2.fingerprint,
             case_id=request.id,
-            system=BASELINE_V1.system,
-            user=BASELINE_V1.render(
+            system=BASELINE_V2.system,
+            user=BASELINE_V2.render(
                 question=request.question,
                 desired_outcome=request.desired_outcome or "(not stated)",
                 criteria=render_criteria(request),
