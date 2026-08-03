@@ -16,26 +16,45 @@ To support those decisions, DecisionLens turns fragmented evidence into a tracea
 
 ## Current status
 
-> **Phase 1 of 12 — product foundation and scaffolding.**
-> **The prototype is not runnable yet.** There is no working agent, no evidence connector, and no evaluation results in this repository today.
+> **Phases 0–9 complete. The prototype runs.**
 >
-> No performance claim, evaluation result, or user finding appears anywhere in these documents. Where results will eventually go, the section is explicitly marked empty.
+> ```bash
+> make setup && make demo
+> ```
+>
+> No API key, no network. The bundled case replays from responses recorded from `claude-opus-5`, and produces a decision brief in `out/`.
+>
+> **There are still no evaluation results.** The harness that would compare DecisionLens against its baseline is Phase 10 and has not been run. No performance claim, measured margin, or user finding appears anywhere in this repository, and [04 — Evaluation](docs/04-evaluation.md) is marked empty where results will go.
 
 | Phase | Deliverable | State |
 |---|---|---|
 | 0 | Repository audit | Complete |
 | 1 | Product strategy, decision log, scaffolding | Complete |
-| 2 | Domain models and evidence-source contract | Not started |
-| 3 | Local file evidence connector | Not started |
-| 4 | Synthetic sample case and ground truth | Not started |
-| 5 | Model-provider abstraction, cached demo provider | Not started |
-| 6 | Strong baseline | Not started |
-| 7 | Analysis skills | Not started |
-| 8 | Orchestrator, challenger, validation, provenance | Not started |
-| 9 | Rendering, CLI, structured Streamlit UI | Not started |
+| 2 | Domain models and evidence-source contract | Complete |
+| 3 | Local file evidence connector | Complete |
+| 4 | Synthetic sample case and ground truth | Complete |
+| 5 | Model-provider abstraction, cached demo provider | Complete |
+| 6 | Strong baseline | Complete |
+| 7 | Analysis skills | Complete |
+| 8 | Orchestrator, challenger, validation, provenance | Complete |
+| 9 | Rendering, CLI, structured Streamlit UI | Complete |
 | 10 | Evaluation harness and results | Not started |
 | 11 | Enterprise ecosystem and governance docs | Not started |
 | 12 | Final quality review | Not started |
+
+821 tests, 100% line coverage, `mypy --strict` clean.
+
+### What `make demo` prints today
+
+```
+56 records · 37 claims · 9 contradictions · 19 gaps · 11 alternatives
+recommendation: data_quality (support: low)
+checks: 1 error(s), 23 warning(s)
+```
+
+That error is not a defect, and it is the most useful thing in the output. The recommendation asserted that *"multiple post-exception comments describe entering the unit number at checkout"*; of the three feedback rows it cited, exactly one mentions checkout. The challenger caught the overstatement and the brief is marked unsafe to act on.
+
+It is left standing. Removing it would mean either weakening the check or re-running until the model produced something more flattering — and a tool that quietly reruns until the answer looks good is the thing this repository argues against.
 
 ---
 
@@ -81,18 +100,19 @@ Not *"should we build an AI assistant for delivery exceptions?"* — a question 
 
 ---
 
-## Planned capabilities
+## Capabilities
 
-Planned, not yet built:
+Built and exercised by the test suite:
 
 - One DecisionLens orchestrator running controlled, inspectable stages
 - `LocalFileEvidenceSource` over Markdown, text, CSV, and JSON
-- Six analysis skills: relevance, classification, contradiction detection, missing-evidence detection, alternative generation, recommendation analysis
+- Six analysis skills — relevance, classification, contradiction detection, missing-evidence detection, alternative generation, recommendation analysis — plus a challenger, each with its own versioned prompt
 - Comparison of opportunities across the decision dimensions above, each carrying its own evidence, confidence, and explicit "cannot be assessed" state
-- A recommendation challenger that attacks the draft before a human sees it
+- A recommendation challenger that puts eight fixed questions to the draft before a human sees it, and can only lower confidence, never raise it
 - Deterministic validation of citation spans, required sections, and mandatory alternatives
+- Citation repair: a quote differing from its source only in typography is rewritten to the source's own characters and the correction reported, so a missing hyphen no longer discards a stage. A changed digit, word, or negation is never repaired
 - A synthetic sample case with planted contradictions, gaps, constraints, and misleading evidence
-- A strong single-call baseline for comparison
+- A strong single-call baseline, briefed from the same shared heuristics so the comparison is about workflow rather than briefing
 - A vendor-neutral provider boundary with a deterministic cached provider requiring **no API key**
 - Structured `DecisionBrief` and `RunTrace` output, with the PM's final decision recorded separately
 
@@ -132,25 +152,39 @@ Enterprise connectors — Jira, Confluence, product metrics, customer feedback, 
 
 ---
 
-## Setup
+## Running it
 
-Requires Python 3.11 or newer.
+Requires Python 3.11 or newer. No API key.
 
 ```bash
-make setup     # create .venv and install with dev dependencies
-make lint      # ruff check + format check
-make typecheck # mypy
-make test      # pytest
+make setup    # create .venv and install
+make demo     # produce a brief from the bundled case, into out/
+make ui       # the same thing in a browser
+make check    # lint, typecheck, tests
 ```
+
+`make help` lists every target.
 
 Or without make:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]"
+.venv/bin/pip install -e ".[dev,ui]"
+PYTHONPATH=src .venv/bin/python -m decision_lens.cli run --out out --format both
 ```
 
-No API key is required. Copy `.env.example` to `.env` only if you intend to run live model comparisons in a later phase; the demo path is deterministic and offline.
+The CLI exits **2** when the brief it produced carries blocking errors — as it does today — so a run that yields an unusable brief cannot look clean to a script. `make demo` absorbs that 2, because a brief correctly reporting its own problems is a real outcome rather than a broken build target. A genuine failure still exits 1 and still fails the target.
+
+### Running against a live model
+
+Optional, and nothing in the demo depends on it. `make setup-live` adds the Anthropic SDK; two lines in `.env` switch the provider over:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+MODEL_PROVIDER=anthropic
+```
+
+Both are required — a key alone changes nothing, by design. `make record` captures a live run into the demo cache so it can be replayed offline afterwards; `make record-resume` re-records only the stages whose prompts have changed. Every cached response carries the model and date it came from, and nothing in that file is hand-written.
 
 ---
 
@@ -158,17 +192,19 @@ No API key is required. Copy `.env.example` to `.env` only if you intend to run 
 
 ```
 decisionlens-ai/
-├── app/          Streamlit interface            (Phase 9)
-├── data/         synthetic evidence corpus      (Phase 4)
-├── docs/         product strategy and reasoning (01 and 05 complete)
-├── evals/        cases, ground truth, results   (Phases 4, 10)
+├── data/         synthetic evidence corpus       the bundled case
+├── docs/         product strategy and reasoning  01, 05 complete; 02-04 outlined
+├── evals/        ground truth for the case       cases/ and results/ await Phase 10
+├── out/          generated briefs                gitignored; rebuilt by `make demo`
 ├── src/
 │   └── decision_lens/
-│       ├── connectors/   evidence retrieval     (Phases 2-3)
-│       ├── skills/       evidence analysis      (Phase 7)
-│       ├── llm/          provider boundary      (Phases 5-6)
-│       └── prompts/      versioned prompts      (Phases 6-8)
-└── tests/                                       (Phase 2 onward)
+│       ├── connectors/   evidence retrieval
+│       ├── skills/       the seven analysis stages
+│       ├── llm/          provider boundary + demo_cache.json
+│       ├── prompts/      versioned prompts, shared heuristics
+│       ├── cli.py        run / record / show
+│       └── ui.py         the Streamlit interface
+└── tests/        821 tests, 100% line coverage
 ```
 
 ## Documentation
@@ -178,16 +214,18 @@ decisionlens-ai/
 | [01 — Product Strategy](docs/01-product-strategy.md) | AI-native PM definition, problem selection, alternatives considered, hypothesis and falsifiability, scope, metrics, assumptions | Complete |
 | [02 — Ecosystem and Adoption](docs/02-ecosystem-and-adoption.md) | Maturity stages, tooling, skills, connectors, configuration layers, training, measurement | Outline (Phase 11) |
 | [03 — Architecture and Governance](docs/03-architecture-and-governance.md) | Prototype and enterprise architecture, connector model, permissions, governance, observability | Outline (Phase 11) |
-| [04 — Evaluation](docs/04-evaluation.md) | Baseline, test cases, ground truth, metrics, results, failures, real-PM study | Outline (Phase 10) |
-| [05 — Decision Log](docs/05-decision-log.md) | How the framing evolved, what was rejected, how AI was used to build this | Complete |
+| [04 — Evaluation](docs/04-evaluation.md) | Baseline, test cases, ground truth, metrics, results, failures, real-PM study | Outline (Phase 10). Commitments and known limitations recorded; **results empty** |
+| [05 — Decision Log](docs/05-decision-log.md) | How the framing evolved, what was rejected, how AI was used to build this | Maintained continuously (D1–D14) |
 
 ---
 
 ## Limitations
 
-- The prototype is not yet runnable. See *Current status*.
+- **No evaluation results exist.** The comparison against the baseline is Phase 10 and has not been run. Nothing here reports a margin, and nothing should be read as one.
+- **The bundled case is in-sample.** The prompts encode reading heuristics — check the denominator, prefer the dated measurement over the prose quoting it — that were written *after* the case was designed, by its author, and they map onto hazards planted in it. Both arms are briefed from the same shared module, so the comparison between them is fair; fair is not the same as generalisable. A strong score on this case cannot separate "the workflow finds hazards" from "the prompts knew which hazards to expect." Only a case authored after the prompts are frozen, by someone who has not read them, would settle that. Recorded in [04](docs/04-evaluation.md) ahead of any result.
 - All evidence is synthetic and authored by one person, who also authored the ground truth used to evaluate against it.
 - No research with real product managers has been conducted. The study design in [04](docs/04-evaluation.md) is a proposal.
+- The brief the demo produces today is **blocked by its own challenger**. That is the system behaving correctly, not a passing grade.
 - Traceability over an incomplete corpus still yields confident, well-cited, badly scoped conclusions. The missing-evidence skill partially compensates by making gaps visible, but it does not solve this.
 - Support labels ("low / moderate / strong") are qualitative judgments. They are **not** calibrated probabilities and must not be read as such.
 
