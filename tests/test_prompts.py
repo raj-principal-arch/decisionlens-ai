@@ -167,4 +167,79 @@ class TestSharedRegistry:
     def test_registered_prompts_are_retrievable_by_version(self) -> None:
         import decision_lens.prompts.baseline  # noqa: F401
 
-        assert REGISTRY.get("baseline", "v1").version == "v1"
+        # v2: the baseline's guidance changed materially when the shared
+        # heuristics were added to close a briefing gap against DecisionLens.
+        # v1 is gone rather than kept, so a recording made under it cannot be
+        # replayed as an answer to the prompt now being asked.
+        assert REGISTRY.get("baseline", "v2").version == "v2"
+        with pytest.raises(KeyError):
+            REGISTRY.get("baseline", "v1")
+
+
+class TestBothArmsAreBriefedEqually:
+    """The comparison is only about structure if both arms are told the same things.
+
+    An earlier version restated the guidance separately in each arm and the two
+    drifted: the DecisionLens prompts warned about seniority, staleness and
+    segment-scoped claims while the baseline did not. Eight reading cues reached
+    one arm and not the other. Any margin measured
+    under that asymmetry would have been partly a difference in briefing rather
+    than in workflow — and a baseline told less is the strawman the build
+    specification forbids.
+    """
+
+    @staticmethod
+    def _decisionlens_text() -> str:
+        from decision_lens.prompts.decisionlens import ALL_PROMPTS
+
+        return "\n".join(p.system for p in ALL_PROMPTS)
+
+    @staticmethod
+    def _baseline_text() -> str:
+        from decision_lens.prompts.baseline import BASELINE_V2
+
+        return BASELINE_V2.system
+
+    @pytest.mark.parametrize(
+        "block",
+        [
+            "ASSESSMENT_STATES",
+            "CITING",
+            "FINDING_GAPS",
+            "READING_EVIDENCE",
+            "SPOTTING_CONFLICTS",
+            "STATING_SUPPORT",
+        ],
+    )
+    def test_every_shared_block_reaches_both_arms(self, block: str) -> None:
+        from decision_lens.prompts import heuristics
+
+        text = getattr(heuristics, block)
+        assert text in self._decisionlens_text(), f"{block} missing from DecisionLens"
+        assert text in self._baseline_text(), f"{block} missing from the baseline"
+
+    def test_the_shared_module_exports_exactly_what_it_defines(self) -> None:
+        """A block added but left out of __all__ would silently reach neither."""
+        from decision_lens.prompts import heuristics
+
+        public = {
+            name
+            for name in vars(heuristics)
+            if name.isupper() and isinstance(getattr(heuristics, name), str)
+        }
+        assert public == set(heuristics.__all__)
+
+    @pytest.mark.parametrize(
+        "cue",
+        ["seniority", "stale", "older document", "largest", "segment", "denominator"],
+    )
+    def test_the_specific_cues_that_had_drifted_are_now_in_both(self, cue: str) -> None:
+        """Named individually because these are the ones that actually diverged."""
+        assert cue in self._decisionlens_text().lower()
+        assert cue in self._baseline_text().lower()
+
+    def test_the_baseline_version_moved_when_its_guidance_did(self) -> None:
+        """A recording made under the old prompt must not be replayed for the new one."""
+        from decision_lens.prompts.baseline import BASELINE_V2
+
+        assert BASELINE_V2.version == "v2"

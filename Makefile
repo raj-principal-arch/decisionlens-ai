@@ -3,11 +3,11 @@ VENV   := .venv
 BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help setup setup-live check test coverage lint typecheck format demo ui record clean
+.PHONY: help setup setup-live check test coverage lint typecheck format demo ui record record-resume clean
 
 help: ## Show available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
-		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-13s\033[0m %s\n", $$1, $$2}'
 
 setup: ## Create .venv and install the package with dev and UI dependencies
 	$(PYTHON) -m venv $(VENV)
@@ -76,6 +76,13 @@ ui: ## Open the structured interface in a browser
 # filled. Run it once with a key; every run after that is free and offline.
 record: ## Call a real model once and record its responses for offline replay
 	@$(DL) record || test $$? -eq 2
+
+# After a prompt version changes, only the affected stages need re-recording.
+# This exists as its own target because the alternative — remembering to type
+# PYTHONPATH by hand — sends people to the `decisionlens` console script, which
+# fails whenever the editable install is in the broken state described above.
+record-resume: ## Re-record only the stages the cache can no longer replay
+	@$(DL) record --resume || test $$? -eq 2
 
 clean: ## Remove the virtualenv and build artifacts
 	rm -rf $(VENV) build dist .pytest_cache .ruff_cache .mypy_cache

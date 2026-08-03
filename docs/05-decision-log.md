@@ -84,6 +84,24 @@ If a strong single call performs comparably, the controlled workflow is unnecess
 
 Not justified at the size of the prototype corpus, and it would make retrieval harder to inspect. Keyword and manifest-driven retrieval over explicitly identified files keeps every retrieval step auditable, which serves the product thesis rather than compromising it. Revisiting this would require explicit approval.
 
+### D12. Shared heuristics between the arms — **adopted**
+
+D10 committed to a baseline that is not a strawman. That commitment was being broken.
+
+The judgment guidance had been written separately in each arm and the two drifted. Eight reading cues carried by the DecisionLens prompts were absent from the baseline: stakeholder recall treated as measurement; seniority converting a preference into a fact; a stale figure quoted in prose; an older document overtaken by a dated measurement; a 'largest cause' claim true only of one segment; support that holds for one segment being asserted of all; a pilot that could not measure its own effect; and a blank field read as zero. The baseline was left to notice those unaided while the other arm was told to look.
+
+Nobody decided this. It is what happens to duplicated text, which is why the fix is structural rather than a correction: both arms now compose from one module, and a test asserts every block reaches both. The baseline prompt version moved to v2 and its cached response was re-recorded, because replaying an answer to a question no longer being asked is the same defect in another form.
+
+The difference now under test is the intended one — staged and validated versus one call — and nothing else.
+
+### D13. The bundled case is in-sample and stays that way — **accepted, not fixed**
+
+The prompts' reading heuristics were written after the bundled case was designed, by the same author, and map onto hazards planted in it. Results on that case cannot separate "the workflow finds hazards" from "the prompts knew which hazards to expect."
+
+D12 does not fix this; it equalises it. Writing a second case now would not fix it either, since the same author knows the same prompts. The honest remedy is a case authored after the prompts are frozen by someone who has not read them, which is out of scope here.
+
+Recorded rather than repaired, and stated in [04 — Evaluation](04-evaluation.md) ahead of any result, so no margin can be quoted without it.
+
 ---
 
 ## Part 2 — How AI was used to build this

@@ -642,3 +642,64 @@ def test_the_preview_counts_only_what_will_really_be_reused(
     assert f"~ {CASE_ID}::alternatives::v1" in out, "before the gap"
     assert f"~ {CASE_ID}::challenger::v1" not in out, "downstream of the gap"
     assert "3 model calls" in out, "recommendation, challenger, and the baseline"
+
+
+def test_another_case_in_the_same_cache_is_left_alone(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One cache file can hold several cases. Only this case's entries count.
+
+    A neighbouring case's `relevance` recording is not this case's coverage, and
+    counting it would preview a saving the run cannot deliver.
+    """
+    from decision_lens.llm import DemoCache
+
+    directory, cache = case_with_cache(tmp_path)
+    loaded_cache = DemoCache.load(cache)
+    borrowed = loaded_cache.responses[f"{CASE_ID}::relevance::v1"]
+    del loaded_cache.responses[f"{CASE_ID}::relevance::v1"]
+    loaded_cache.responses["a_different_case::relevance::v1"] = borrowed
+    loaded_cache.save(cache)
+
+    monkeypatch.setattr(
+        Settings, "load", classmethod(lambda cls, **_: Settings(anthropic_api_key=KEY))
+    )
+    monkeypatch.setattr(cli, "_confirm", lambda _stream: False)
+
+    _, out = _run("record", "--case", str(directory), "--cache", str(cache), "--resume")
+
+    # relevance is the head of the chain, so losing it makes everything after it
+    # unusable too: nothing is reused and the full run is quoted.
+    assert "will be reused, not called" not in out
+    assert "a_different_case" not in out
+    assert "8 model calls" in out
+
+
+def test_a_stage_cached_under_an_old_prompt_version_is_quoted_as_a_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The bug that previewed "0 model calls" and then billed one.
+
+    The recorder looks up the whole cache key, version included, so a recording
+    made under a superseded prompt is a miss. The preview has to agree with it.
+    """
+    from decision_lens.llm import DemoCache
+
+    directory, cache = case_with_cache(tmp_path)
+    loaded_cache = DemoCache.load(cache)
+    stale = loaded_cache.responses[f"{CASE_ID}::challenger::v1"]
+    del loaded_cache.responses[f"{CASE_ID}::challenger::v1"]
+    loaded_cache.responses[f"{CASE_ID}::challenger::v0"] = stale
+    loaded_cache.save(cache)
+
+    monkeypatch.setattr(
+        Settings, "load", classmethod(lambda cls, **_: Settings(anthropic_api_key=KEY))
+    )
+    monkeypatch.setattr(cli, "_confirm", lambda _stream: False)
+
+    _, out = _run("record", "--case", str(directory), "--cache", str(cache), "--resume")
+
+    assert f"~ {CASE_ID}::challenger::v0" not in out, "a superseded entry is not coverage"
+    assert f"~ {CASE_ID}::challenger::v1" not in out, "and it is not silently upgraded either"
+    assert "6 stage(s) already recorded will be reused" in out
+    assert "2 model calls" in out, "the challenger, and the baseline"

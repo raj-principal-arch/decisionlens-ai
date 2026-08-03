@@ -42,6 +42,7 @@ from decision_lens.models import (
     EvidenceRequest,
 )
 from decision_lens.orchestrator import DecisionLens
+from decision_lens.prompts import REGISTRY
 
 __all__ = [
     "CHAINED_STAGES",
@@ -51,6 +52,7 @@ __all__ = [
     "ProgressFn",
     "RecordingProvider",
     "RecordingSummary",
+    "current_stage_versions",
     "estimate_run",
     "merge_into",
     "record_case",
@@ -102,6 +104,27 @@ INDEPENDENT_STAGES: tuple[str, ...] = ("baseline",)
 
 #: The stages a full recording makes, in order, for the progress counter.
 EXPECTED_STAGES: tuple[str, ...] = CHAINED_STAGES + INDEPENDENT_STAGES
+
+
+def current_stage_versions() -> dict[str, str]:
+    """The prompt version each stage will ask for on the next run.
+
+    A resumed run reuses a cached response only when the whole key matches,
+    version included. Anything that previews a resume has to resolve the version
+    the same way, or it promises a saving the run then does not deliver: the CLI
+    preview once split the key on `::` and kept only the stage name, so a cache
+    holding `baseline::v1` was read as "baseline is covered". It printed nothing
+    to record and no cost, then billed a real call for `baseline::v2`.
+
+    Reading from the registry rather than restating a table here means the
+    answer cannot drift from the prompts themselves. A test pins the one
+    assumption that makes it valid: every stage runs its latest registered
+    prompt, so `latest` is what the run will actually request.
+    """
+    import decision_lens.prompts.baseline  # noqa: F401  registers the baseline prompt
+    import decision_lens.prompts.decisionlens  # noqa: F401  registers the skill prompts
+
+    return {stage: REGISTRY.latest(stage).version for stage in EXPECTED_STAGES}
 
 
 def stages_worth_reusing(cached: set[str]) -> set[str]:
@@ -272,8 +295,11 @@ class RunEstimate:
     approx_input_tokens: int
 
     def describe(self) -> str:
+        # "1 model calls" reads as a bug in the thing about to spend money, which
+        # is the worst possible moment to look careless.
+        calls = "1 model call" if self.calls == 1 else f"{self.calls} model calls"
         return (
-            f"{self.calls} model calls over {self.evidence_records} evidence records, "
+            f"{calls} over {self.evidence_records} evidence records, "
             f"roughly {self.approx_input_tokens:,} input tokens (a character-based "
             "estimate, not a measurement). Output tokens and cost depend on the model."
         )
