@@ -434,3 +434,101 @@ def test_the_claim_ids_the_challenger_must_use_are_shown_to_it() -> None:
     )
     rendered = _skill(claims=claims).render_values(_context())["claims"]
     assert "C-003" in rendered
+
+
+# --------------------------------------------------------------------------- #
+# Reformatted claim ids
+# --------------------------------------------------------------------------- #
+
+
+def _numbered_claims(*ids: str) -> tuple[Claim, ...]:
+    return tuple(
+        Claim(
+            id=i,
+            statement=f"Statement {i}.",
+            claim_type=ClaimType.FACT,
+            citations=(Citation(evidence_id="EV-1", quote=QUOTE),),
+        )
+        for i in ids
+    )
+
+
+def test_a_reformatted_claim_id_is_resolved_to_the_one_it_means() -> None:
+    """From two real runs: `C2` answered for a claim shown as `C-002`.
+
+    The ids were in the prompt and the rejection named them, twice. An
+    instruction that has been ignored twice is not a control, so the mechanical
+    difference is resolved in code.
+    """
+    claims = _numbered_claims("C-001", "C-002", "C-003")
+    text = _output(
+        reclassify=(
+            ClaimReclassification(
+                claim_id="C2", new_type=ClaimType.STAKEHOLDER_OPINION, reason="A preference."
+            ),
+        )
+    )
+    run = _skill(text, claims=claims).run(_context())
+
+    assert run.output.reclassify[0].claim_id == "C-002"
+    assert any("was read as 'C-002'" in w for w in run.warnings)
+
+
+def test_an_exact_id_is_left_alone_and_unremarked() -> None:
+    claims = _numbered_claims("C-001", "C-002")
+    text = _output(
+        reclassify=(
+            ClaimReclassification(
+                claim_id="C-002", new_type=ClaimType.ASSUMPTION, reason="Unsupported."
+            ),
+        )
+    )
+    run = _skill(text, claims=claims).run(_context())
+
+    assert run.output.reclassify[0].claim_id == "C-002"
+    assert not any("was read as" in w for w in run.warnings)
+
+
+def test_an_ambiguous_id_is_still_rejected() -> None:
+    """Narrowing a formatting difference is not the same as guessing."""
+    claims = _numbered_claims("C-002", "C-02")  # both canonicalise to c2
+    text = _output(
+        reclassify=(
+            ClaimReclassification(claim_id="C2", new_type=ClaimType.ASSUMPTION, reason="x"),
+        )
+    )
+    with pytest.raises(SkillViolation, match="match no claim"):
+        _skill(text, allow_retry=False, claims=claims).run(_context())
+
+
+def test_an_id_matching_nothing_is_still_rejected() -> None:
+    claims = _numbered_claims("C-001")
+    text = _output(
+        reclassify=(
+            ClaimReclassification(claim_id="Z-999", new_type=ClaimType.ASSUMPTION, reason="x"),
+        )
+    )
+    with pytest.raises(SkillViolation, match="Z-999"):
+        _skill(text, allow_retry=False, claims=claims).run(_context())
+
+
+def test_the_rejection_shows_what_the_ids_look_like() -> None:
+    """Naming the format is more use than naming only the bad value."""
+    claims = _numbered_claims("C-001", "C-002")
+    text = _output(
+        reclassify=(
+            ClaimReclassification(claim_id="banana", new_type=ClaimType.ASSUMPTION, reason="x"),
+        )
+    )
+    with pytest.raises(SkillViolation, match="they look like: C-001, C-002"):
+        _skill(text, allow_retry=False, claims=claims).run(_context())
+
+
+@pytest.mark.parametrize(
+    ("written", "expected"),
+    [("C-002", "c2"), ("C2", "c2"), ("c002", "c2"), ("CL-0002", "cl2"), ("C-000", "c")],
+)
+def test_canonical_form_ignores_punctuation_and_leading_zeros(written: str, expected: str) -> None:
+    from decision_lens.skills.challenger import canonical_claim_id
+
+    assert canonical_claim_id(written) == expected

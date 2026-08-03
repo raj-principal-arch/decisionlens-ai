@@ -21,7 +21,11 @@ _JSON_ONLY = (
 _CITE = (
     "Every citation must name an evidence id from the list and quote text VERBATIM from "
     "that record. Never paraphrase inside a quote. A citation that cannot be found in the "
-    "evidence will be rejected, so omit a claim rather than invent support for it."
+    "evidence will be rejected, so omit a claim rather than invent support for it.\n\n"
+    "The id and the quote must come from the SAME block. Copy the id from the header of "
+    "the block the quoted line actually appears in — with dozens of records it is easy to "
+    "quote one record accurately and label it with a neighbour's id, and that is rejected "
+    "just as an invented quote would be."
 )
 
 RELEVANCE_V1 = Prompt(
