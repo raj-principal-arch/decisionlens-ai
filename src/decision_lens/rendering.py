@@ -49,10 +49,18 @@ def render_criteria(request: DecisionRequest) -> str:
 
 
 def render_claims(claims: Sequence[Claim]) -> str:
+    """Format claims, id first.
+
+    The id is not decoration. The challenger is asked to reclassify claims *by
+    id*, and an earlier version of this function omitted them — so the prompt
+    demanded an identifier it never showed. A real run duly invented `C3` and
+    `C7` for claims actually called `C-003` and `C-007`, and the whole stage was
+    rejected. Anything a prompt asks a model to cite back must appear in it.
+    """
     if not claims:
         return "(none identified)"
     return "\n".join(
-        f"- [{c.claim_type.value}] {c.statement} "
+        f"- {c.id} [{c.claim_type.value}] {c.statement} "
         f"({', '.join(str(cit) for cit in c.citations) or 'uncited'})"
         for c in claims
     )

@@ -424,7 +424,11 @@ loaded = load_case(Path(os.environ["DL_CASE"]))
 brief = DecisionLens(
     CachedDemoProvider(Path(os.environ["DL_CACHE"])), loaded.sources, as_of=loaded.as_of
 ).run(loaded.request)
-render(brief.model_copy(update={"contradictions": (), "recommendation": None}))
+render(
+    brief.model_copy(
+        update={"contradictions": (), "recommendation": None, "claims": ()}
+    )
+)
 """
 
 
@@ -444,3 +448,4 @@ def test_empty_sections_say_what_is_absent_rather_than_showing_nothing(
     assert "That is not the same as none existing" in captions
     assert "No experiment was proposed" in captions
     assert any("No recommendation was produced" in e.value for e in app.error)
+    assert any("No claims were extracted" in i.value for i in app.info)

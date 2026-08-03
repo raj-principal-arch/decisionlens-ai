@@ -225,10 +225,23 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
 
     key = settings.require_anthropic_key()
     model = args.model or settings.model_name or DEFAULT_MODEL
-    estimate = estimate_run(_evidence_of(loaded), calls=7 if args.no_baseline else 8)
+    total_calls = 7 if args.no_baseline else 8
+    resume_from: DemoCache | None = None
+    already: list[str] = []
+    if args.resume and Path(args.cache).is_file():
+        resume_from = DemoCache.load(Path(args.cache))
+        already = sorted(k for k in resume_from.responses if k.startswith(f"{loaded.case_id}::"))
+    estimate = estimate_run(_evidence_of(loaded), calls=max(0, total_calls - len(already)))
 
     stream.write(f"\ncase:  {loaded.case_id}\nmodel: {model}\nkey:   {settings.masked_key}\n")
     stream.write(f"{estimate.describe()}\n")
+    if already:
+        stream.write(
+            f"\nResuming: {len(already)} stage(s) already recorded will be reused, not called.\n"
+        )
+        for key in already:
+            stream.write(f"  ~ {key}\n")
+        stream.write("  Delete an entry from the cache to force it to be recorded again.\n")
     stream.write("\nThis calls a real model and will be billed to that key.\n")
 
     if not args.yes and not _confirm(stream):
@@ -256,6 +269,7 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
             as_of=loaded.as_of,
             include_baseline=not args.no_baseline,
             progress=report,
+            resume_from=resume_from,
         )
     except (DecisionLensError, ModelError) as exc:
         stream.write(f"\nrecording failed: {exc}\n")
@@ -337,6 +351,11 @@ def build_parser() -> argparse.ArgumentParser:
     record.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     record.add_argument(
         "--no-baseline", action="store_true", help="record only the DecisionLens arm"
+    )
+    record.add_argument(
+        "--resume",
+        action="store_true",
+        help="reuse stages already in the cache instead of paying for them again",
     )
     record.set_defaults(handler=cmd_record)
 

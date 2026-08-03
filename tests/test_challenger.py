@@ -415,3 +415,22 @@ def test_the_draft_is_rendered_with_the_parts_worth_attacking() -> None:
 def test_a_missing_draft_is_rendered_plainly_rather_than_blank() -> None:
     rendered = _skill(recommendation=None).render_values(_context())["recommendation"]
     assert rendered == "(no recommendation was produced)"
+
+
+def test_the_claim_ids_the_challenger_must_use_are_shown_to_it() -> None:
+    """A prompt cannot demand an identifier it never displays.
+
+    An earlier version omitted claim ids from the rendered list while asking the
+    challenger to reclassify by id. A real run answered with `C3` and `C7` for
+    claims called `C-003` and `C-007`, and the stage was rejected.
+    """
+    claims = (
+        Claim(
+            id="C-003",
+            statement="Notifications are the answer.",
+            claim_type=ClaimType.FACT,
+            citations=(Citation(evidence_id="EV-1", quote=QUOTE),),
+        ),
+    )
+    rendered = _skill(claims=claims).render_values(_context())["claims"]
+    assert "C-003" in rendered

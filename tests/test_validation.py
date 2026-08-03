@@ -510,3 +510,36 @@ def test_the_reduction_names_a_missing_no_build_option() -> None:
     )
     _, (issue,) = enforce_support_ceiling(brief)
     assert "no no-build alternative" in issue.message
+
+
+def test_a_recommendation_naming_an_absent_alternative_is_an_error() -> None:
+    """From a real run: ALT-03 recommended out of a set of nothing.
+
+    The recommendation skill only checks this when it was handed a non-empty
+    option set, so a failed alternatives stage lets a dangling reference through.
+    """
+    brief = _brief(
+        alternatives=(),
+        recommendation=_recommendation(selected_alternative_id="ALT-03"),
+    )
+    (issue,) = [i for i in validate(brief) if i.code == ValidationCode.DANGLING_ALTERNATIVE]
+
+    assert issue.severity is ValidationSeverity.ERROR
+    assert "ALT-03" in issue.message
+    assert "no alternatives were generated" in issue.message
+
+
+def test_a_recommendation_naming_the_wrong_alternative_lists_the_real_ones() -> None:
+    brief = _brief(recommendation=_recommendation(selected_alternative_id="ALT-99"))
+    (issue,) = [i for i in validate(brief) if i.code == ValidationCode.DANGLING_ALTERNATIVE]
+    assert "ALT-1, ALT-2" in issue.message
+
+
+def test_a_recommendation_pointing_at_a_real_option_is_fine() -> None:
+    assert ValidationCode.DANGLING_ALTERNATIVE not in _codes(_brief())
+
+
+def test_a_recommendation_naming_no_option_is_not_dangling() -> None:
+    """Recommending 'gather more evidence' need not select an option."""
+    brief = _brief(recommendation=_recommendation(selected_alternative_id=""))
+    assert ValidationCode.DANGLING_ALTERNATIVE not in _codes(brief)

@@ -545,3 +545,124 @@ def test_the_summary_reports_wall_clock_time(case: Path) -> None:
     )
     assert summary.elapsed_seconds > 0
     assert "in 0m" in summary.describe()
+
+
+# --------------------------------------------------------------------------- #
+# Resume
+# --------------------------------------------------------------------------- #
+
+
+def test_resuming_reuses_what_was_already_recorded(case: Path) -> None:
+    """A recording costs real money; re-buying stages that worked is waste."""
+    loaded = load_case(case)
+    first = DemoCache()
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=first,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+
+    live = FakeLive(_script(case))
+    second = DemoCache()
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        live,
+        cache=second,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        resume_from=first,
+    )
+
+    assert live.calls == [], "nothing was called a second time"
+    assert len(summary.reused) == 8
+    assert len(summary.keys) == 8
+    assert summary.succeeded
+
+
+def test_resuming_still_calls_for_what_is_missing(case: Path) -> None:
+    loaded = load_case(case)
+    partial = DemoCache()
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=partial,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+    # Force two stages to be recorded again.
+    for skill in ("alternatives", "recommendation"):
+        del partial.responses[f"{CASE_ID}::{skill}::v1"]
+
+    live = FakeLive(_script(case))
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        live,
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        resume_from=partial,
+    )
+
+    assert live.calls == ["alternatives", "recommendation"]
+    assert len(summary.reused) == 6
+    assert len(summary.keys) == 8
+
+
+def test_a_reused_stage_is_announced(case: Path) -> None:
+    """Reuse is never silent — otherwise it is indistinguishable from stale."""
+    loaded = load_case(case)
+    first = DemoCache()
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=first,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+
+    lines: list[str] = []
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        resume_from=first,
+        progress=lines.append,
+    )
+    assert any("reused an earlier recording" in line for line in lines)
+    assert "were reused, not called" in summary.describe()
+    assert summary.describe().count("  ~ ") == 8
+
+
+def test_without_resume_everything_is_called_again(case: Path) -> None:
+    loaded = load_case(case)
+    first = DemoCache()
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=first,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+
+    live = FakeLive(_script(case))
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        live,
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+    assert len(live.calls) == 8
+    assert summary.reused == []

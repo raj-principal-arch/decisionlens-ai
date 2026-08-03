@@ -33,6 +33,7 @@ from decision_lens.llm import (
     ModelProvider,
     ModelRequest,
     ModelResponse,
+    ModelUsage,
 )
 from decision_lens.models import (
     DecisionBrief,
@@ -115,14 +116,17 @@ class RecordingProvider:
         clock: datetime | None = None,
         progress: ProgressFn | None = None,
         total: int = len(EXPECTED_STAGES),
+        resume_from: DemoCache | None = None,
     ) -> None:
         self.inner = inner
         self.cache = cache
         self._clock = clock
         self._progress = progress
         self._total = total
+        self._resume_from = resume_from
         self._calls = 0
         self.recorded: list[str] = []
+        self.reused: list[str] = []
         self.input_tokens = 0
         self.output_tokens = 0
 
@@ -138,8 +142,46 @@ class RecordingProvider:
     def model_id(self) -> str:
         return self.inner.model_id
 
+    def _replay(self, request: ModelRequest) -> ModelResponse | None:
+        """Serve an earlier recording instead of paying for it again.
+
+        Only when the caller explicitly asked to resume. A recording run costs
+        real money and most of it is usually stages that already worked; making
+        someone re-buy those to fix one is waste. Every reuse is announced, so
+        this cannot quietly serve something stale.
+        """
+        if self._resume_from is None:
+            return None
+        entry = self._resume_from.responses.get(request.cache_key)
+        if entry is None:
+            return None
+
+        self.cache.add(entry)
+        if request.cache_key not in self.recorded:
+            self.recorded.append(request.cache_key)
+        if request.cache_key not in self.reused:
+            self.reused.append(request.cache_key)
+        self._say(
+            f"  [{self._calls}/{self._total}] {request.skill} — reused an earlier "
+            f"recording from {entry.recorded_at.date().isoformat()}, not called"
+        )
+        return ModelResponse(
+            text=entry.text,
+            provider=self.provider_id,
+            model=entry.recorded_from_model,
+            prompt_version=request.prompt_version,
+            skill=request.skill,
+            latency_ms=0,
+            usage=ModelUsage(input_tokens=entry.input_tokens, output_tokens=entry.output_tokens),
+            is_cached=True,
+        )
+
     def complete(self, request: ModelRequest) -> ModelResponse:
         self._calls += 1
+        reused = self._replay(request)
+        if reused is not None:
+            return reused
+
         started = time.perf_counter()
         self._say(f"  [{self._calls}/{self._total}] {request.skill} …")
 
@@ -209,6 +251,8 @@ class RecordingSummary:
     failures: list[str] = field(default_factory=list)
     #: Cache keys discarded because the stage that produced them was rejected.
     dropped: list[str] = field(default_factory=list)
+    #: Cache keys served from an earlier recording instead of being called again.
+    reused: list[str] = field(default_factory=list)
     elapsed_seconds: float = 0.0
 
     @property
@@ -221,7 +265,9 @@ class RecordingSummary:
             f"Recorded {len(self.keys)} response(s) for {self.case_id} in {minutes}m {seconds}s.",
             f"Tokens: {self.input_tokens:,} in, {self.output_tokens:,} out (measured).",
         ]
-        lines += [f"  + {key}" for key in self.keys]
+        lines += [f"  {'~' if key in self.reused else '+'} {key}" for key in self.keys]
+        if self.reused:
+            lines.append(f"({len(self.reused)} marked ~ were reused, not called.)")
         if self.dropped:
             lines.append(f"{len(self.dropped)} response(s) discarded as unusable:")
             lines += [f"  - {key}" for key in self.dropped]
@@ -257,6 +303,7 @@ def record_case(
     include_baseline: bool = True,
     timeout_seconds: float = LIVE_SKILL_TIMEOUT_SECONDS,
     progress: ProgressFn | None = None,
+    resume_from: DemoCache | None = None,
 ) -> RecordingSummary:
     """Run both arms against a live provider and capture every response.
 
@@ -275,6 +322,7 @@ def record_case(
         clock=clock,
         progress=progress,
         total=len(EXPECTED_STAGES) - (0 if include_baseline else 1),
+        resume_from=resume_from,
     )
     summary = RecordingSummary(case_id=request.id)
     started = time.perf_counter()
@@ -315,6 +363,7 @@ def record_case(
     summary.keys = list(recording.recorded)
     summary.input_tokens = recording.input_tokens
     summary.output_tokens = recording.output_tokens
+    summary.reused = list(recording.reused)
     summary.elapsed_seconds = time.perf_counter() - started
     return summary
 
