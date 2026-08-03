@@ -37,19 +37,40 @@ the human supplies context, judgment and accountability. That makes AI a partner
 and hold to account, not a tool you invoke. Three things change. The limit on a decision
 stops being how much evidence you can read and becomes how well you can question it. The
 reasoning outlives the deck, so teams stop re-litigating decisions from memory. And you make
-fewer confidently wrong bets, and catch the wrong ones sooner. What blocks all of it is that
-checking AI's work currently costs more than doing the work yourself.
+fewer confidently wrong bets, and catch the wrong ones sooner. 
 
-**2. What ecosystem moves PMs from little AI use to responsible adoption?** Five decisions,
-and only the first is built here. Give PMs one good tool for one high-consequence job rather
-than a general assistant that does everything adequately. Centralise the plumbing — the
-company connects to each data source once, and PMs never hold credentials or configure APIs.
-Treat analysis skills as shared, versioned assets with content fingerprints, so an
-improvement reaches everyone instead of living in one person's notes. Teach evidence
-interrogation rather than prompt technique, because prompt skill belongs to a tool
-generation and evidence skill does not. And measure whether decisions improved, not how many
-people used the tool: usage rises when a tool is used badly, and cannot distinguish a PM who
-checked the output from one who pasted it into a deck.
+**2. What ecosystem moves PMs from little AI use to responsible adoption?** Build a paved
+road, not a walled garden. The organising decision is where the platform ends and the team
+begins: centralise too much and you ship a golden path nobody walks, decentralise and every
+team stands up its own connectors, negotiates its own data access, and produces analysis no
+reviewer can audit. Three tiers. **Platform tier — non-negotiable, because the blast radius
+is organisational rather than team-level.** Delegated identity and least-privilege access,
+so an agent inherits exactly the entitlements the PM already holds: no shadow permissions,
+no service account with god rights. One connector per system of record, platform-owned and
+retrieval-only. A model gateway giving vendor neutrality, version pinning, rate limiting,
+cost attribution and prompt logging. Data classification enforced at the connector rather
+than asked for in a prompt. An immutable audit trail per run. **Registry tier — shared
+defaults, forkable.** Analysis skills as versioned, content-fingerprinted, independently
+evaluated artefacts: relevance, classification, contradiction detection, gap analysis,
+option generation, recommendation, adversarial challenge. Teams adopt the default set and
+inherit the organisation's accumulated judgment; a team the defaults underserve forks a
+skill and upstreams it if it beats the incumbent on the eval harness. That fork-and-upstream
+path is what turns a mandated platform into an adopted one. **Team tier — owned by the PM,
+never delegated.** Decision framing, evidence scope, weighting criteria, and the call
+itself. On agent topology: one orchestrator per decision running a bounded set of narrow,
+inspectable steps — not a general-purpose copilot, and not a multi-agent swarm, because
+auditability is the product requirement and a swarm is not auditable by a PM under time
+pressure. Governance rides the tiers rather than sitting beside them as a review board:
+entitlements are inherited, sensitive classes are blocked at retrieval, and every run emits
+provider, model, prompt version and content hash — guardrails, not gates. Enablement shifts
+training from prompt craft to evidence interrogation, because prompt technique depreciates
+with each model generation and evidence literacy compounds; champions sit embedded per
+product area while the central team owns the platform and the eval harness. Instrument the
+adoption funnel — activation, repeat use, decisions shipped with a brief attached — but hold
+the organisation to decision-quality leading indicators: groundedness, unsupported-claim
+rate, verification time, alternative coverage. Usage volume is a vanity metric. It rises
+when the tool is misused, and cannot separate a PM who verified the output from one who
+pasted it into a deck.
 
 **3. What is the hardest and highest-value problem?** Verification cost. A PM reading an
 AI-written recommendation has to establish where each number came from, which conclusions
