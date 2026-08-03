@@ -81,6 +81,7 @@ class ValidationCode(StrEnum):
     SECTION_MISSING = "section_missing"
     UNGROUNDED_FACT = "ungrounded_fact"
     UNGROUNDED_CLAIM = "ungrounded_claim"
+    DANGLING_ALTERNATIVE = "dangling_alternative"
     STAGE_FAILED = "stage_failed"
     NO_MISSING_EVIDENCE = "no_missing_evidence"
     NON_AI_ALTERNATIVE_MISSING = "non_ai_alternative_missing"
@@ -213,6 +214,36 @@ def _check_recommendation_grounding(brief: DecisionBrief) -> list[ValidationIssu
             f"recommendation claim {claim.id}",
         )
         for claim in brief.recommendation.ungrounded_claims
+    ]
+
+
+def _check_recommendation_points_somewhere(brief: DecisionBrief) -> list[ValidationIssue]:
+    """The recommended option has to be one of the options.
+
+    The recommendation skill checks this too, but only when it was given a
+    non-empty option set — so when the alternatives stage fails, the check is
+    skipped and the recommendation is free to name something that does not
+    exist. A real run produced exactly that: `ALT-03` recommended out of a set
+    of nothing. Checked here as well because the brief is the thing a person
+    acts on, and "do ALT-03" is unactionable when there is no ALT-03.
+    """
+    recommendation = brief.recommendation
+    if recommendation is None or not recommendation.selected_alternative_id:
+        return []
+
+    known = {a.id for a in brief.alternatives}
+    if recommendation.selected_alternative_id in known:
+        return []
+
+    available = ", ".join(sorted(known)) if known else "no alternatives were generated"
+    return [
+        _issue(
+            ValidationCode.DANGLING_ALTERNATIVE,
+            ValidationSeverity.ERROR,
+            f"The recommendation selects {recommendation.selected_alternative_id}, which is "
+            f"not in this brief ({available}). There is nothing for a reader to act on.",
+            "recommendation",
+        )
     ]
 
 
@@ -421,6 +452,7 @@ def validate(
     issues.extend(_check_required_sections(brief))
     issues.extend(_check_assumptions_separated(brief))
     issues.extend(_check_recommendation_grounding(brief))
+    issues.extend(_check_recommendation_points_somewhere(brief))
     issues.extend(_check_contradictions_are_visible(brief))
     issues.extend(_check_stages(brief))
     issues.extend(_check_gaps_surfaced(brief))

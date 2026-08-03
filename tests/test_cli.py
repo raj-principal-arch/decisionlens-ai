@@ -517,3 +517,32 @@ def test_an_unanswerable_prompt_declines(monkeypatch: pytest.MonkeyPatch) -> Non
 
     monkeypatch.setattr("builtins.input", eof)
     assert cli._confirm(io.StringIO()) is False
+
+
+def test_resume_previews_what_will_be_reused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The saving has to be visible before consenting, like the cost is."""
+    directory, cache = case_with_cache(tmp_path)
+    monkeypatch.setattr(
+        Settings, "load", classmethod(lambda cls, **_: Settings(anthropic_api_key=KEY))
+    )
+    monkeypatch.setattr(cli, "_confirm", lambda _stream: False)
+
+    _, out = _run("record", "--case", str(directory), "--cache", str(cache), "--resume")
+
+    assert "will be reused, not called" in out
+    assert f"~ {CASE_ID}::relevance::v1" in out
+    assert "Delete an entry from the cache to force it" in out
+    assert "Nothing was sent." in out
+
+
+def test_without_resume_nothing_is_reused(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    directory, cache = case_with_cache(tmp_path)
+    monkeypatch.setattr(
+        Settings, "load", classmethod(lambda cls, **_: Settings(anthropic_api_key=KEY))
+    )
+    monkeypatch.setattr(cli, "_confirm", lambda _stream: False)
+
+    _, out = _run("record", "--case", str(directory), "--cache", str(cache))
+    assert "will be reused" not in out
