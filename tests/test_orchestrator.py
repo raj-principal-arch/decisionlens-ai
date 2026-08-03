@@ -342,7 +342,14 @@ def test_the_run_trace_pins_provider_model_and_prompt_version() -> None:
     assert trace.started_at == CLOCK
     model_stages = [s for s in trace.stages if s.model]
     assert {s.provider for s in model_stages} == {"scripted"}
-    assert all(s.prompt_version == "v1" for s in model_stages)
+    # Each stage reports whatever its own prompt declares. Asserting a literal
+    # would make this test fail on any prompt bump while saying nothing about
+    # the property under test, which is that the version is pinned at all.
+    from decision_lens.recorder import current_stage_versions
+
+    expected = current_stage_versions()
+    assert all(s.prompt_version for s in model_stages), "every model stage names its version"
+    assert all(s.prompt_version == expected[s.name] for s in model_stages if s.name in expected)
     assert trace.total_latency_ms > 0
 
 
@@ -756,11 +763,16 @@ def test_every_source_failing_is_the_no_evidence_case() -> None:
 
 
 def _cache_file(tmp_path: Path) -> Path:
+    # Versions come from the prompts, not a literal, so a legitimate bump does
+    # not read as a broken workflow.
+    from decision_lens.recorder import current_stage_versions
+
+    versions = current_stage_versions()
     cache = DemoCache()
     for skill, text in _script().items():
         cache.add(
             CachedResponse(
-                key=f"DR-001::{skill}::v1",
+                key=f"DR-001::{skill}::{versions.get(skill, 'v1')}",
                 text=text,
                 recorded_from_model="claude-opus-5",
                 recorded_at=datetime(2026, 8, 1, 12, 0, 0),

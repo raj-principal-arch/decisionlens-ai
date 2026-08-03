@@ -102,6 +102,20 @@ D12 does not fix this; it equalises it. Writing a second case now would not fix 
 
 Recorded rather than repaired, and stated in [04 — Evaluation](04-evaluation.md) ahead of any result, so no margin can be quoted without it.
 
+### D14. Reuse is decided on prompt text, not on a version label — **adopted**
+
+Two prompts, `classification` and `contradictions`, were edited after being recorded and their versions were left alone. Resumed runs match on version, so every later run replayed answers to wording that no longer existed. Two of the eight shipped stages were stale and the demo gave no sign of it.
+
+Three things were wrong, and only fixing all three closes it:
+
+- **The label lied.** Both prompts are now v2, and the responses were re-recorded. A version is a declaration a human makes and forgets to make.
+- **Resume trusted the label.** It now compares the prompt's content fingerprint and re-records on a mismatch. The fingerprint is derived from the text, so it cannot be forgotten. An absent fingerprint on an older recording is treated as "unknown", not "mismatched", so adding the check did not invalidate the existing cache.
+- **The warning existed and went nowhere.** The cached provider was already emitting *"the prompt has changed since this response was recorded"* on every affected call. `RunStage` had no field to hold it and the report had no line to print it, so it was constructed and discarded on every run. Provider warnings now reach the run trace and the rendered brief.
+
+The third is the one worth remembering. The detection was never missing; the path from detection to a human reading it was. A check whose output nobody receives is indistinguishable from no check, and this repository's argument is that a person must be able to see what a system did.
+
+Tests cover each layer, and a test compares every shipped recording's fingerprint against the live prompt, so this class of drift now fails the build rather than surviving in a cache.
+
 ---
 
 ## Part 2 — How AI was used to build this

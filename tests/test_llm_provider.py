@@ -243,6 +243,30 @@ class TestPromptDrift:
         response = _provider(_entry(request.cache_key, fingerprint="")).complete(request)
         assert not any("prompt has changed" in w for w in response.warnings)
 
+    def test_the_warning_reaches_the_run_trace(self) -> None:
+        """The gap that let two stale prompts run unnoticed for an evening.
+
+        Everything above passed the whole time. The warning was built correctly
+        and then dropped at the trace boundary, because `to_stage` did not carry
+        it and `RunStage` had nowhere to put it. A warning that stops at the
+        provider is not a warning anyone receives.
+        """
+        request = _request(prompt_fingerprint="new-fingerprint")
+        provider = _provider(_entry(request.cache_key, fingerprint="old-fingerprint"))
+        stage = provider.complete(request).to_stage("contradictions")
+        assert any("prompt has changed" in w for w in stage.warnings)
+
+    def test_a_clean_replay_still_says_it_was_a_replay(self) -> None:
+        """The other warning must survive too, or the trace stops saying "cached"."""
+        request = _request(prompt_fingerprint="same")
+        stage = (
+            _provider(_entry(request.cache_key, fingerprint="same"))
+            .complete(request)
+            .to_stage("contradictions")
+        )
+        assert any("Replayed from cache" in w for w in stage.warnings)
+        assert not any("prompt has changed" in w for w in stage.warnings)
+
 
 class TestCacheMiss:
     def test_a_miss_raises_rather_than_returning_a_placeholder(self) -> None:

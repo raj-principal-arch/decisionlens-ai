@@ -50,9 +50,15 @@ RELEVANCE_V1 = Prompt(
     ),
 )
 
-CLASSIFICATION_V1 = Prompt(
+#: v2, and v1 is gone rather than kept. The v1 text was edited after it had
+#: been recorded — the fix that stopped citations being attached to a
+#: neighbouring record's id — without the version moving. A resumed run
+#: matches on version, so every later run happily replayed an answer to the
+#: superseded wording. The fingerprint test in tests/test_recorder.py now
+#: catches that class of drift; this bump repairs the instance of it.
+CLASSIFICATION_V2 = Prompt(
     name="classification",
-    version="v1",
+    version="v2",
     description="Extract statements from evidence and label how each should be read.",
     system=(
         "You extract statements from evidence and label how each should be read.\n\n"
@@ -72,9 +78,11 @@ CLASSIFICATION_V1 = Prompt(
     ),
 )
 
-CONTRADICTIONS_V1 = Prompt(
+#: v2 for the same reason as the classification prompt above: edited after
+#: recording, version left alone, stale answer replayed ever since.
+CONTRADICTIONS_V2 = Prompt(
     name="contradictions",
-    version="v1",
+    version="v2",
     description="Surface conflicting evidence without resolving it.",
     system=(
         "You surface contradictions. You do not resolve them.\n\n"
@@ -245,8 +253,8 @@ CHALLENGER_V1 = Prompt(
 
 ALL_PROMPTS = (
     RELEVANCE_V1,
-    CLASSIFICATION_V1,
-    CONTRADICTIONS_V1,
+    CLASSIFICATION_V2,
+    CONTRADICTIONS_V2,
     MISSING_EVIDENCE_V1,
     ALTERNATIVES_V1,
     RECOMMENDATION_V1,
@@ -260,8 +268,8 @@ __all__ = [
     "ALL_PROMPTS",
     "ALTERNATIVES_V1",
     "CHALLENGER_V1",
-    "CLASSIFICATION_V1",
-    "CONTRADICTIONS_V1",
+    "CLASSIFICATION_V2",
+    "CONTRADICTIONS_V2",
     "MISSING_EVIDENCE_V1",
     "RECOMMENDATION_V1",
     "RELEVANCE_V1",

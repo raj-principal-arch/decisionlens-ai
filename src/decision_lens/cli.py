@@ -40,7 +40,7 @@ from decision_lens.models import (
 from decision_lens.orchestrator import DecisionLens, DecisionLensError
 from decision_lens.recorder import (
     LIVE_SKILL_TIMEOUT_SECONDS,
-    current_stage_versions,
+    current_stage_prompts,
     estimate_run,
     merge_into,
     record_case,
@@ -242,16 +242,22 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
         # name alone, so a cache holding `baseline::v1` previewed as "8 reused,
         # nothing to record, $0.00" and then billed a call for `baseline::v2`.
         prefix = f"{loaded.case_id}::"
-        versions = current_stage_versions()
+        prompts = current_stage_prompts()
         cached = set()
-        for entry in resume_from.responses:
-            if not entry.startswith(prefix):
+        for key, entry in resume_from.responses.items():
+            if not key.startswith(prefix):
                 continue
-            stage, _, version = entry[len(prefix) :].partition("::")
-            if versions.get(stage) == version:
-                cached.add(stage)
+            stage, _, version = key[len(prefix) :].partition("::")
+            prompt = prompts.get(stage)
+            if prompt is None or prompt.version != version:
+                continue
+            # The recorder declines a stale entry on the fingerprint, so a preview
+            # that stopped at the version would promise a reuse the run refuses.
+            if entry.prompt_fingerprint and entry.prompt_fingerprint != prompt.fingerprint:
+                continue
+            cached.add(stage)
         already = sorted(
-            f"{prefix}{stage}::{versions[stage]}" for stage in stages_worth_reusing(cached)
+            f"{prefix}{stage}::{prompts[stage].version}" for stage in stages_worth_reusing(cached)
         )
     estimate = estimate_run(_evidence_of(loaded), calls=max(0, total_calls - len(already)))
 

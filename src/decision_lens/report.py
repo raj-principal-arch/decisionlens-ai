@@ -371,6 +371,16 @@ def _trace(brief: DecisionBrief) -> list[str]:
             f"| {stage.prompt_version or '-'} | {tokens} | {stage.latency_ms or '-'} | {outcome} |"
         )
     lines.append("")
+
+    # Printed under the table rather than squeezed into a cell: these are
+    # sentences about how an answer was obtained, and the one that matters most
+    # — "the prompt has changed since this was recorded" — is the difference
+    # between a brief and a brief that is quietly out of date.
+    noted = [(s.name, w) for s in trace.stages for w in s.warnings]
+    if noted:
+        lines += ["**Notes on how these answers were obtained**", ""]
+        lines += [f"- `{name}` — {warning}" for name, warning in noted]
+        lines.append("")
     return lines
 
 

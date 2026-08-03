@@ -703,3 +703,34 @@ def test_a_stage_cached_under_an_old_prompt_version_is_quoted_as_a_call(
     assert f"~ {CASE_ID}::challenger::v1" not in out, "and it is not silently upgraded either"
     assert "6 stage(s) already recorded will be reused" in out
     assert "2 model calls" in out, "the challenger, and the baseline"
+
+
+def test_a_stage_whose_prompt_text_changed_is_quoted_as_a_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Same version, different text. The version alone would call this reusable.
+
+    This is the drift that actually happened: two prompts edited in place with
+    the version left alone. The recorder refuses such an entry, so the preview
+    has to quote it as a call or it under-states the bill.
+    """
+    from decision_lens.llm import DemoCache
+
+    directory, cache = case_with_cache(tmp_path)
+    loaded_cache = DemoCache.load(cache)
+    key = f"{CASE_ID}::challenger::v1"
+    loaded_cache.responses[key] = loaded_cache.responses[key].model_copy(
+        update={"prompt_fingerprint": "0" * 64}
+    )
+    loaded_cache.save(cache)
+
+    monkeypatch.setattr(
+        Settings, "load", classmethod(lambda cls, **_: Settings(anthropic_api_key=KEY))
+    )
+    monkeypatch.setattr(cli, "_confirm", lambda _stream: False)
+
+    _, out = _run("record", "--case", str(directory), "--cache", str(cache), "--resume")
+
+    assert f"~ {key}" not in out, "an entry whose prompt text moved is not coverage"
+    assert "6 stage(s) already recorded will be reused" in out
+    assert "2 model calls" in out, "the challenger, and the baseline"
