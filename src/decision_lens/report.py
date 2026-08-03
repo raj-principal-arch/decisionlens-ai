@@ -360,15 +360,16 @@ def _trace(brief: DecisionBrief) -> list[str]:
     lines += [
         f"Run `{trace.run_id}` · {trace.total_latency_ms} ms total",
         "",
-        "| Stage | Provider | Model | Prompt | Tokens in/out | ms | Outcome |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| Stage | Provider | Model | Prompt | Fingerprint | Tokens in/out | ms | Outcome |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for stage in trace.stages:
         tokens = f"{stage.input_tokens or '-'}/{stage.output_tokens or '-'}"
         outcome = "ok" if stage.succeeded else f"**failed** — {stage.error[:80]}"
         lines.append(
             f"| {stage.name} | {stage.provider or '-'} | {stage.model or '-'} "
-            f"| {stage.prompt_version or '-'} | {tokens} | {stage.latency_ms or '-'} | {outcome} |"
+            f"| {stage.prompt_version or '-'} | {stage.prompt_fingerprint[:12] or '-'} "
+            f"| {tokens} | {stage.latency_ms or '-'} | {outcome} |"
         )
     lines.append("")
 

@@ -308,3 +308,42 @@ class TestProviderWarningsReachThePage:
     def test_the_warning_survives_the_json_artifact_too(self, brief: DecisionBrief) -> None:
         payload = json.loads(report.to_json(self._with(brief, ("prompt changed",))))
         assert payload["brief"]["run_trace"]["stages"][0]["warnings"] == ["prompt changed"]
+
+
+class TestTheTraceRecordsWhichTextRan:
+    """A version is a label a human attaches; a fingerprint is derived from the text.
+
+    D14 established that the label cannot be trusted alone — two prompts were
+    edited with their versions left unchanged and the cache went on replaying
+    answers to wording that no longer existed. A trace carrying only the version
+    reproduces that weakness: it says what the prompt was called, not what it
+    said.
+    """
+
+    def test_the_fingerprint_reaches_the_run_trace(self, brief: DecisionBrief) -> None:
+        trace = brief.run_trace
+        assert trace is not None
+        model_stages = [s for s in trace.stages if s.model]
+        assert model_stages
+        assert all(s.prompt_fingerprint for s in model_stages), (
+            "every model stage must record the text that produced it"
+        )
+
+    def test_the_fingerprint_is_printed_in_the_brief(self, brief: DecisionBrief) -> None:
+        trace = brief.run_trace
+        assert trace is not None
+        stage = next(s for s in trace.stages if s.prompt_fingerprint)
+        assert stage.prompt_fingerprint[:12] in report.to_markdown(brief)
+
+    def test_it_survives_the_json_artifact(self, brief: DecisionBrief) -> None:
+        payload = json.loads(report.to_json(brief))
+        stages = payload["brief"]["run_trace"]["stages"]
+        assert any(s.get("prompt_fingerprint") for s in stages)
+
+    def test_a_stage_that_never_called_a_model_has_none(self, brief: DecisionBrief) -> None:
+        """Retrieval is a stage too, and it has no prompt."""
+        trace = brief.run_trace
+        assert trace is not None
+        retrieval = [s for s in trace.stages if not s.model]
+        assert retrieval, "the fixture should include a retrieval stage"
+        assert all(not s.prompt_fingerprint for s in retrieval)
