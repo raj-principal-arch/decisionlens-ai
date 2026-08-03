@@ -546,3 +546,67 @@ def test_without_resume_nothing_is_reused(tmp_path: Path, monkeypatch: pytest.Mo
 
     _, out = _run("record", "--case", str(directory), "--cache", str(cache))
     assert "will be reused" not in out
+
+
+def test_the_real_api_key_reaches_the_provider_when_resuming(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Regression: the resume preview looped over `key`, clobbering the credential.
+
+    The preview printed cache keys with `for key in already:`, rebinding the
+    name that held the API key. The provider was then constructed with
+    'sample_delivery_exceptions::relevance::v1' and Anthropic answered 401 —
+    which reads exactly like a revoked key, and was diagnosed as one twice.
+
+    Nothing type-checks this: both values are `str`. Only asserting the value
+    catches it.
+    """
+    directory, cache = case_with_cache(tmp_path)
+    got: dict[str, str] = {}
+
+    class Spy:
+        provider_id = "anthropic"
+        model_id = "claude-opus-5"
+
+        def __init__(self, api_key: str, *, model: str) -> None:
+            got["api_key"] = api_key
+            got["model"] = model
+
+        def complete(self, request: object) -> object:
+            raise ModelUnavailable("no calls in tests")
+
+    monkeypatch.setattr(
+        Settings, "load", classmethod(lambda cls, **_: Settings(anthropic_api_key=KEY))
+    )
+    monkeypatch.setattr(cli, "AnthropicProvider", Spy)
+
+    _run("record", "--case", str(directory), "--cache", str(cache), "--resume", "--yes")
+
+    assert got["api_key"] == KEY, "the credential, not a cache key"
+    assert "::" not in got["api_key"], "a cache key was passed as the credential"
+    assert got["model"] == "claude-opus-5"
+
+
+def test_the_real_api_key_reaches_the_provider_without_resuming(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    directory = write_case(tmp_path)
+    got: dict[str, str] = {}
+
+    class Spy:
+        provider_id = "anthropic"
+        model_id = "claude-opus-5"
+
+        def __init__(self, api_key: str, *, model: str) -> None:
+            got["api_key"] = api_key
+
+        def complete(self, request: object) -> object:
+            raise ModelUnavailable("no calls in tests")
+
+    monkeypatch.setattr(
+        Settings, "load", classmethod(lambda cls, **_: Settings(anthropic_api_key=KEY))
+    )
+    monkeypatch.setattr(cli, "AnthropicProvider", Spy)
+
+    _run("record", "--case", str(directory), "--cache", str(tmp_path / "c.json"), "--yes")
+    assert got["api_key"] == KEY
