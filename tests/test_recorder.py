@@ -873,8 +873,8 @@ def test_stage_versions_match_the_prompt_each_stage_really_uses() -> None:
     from decision_lens.prompts.decisionlens import (
         ALTERNATIVES_V1,
         CHALLENGER_V1,
-        CLASSIFICATION_V1,
-        CONTRADICTIONS_V1,
+        CLASSIFICATION_V2,
+        CONTRADICTIONS_V2,
         MISSING_EVIDENCE_V1,
         RECOMMENDATION_V1,
         RELEVANCE_V1,
@@ -882,8 +882,8 @@ def test_stage_versions_match_the_prompt_each_stage_really_uses() -> None:
 
     assert current_stage_versions() == {
         "relevance": RELEVANCE_V1.version,
-        "classification": CLASSIFICATION_V1.version,
-        "contradictions": CONTRADICTIONS_V1.version,
+        "classification": CLASSIFICATION_V2.version,
+        "contradictions": CONTRADICTIONS_V2.version,
         "missing_evidence": MISSING_EVIDENCE_V1.version,
         "alternatives": ALTERNATIVES_V1.version,
         "recommendation": RECOMMENDATION_V1.version,
@@ -997,18 +997,11 @@ def test_every_shipped_recording_answers_the_prompt_that_is_still_asked() -> Non
     _shipped_keys()  # skips when nothing has been recorded yet
     payload = json.loads(DEFAULT_CACHE_PATH.read_text(encoding="utf-8"))
 
-    # Known stale, pending one re-record. `classification` and `contradictions`
-    # were captured at 18:53 and 18:54 on 2026-08-02; both prompts were then
-    # edited later that evening to fix citation targeting and claim-id echoing,
-    # and neither version was bumped. Every `--resume` after that reused the old
-    # recordings, because resume matches on version and version had not moved.
-    #
-    # The demo they produce is coherent, but two of its eight stages answer
-    # prompts that no longer exist, which is not a claim this repository can
-    # make about traceability and then quietly break. Fixing it costs six live
-    # calls: both stages sit early in the chain, so everything downstream of
-    # them is re-recorded too.
-    known_stale = {"classification", "contradictions"}
+    # No exceptions. Both stale entries were re-recorded and the superseded v1
+    # keys dropped, so every shipped recording answers a prompt that still
+    # exists. Keeping an allowance here "just in case" would let the next drift
+    # settle in quietly, which is exactly how the last one survived an evening.
+    known_stale: set[str] = set()
 
     mismatched = set()
     for key, entry in payload["responses"].items():
@@ -1029,3 +1022,77 @@ def test_every_shipped_recording_answers_the_prompt_that_is_still_asked() -> Non
         f"{sorted(healed)} now matches its prompt — drop it from known_stale so the "
         "exception cannot outlive the problem."
     )
+
+
+def test_a_resumed_run_refuses_an_entry_whose_prompt_text_changed(case: Path) -> None:
+    """Version is a declaration; fingerprint is derived. Trust the derived one.
+
+    Two prompts were edited after being recorded and left at v1, so every
+    resumed run went on replaying answers to wording that no longer existed.
+    Announcing the reuse did not help — the announcement looked the same either
+    way. Matching on the fingerprint makes the mistake unrepeatable.
+    """
+    loaded = load_case(case)
+    seed = DemoCache()
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=seed,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+
+    # Same key, same version — but recorded from different prompt text.
+    versions = current_stage_versions()
+    stale_key = f"{CASE_ID}::contradictions::{versions['contradictions']}"
+    original = seed.responses[stale_key]
+    seed.responses[stale_key] = original.model_copy(update={"prompt_fingerprint": "0" * 64})
+
+    live = FakeLive(_script(case))
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        live,
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        resume_from=seed,
+    )
+
+    assert "contradictions" in live.calls, "the stale entry must not have been served"
+    assert stale_key not in summary.reused
+    # relevance and classification precede it and were untouched, so they stand.
+    assert f"{CASE_ID}::relevance::{versions['relevance']}" in summary.reused
+    assert f"{CASE_ID}::classification::{versions['classification']}" in summary.reused
+
+
+def test_an_entry_recorded_before_fingerprints_were_stored_is_still_reusable(
+    case: Path,
+) -> None:
+    """Absent is not mismatched. Refusing a blank would re-buy the whole cache."""
+    loaded = load_case(case)
+    seed = DemoCache()
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=seed,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+    key = f"{CASE_ID}::contradictions::{current_stage_versions()['contradictions']}"
+    seed.responses[key] = seed.responses[key].model_copy(update={"prompt_fingerprint": None})
+
+    live = FakeLive(_script(case))
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        live,
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        resume_from=seed,
+    )
+    assert "contradictions" not in live.calls
+    assert key in summary.reused

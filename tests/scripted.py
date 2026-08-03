@@ -258,11 +258,18 @@ def evidence_ids(directory: Path) -> dict[str, str]:
 
 def write_cache(directory: Path, cache_path: Path, *, case_id: str = CASE_ID) -> Path:
     """Populate a demo cache that answers the tiny case. Returns the path."""
+    # Keys are built from the prompts themselves, not from a literal "v1". A
+    # hardcoded version turns every legitimate prompt bump into a wall of
+    # unrelated cache-miss failures across the suite, which teaches whoever hits
+    # it that bumping versions is painful — the opposite of the lesson.
+    from decision_lens.recorder import current_stage_versions
+
+    versions = current_stage_versions()
     cache = DemoCache()
     for skill, text in _script(evidence_ids(directory)).items():
         cache.add(
             CachedResponse(
-                key=f"{case_id}::{skill}::v1",
+                key=f"{case_id}::{skill}::{versions.get(skill, 'v1')}",
                 text=text,
                 recorded_from_model="claude-opus-5",
                 recorded_at=RECORDED_AT,

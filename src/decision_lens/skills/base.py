@@ -38,6 +38,7 @@ from decision_lens.llm import (
 )
 from decision_lens.models import Citation, DecisionRequest, EvidenceRecord, RunStage
 from decision_lens.prompts import Prompt
+from decision_lens.quoting import QuoteMatch, find_quote
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -88,20 +89,14 @@ class SkillContext(BaseModel):
         record = self.by_id().get(citation.evidence_id)
         return record is not None and record.contains(citation.quote)
 
-    def source_of(self, quote: str) -> str | None:
-        """The one record containing this quote verbatim, if there is exactly one.
+    def locate(self, quote: str) -> QuoteMatch | None:
+        """Where this quote really came from, in the source's own characters.
 
-        Used to correct a citation that quotes accurately and labels wrongly.
-        Across dozens of records that is a common slip, and the correct id is
-        not a matter of opinion — it is wherever the text actually is. When the
-        quote appears in several records, or in none, this returns ``None`` and
-        the citation is rejected as before.
+        Tolerates the typography a model rewrites without meaning to — case,
+        spacing, hyphens, curly quotes — and nothing else. See
+        :mod:`decision_lens.quoting` for why that line is drawn there.
         """
-        text = quote.strip()
-        if not text:
-            return None
-        found = {r.id for r in self.evidence if r.contains(text)}
-        return found.pop() if len(found) == 1 else None
+        return find_quote(quote, {r.id: r.content for r in self.evidence})
 
     def unresolvable(self, citations: Sequence[Citation]) -> tuple[Citation, ...]:
         return tuple(c for c in citations if not self.resolves(c))
@@ -128,14 +123,24 @@ def repair_citations(value: object, context: SkillContext, fixed: list[str]) -> 
     if isinstance(value, Citation):
         if context.resolves(value):
             return value
-        correct = context.source_of(value.quote)
-        if correct is None or correct == value.evidence_id:
+        match = context.locate(value.quote)
+        if match is None:
             return value
-        fixed.append(
-            f"A quote attributed to {value.evidence_id} was found in {correct}; "
-            "the citation was re-pointed there."
-        )
-        return value.model_copy(update={"evidence_id": correct})
+
+        repairs: dict[str, str] = {}
+        if match.evidence_id != value.evidence_id:
+            repairs["evidence_id"] = match.evidence_id
+            fixed.append(
+                f"A quote attributed to {value.evidence_id} was found in "
+                f"{match.evidence_id}; the citation was re-pointed there."
+            )
+        if match.text != value.quote:
+            repairs["quote"] = match.text
+            fixed.append(
+                f"A quote against {match.evidence_id} differed from the source only in "
+                f"typography; it was replaced with the source text: {match.text[:80]!r}."
+            )
+        return value.model_copy(update=repairs) if repairs else value
 
     if isinstance(value, BaseModel):
         updates = {}

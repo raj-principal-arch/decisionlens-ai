@@ -127,7 +127,10 @@ class ModelResponse(_Frozen):
         """Contribute this call to the run trace.
 
         The trace is what makes a brief reproducible: provider, model and prompt
-        version pinned, plus whether the answer came from cache.
+        version pinned, plus whether the answer came from cache, plus whatever
+        the provider warned about. Dropping the warnings here is how a cached
+        provider could say "the prompt has changed since this was recorded" into
+        a void for an entire evening.
         """
         return RunStage(
             name=name,
@@ -138,6 +141,7 @@ class ModelResponse(_Frozen):
             output_tokens=self.usage.output_tokens,
             latency_ms=self.latency_ms,
             error=error,
+            warnings=self.warnings,
         )
 
 

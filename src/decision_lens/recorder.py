@@ -42,7 +42,7 @@ from decision_lens.models import (
     EvidenceRequest,
 )
 from decision_lens.orchestrator import DecisionLens
-from decision_lens.prompts import REGISTRY
+from decision_lens.prompts import REGISTRY, Prompt
 
 __all__ = [
     "CHAINED_STAGES",
@@ -52,6 +52,7 @@ __all__ = [
     "ProgressFn",
     "RecordingProvider",
     "RecordingSummary",
+    "current_stage_prompts",
     "current_stage_versions",
     "estimate_run",
     "merge_into",
@@ -106,6 +107,20 @@ INDEPENDENT_STAGES: tuple[str, ...] = ("baseline",)
 EXPECTED_STAGES: tuple[str, ...] = CHAINED_STAGES + INDEPENDENT_STAGES
 
 
+def current_stage_prompts() -> dict[str, Prompt]:
+    """The prompt each stage will actually send on the next run.
+
+    Callers previewing a resume need both halves of the identity: the version,
+    which forms the cache key, and the fingerprint, which says whether the text
+    behind that key still matches. Checking only the version is what let two
+    edited prompts keep serving stale recordings.
+    """
+    import decision_lens.prompts.baseline  # noqa: F401  registers the baseline prompt
+    import decision_lens.prompts.decisionlens  # noqa: F401  registers the skill prompts
+
+    return {stage: REGISTRY.latest(stage) for stage in EXPECTED_STAGES}
+
+
 def current_stage_versions() -> dict[str, str]:
     """The prompt version each stage will ask for on the next run.
 
@@ -121,10 +136,7 @@ def current_stage_versions() -> dict[str, str]:
     assumption that makes it valid: every stage runs its latest registered
     prompt, so `latest` is what the run will actually request.
     """
-    import decision_lens.prompts.baseline  # noqa: F401  registers the baseline prompt
-    import decision_lens.prompts.decisionlens  # noqa: F401  registers the skill prompts
-
-    return {stage: REGISTRY.latest(stage).version for stage in EXPECTED_STAGES}
+    return {stage: p.version for stage, p in current_stage_prompts().items()}
 
 
 def stages_worth_reusing(cached: set[str]) -> set[str]:
@@ -200,13 +212,25 @@ class RecordingProvider:
 
         Only when the caller explicitly asked to resume. A recording run costs
         real money and most of it is usually stages that already worked; making
-        someone re-buy those to fix one is waste. Every reuse is announced, so
-        this cannot quietly serve something stale.
+        someone re-buy those to fix one is waste.
+
+        Reuse is decided on the prompt's fingerprint, not on its version. The
+        version is a human declaration and humans forget: two prompts here were
+        edited after being recorded and left at v1, so every resumed run went on
+        replaying answers to the superseded wording. Announcing each reuse did
+        not help, because the announcement looked identical either way. The
+        fingerprint is derived from the text, so it cannot be forgotten.
         """
         if self._resume_from is None:
             return None
         entry = self._resume_from.responses.get(request.cache_key)
         if entry is None:
+            return None
+        if entry.prompt_fingerprint and entry.prompt_fingerprint != request.prompt_fingerprint:
+            self._say(
+                f"  [{self._calls}/{self._total}] {request.skill} — recording again: the "
+                "prompt text has changed since this was recorded"
+            )
             return None
         if request.skill in CHAINED_STAGES and self._chain_broken:
             self._say(

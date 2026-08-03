@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict
 
 from decision_lens.models import Contradiction
 from decision_lens.prompts import Prompt
-from decision_lens.prompts.decisionlens import CONTRADICTIONS_V1
+from decision_lens.prompts.decisionlens import CONTRADICTIONS_V2
 from decision_lens.rendering import render_evidence
 from decision_lens.skills.base import Skill, SkillContext
 
@@ -45,7 +45,7 @@ class ContradictionsSkill(Skill[ContradictionsOutput]):
 
     @property
     def prompt(self) -> Prompt:
-        return CONTRADICTIONS_V1
+        return CONTRADICTIONS_V2
 
     @property
     def output_model(self) -> type[ContradictionsOutput]:

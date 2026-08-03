@@ -206,11 +206,14 @@ class TestSkillContract:
 
     def test_every_call_is_traceable_to_a_prompt_version(self) -> None:
         provider = FakeProvider(json.dumps({"contradictions": []}))
-        ContradictionsSkill(provider).run(_context(_record("EV-1", "x")))
+        skill = ContradictionsSkill(provider)
+        skill.run(_context(_record("EV-1", "x")))
         sent = provider.requests[0]
         assert sent.skill == "contradictions"
-        assert sent.prompt_version == "v1"
-        assert sent.prompt_fingerprint
+        # Whatever the skill declares, not a pinned literal: the claim under test
+        # is that the request carries the version, not which version it is today.
+        assert sent.prompt_version == skill.prompt.version
+        assert sent.prompt_fingerprint == skill.prompt.fingerprint
 
 
 # --------------------------------------------------------------------------- #
@@ -1245,7 +1248,9 @@ class TestCitationRepair:
 
         assert isinstance(repaired, Citation)
         assert repaired.evidence_id == "EV-1"
-        assert repaired.quote == citation.quote, "the quote is never altered"
+        assert repaired.quote == citation.quote, (
+            "an already-verbatim quote is never rewritten; only the label moved"
+        )
         assert "was found in EV-1" in fixed[0]
 
     def test_a_correct_citation_is_untouched_and_unremarked(self) -> None:
@@ -1263,6 +1268,54 @@ class TestCitationRepair:
 
         context = self._context()
         citation = Citation(evidence_id="EV-1", quote="Exceptions fell by half last quarter.")
+        fixed: list[str] = []
+
+        assert repair_citations(citation, context, fixed) is citation
+        assert fixed == []
+        assert context.unresolvable((citation,)) == (citation,)
+
+    def test_a_quote_differing_only_in_typography_is_snapped_to_the_source(self) -> None:
+        """One missing hyphen cost a 29-minute recording run. Not twice.
+
+        The repair rewrites the quote to the source's own characters rather than
+        loosening the check, so what lands in the brief is genuinely verbatim
+        and a reader who searches the evidence for it will find it.
+        """
+        from decision_lens.skills.base import repair_citations
+
+        context = _context(_record("EV-1", "First-attempt success was 88.1% in the pilot."))
+        citation = Citation(evidence_id="EV-1", quote="first attempt success was 88.1%")
+        fixed: list[str] = []
+        repaired = repair_citations(citation, context, fixed)
+
+        assert isinstance(repaired, Citation)
+        assert repaired.quote == "First-attempt success was 88.1%"
+        assert context.resolves(repaired), "the repaired citation must actually resolve"
+        assert "typography" in fixed[0]
+
+    def test_a_wrong_id_and_wrong_typography_are_both_repaired_and_both_reported(self) -> None:
+        from decision_lens.skills.base import repair_citations
+
+        context = _context(
+            _record("EV-1", "Gate was locked and the driver did not have the code."),
+            _record("EV-2", "Unrelated."),
+        )
+        citation = Citation(evidence_id="EV-2", quote="gate was locked and the driver")
+        fixed: list[str] = []
+        repaired = repair_citations(citation, context, fixed)
+
+        assert isinstance(repaired, Citation)
+        assert repaired.evidence_id == "EV-1"
+        assert repaired.quote == "Gate was locked and the driver"
+        assert context.resolves(repaired)
+        assert len(fixed) == 2, "a reader is told about both corrections, not one"
+
+    def test_a_changed_number_is_never_snapped(self) -> None:
+        """The line the repair must not cross: this is a different claim."""
+        from decision_lens.skills.base import repair_citations
+
+        context = _context(_record("EV-1", "First-attempt success was 88.1% in the pilot."))
+        citation = Citation(evidence_id="EV-1", quote="First-attempt success was 87.6%")
         fixed: list[str] = []
 
         assert repair_citations(citation, context, fixed) is citation
@@ -1349,4 +1402,4 @@ class TestCitationRepair:
 
     def test_a_blank_quote_resolves_to_nothing(self) -> None:
         """Guard: an empty string is contained by every record."""
-        assert self._context().source_of("   ") is None
+        assert self._context().locate("   ") is None

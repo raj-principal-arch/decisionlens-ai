@@ -30,7 +30,7 @@ from decision_lens.models import (
     SupportLevel,
 )
 from decision_lens.prompts import Prompt
-from decision_lens.prompts.decisionlens import CLASSIFICATION_V1
+from decision_lens.prompts.decisionlens import CLASSIFICATION_V2
 from decision_lens.rendering import render_evidence
 from decision_lens.skills.base import SKILL_TIMEOUT_SECONDS, Skill, SkillContext
 
@@ -98,7 +98,7 @@ class ClassificationSkill(Skill[ClassificationOutput]):
 
     @property
     def prompt(self) -> Prompt:
-        return CLASSIFICATION_V1
+        return CLASSIFICATION_V2
 
     @property
     def output_model(self) -> type[ClassificationOutput]:

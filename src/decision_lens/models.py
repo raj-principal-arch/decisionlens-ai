@@ -709,6 +709,12 @@ class RunStage(_Frozen):
     output_tokens: int | None = None
     latency_ms: int | None = None
     error: str = ""
+    #: Anything the provider wanted the reader to know about how this answer was
+    #: obtained — replayed rather than called, or replayed from a recording whose
+    #: prompt has since been edited. The cached provider emitted exactly that
+    #: second warning for two stages and nobody saw it, because the trace had
+    #: nowhere to put it and the report had nothing to print.
+    warnings: tuple[str, ...] = ()
 
     @property
     def succeeded(self) -> bool:

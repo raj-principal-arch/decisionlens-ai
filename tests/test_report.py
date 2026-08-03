@@ -20,6 +20,8 @@ from decision_lens.models import (
     DECISION_OWNER_NOTICE,
     SYNTHETIC_DATA_NOTICE,
     DecisionBrief,
+    RunStage,
+    RunTrace,
 )
 from decision_lens.orchestrator import DecisionLens, record_pm_decision
 from tests.scripted import case_with_cache
@@ -270,3 +272,39 @@ def test_issues_render_as_one_line_each(tmp_path: Path) -> None:
 
     for issue in brief.validation_issues:
         assert "\n" not in issue.message
+
+
+class TestProviderWarningsReachThePage:
+    """A warning nobody prints is the same as no warning.
+
+    The cached provider already said "the prompt has changed since this response
+    was recorded" for two stages. `RunStage` had no field to hold it and the
+    report had no line to print it, so the sentence was constructed and dropped
+    on every run for an entire evening. These pin the whole path.
+    """
+
+    @staticmethod
+    def _with(brief: DecisionBrief, warnings: tuple[str, ...]) -> DecisionBrief:
+        stage = RunStage(name="classification", provider="cached-demo", warnings=warnings)
+        trace = RunTrace(run_id="r1", request_id="q1", stages=(stage,))
+        return brief.model_copy(update={"run_trace": trace})
+
+    def test_a_stale_prompt_warning_is_printed(self, brief: DecisionBrief) -> None:
+        note = "The prompt has changed since this was recorded."
+        text = report.to_markdown(self._with(brief, (note,)))
+        assert "Notes on how these answers were obtained" in text
+        assert note in text
+        assert "`classification`" in text
+
+    def test_several_warnings_are_all_printed(self, brief: DecisionBrief) -> None:
+        text = report.to_markdown(self._with(brief, ("first thing", "second thing")))
+        assert "first thing" in text
+        assert "second thing" in text
+
+    def test_no_warnings_means_no_empty_heading(self, brief: DecisionBrief) -> None:
+        text = report.to_markdown(self._with(brief, ()))
+        assert "Notes on how these answers were obtained" not in text
+
+    def test_the_warning_survives_the_json_artifact_too(self, brief: DecisionBrief) -> None:
+        payload = json.loads(report.to_json(self._with(brief, ("prompt changed",))))
+        assert payload["brief"]["run_trace"]["stages"][0]["warnings"] == ["prompt changed"]
