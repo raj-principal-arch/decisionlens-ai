@@ -196,7 +196,7 @@ def _sidebar() -> dict[str, Any]:
         "live": live,
         "api_key": api_key,
         "model": model,
-        "run": st.sidebar.button("Produce a brief", type="primary", use_container_width=True),
+        "run": st.sidebar.button("Produce a brief", type="primary", width="stretch"),
     }
 
 
@@ -461,7 +461,7 @@ def _trace(brief: DecisionBrief) -> None:
             }
             for s in trace.stages
         ],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -473,13 +473,13 @@ def _exports(brief: DecisionBrief) -> None:
         "DecisionBrief (Markdown)",
         report.to_markdown(brief),
         file_name=f"{brief.id}.md",
-        use_container_width=True,
+        width="stretch",
     )
     right.download_button(
         "DecisionBrief (JSON)",
         report.to_json(brief),
         file_name=f"{brief.id}.json",
-        use_container_width=True,
+        width="stretch",
         mime="application/json",
     )
 
