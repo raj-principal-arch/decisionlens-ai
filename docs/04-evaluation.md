@@ -76,7 +76,7 @@ offline, so a correction to an answer key never requires re-recording.
 
 | Metric | DecisionLens | Baseline |
 |---|---|---|
-| Contradiction recall | **36/50 (72%)** | 32/50 (64%) |
+| Contradiction recall | **36/50 (72.0%)** | 32/50 (64.0%) |
 | Citation validity | **1451/1451 (100%)** | 967/969 (99.8%) |
 | Uncited claims | 0/534 | 0/236 |
 | Options generated | 134 | 79 |

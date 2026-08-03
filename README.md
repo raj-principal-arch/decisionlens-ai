@@ -16,7 +16,7 @@ To support those decisions, DecisionLens turns fragmented evidence into a tracea
 
 ## Current status
 
-> **Phases 0–9 complete. The prototype runs.**
+> **Phases 0–11 complete. The prototype runs and has been evaluated.**
 >
 > ```bash
 > make setup && make demo
@@ -24,7 +24,9 @@ To support those decisions, DecisionLens turns fragmented evidence into a tracea
 >
 > No API key, no network. The bundled case replays from responses recorded from `claude-opus-5`, and produces a decision brief in `out/`.
 >
-> **There are still no evaluation results.** The harness that would compare DecisionLens against its baseline is Phase 10 and has not been run. No performance claim, measured margin, or user finding appears anywhere in this repository, and [04 — Evaluation](docs/04-evaluation.md) is marked empty where results will go.
+> **Start here: [00 — Submission Summary](docs/00-submission.md)** answers the five questions in the assignment directly.
+>
+> Evaluation results are measured and published: eleven cases, both arms, 88 recorded stages. See [04 — Evaluation](docs/04-evaluation.md). No real-PM research was conducted; that study is designed, not run.
 
 | Phase | Deliverable | State |
 |---|---|---|
@@ -38,11 +40,11 @@ To support those decisions, DecisionLens turns fragmented evidence into a tracea
 | 7 | Analysis skills | Complete |
 | 8 | Orchestrator, challenger, validation, provenance | Complete |
 | 9 | Rendering, CLI, structured Streamlit UI | Complete |
-| 10 | Evaluation harness and results | Not started |
-| 11 | Enterprise ecosystem and governance docs | Not started |
+| 10 | Evaluation harness and results | Complete |
+| 11 | Enterprise ecosystem and governance docs | Complete |
 | 12 | Final quality review | Not started |
 
-821 tests, 100% line coverage, `mypy --strict` clean.
+988 tests, 100% line coverage, `mypy --strict` clean.
 
 ### What `make demo` prints today
 
@@ -204,18 +206,19 @@ decisionlens-ai/
 │       ├── prompts/      versioned prompts, shared heuristics
 │       ├── cli.py        run / record / show
 │       └── ui.py         the Streamlit interface
-└── tests/        821 tests, 100% line coverage
+└── tests/        988 tests, 100% line coverage
 ```
 
 ## Documentation
 
 | Document | Contents | State |
 |---|---|---|
+| [00 — Submission Summary](docs/00-submission.md) | The five assignment questions answered directly, with results and limitations | Complete |
 | [01 — Product Strategy](docs/01-product-strategy.md) | AI-native PM definition, problem selection, alternatives considered, hypothesis and falsifiability, scope, metrics, assumptions | Complete |
-| [02 — Ecosystem and Adoption](docs/02-ecosystem-and-adoption.md) | Maturity stages, tooling, skills, connectors, configuration layers, training, measurement | Outline (Phase 11) |
-| [03 — Architecture and Governance](docs/03-architecture-and-governance.md) | Prototype and enterprise architecture, connector model, permissions, governance, observability | Outline (Phase 11) |
-| [04 — Evaluation](docs/04-evaluation.md) | Baseline, test cases, ground truth, metrics, results, failures, real-PM study | Outline (Phase 10). Commitments and known limitations recorded; **results empty** |
-| [05 — Decision Log](docs/05-decision-log.md) | How the framing evolved, what was rejected, how AI was used to build this | Maintained continuously (D1–D14) |
+| [02 — Ecosystem and Adoption](docs/02-ecosystem-and-adoption.md) | Maturity stages, tooling, skills, connectors, configuration layers, training, measurement | Complete (design; only DecisionLens is built) |
+| [03 — Architecture and Governance](docs/03-architecture-and-governance.md) | Prototype and enterprise architecture, connector model, permissions, governance, observability | Complete; every claim marked [Built] or [Design] |
+| [04 — Evaluation](docs/04-evaluation.md) | Baseline, test cases, ground truth, metrics, results, failures, real-PM study | **Results measured** across 11 cases; real-PM study designed, not conducted |
+| [05 — Decision Log](docs/05-decision-log.md) | How the framing evolved, what was rejected, how AI was used to build this | Maintained continuously (D1–D15) |
 
 ---
 
