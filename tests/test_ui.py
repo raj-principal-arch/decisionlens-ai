@@ -302,18 +302,22 @@ def test_a_disagreement_without_a_reason_is_refused(rendered_app: Any) -> None:
     assert any("override_reason" in e.value for e in app.error)
 
 
-def test_pressing_the_button_with_an_empty_cache_explains_itself() -> None:
-    """The bundled cache ships empty until someone records; say so, don't crash."""
-    app = AppTest.from_file(UI_PATH, default_timeout=120).run()
+def test_pressing_the_button_produces_a_brief_or_explains_why_not() -> None:
+    """Deliberately agnostic about whether the packaged cache has recordings.
+
+    An earlier version asserted the cache-miss message, which quietly depended
+    on the cache shipping empty. The moment real recordings landed the test
+    failed, having tested the fixture rather than the behaviour. What actually
+    matters is that pressing the button never raises, and that the outcome is
+    either a brief or a stated reason.
+    """
+    app = AppTest.from_file(UI_PATH, default_timeout=180).run()
     app.sidebar.button[0].click().run()
 
     assert not app.exception
-    rendered = " ".join(
-        [i.value for i in app.error]
-        + [c.value for c in app.caption]
-        + [w.value for w in app.warning]
-    )
-    assert "decisionlens record" in rendered or "should not be acted on" in rendered
+    produced_a_brief = any(h.value == "Recommendation" for h in app.subheader)
+    explained = any("decisionlens record" in c.value for c in app.caption) or bool(app.error)
+    assert produced_a_brief or explained
 
 
 # --------------------------------------------------------------------------- #
@@ -424,9 +428,22 @@ loaded = load_case(Path(os.environ["DL_CASE"]))
 brief = DecisionLens(
     CachedDemoProvider(Path(os.environ["DL_CACHE"])), loaded.sources, as_of=loaded.as_of
 ).run(loaded.request)
+from decision_lens.models import ValidationIssue, ValidationSeverity
+
 render(
     brief.model_copy(
-        update={"contradictions": (), "recommendation": None, "claims": ()}
+        update={
+            "contradictions": (),
+            "recommendation": None,
+            "claims": (),
+            "validation_issues": (
+                ValidationIssue(
+                    code="section_missing",
+                    severity=ValidationSeverity.ERROR,
+                    message="No recommendation was produced.",
+                ),
+            ),
+        }
     )
 )
 """
@@ -448,4 +465,7 @@ def test_empty_sections_say_what_is_absent_rather_than_showing_nothing(
     assert "That is not the same as none existing" in captions
     assert "No experiment was proposed" in captions
     assert any("No recommendation was produced" in e.value for e in app.error)
+    assert any("should not be acted on as it stands" in e.value for e in app.error), (
+        "a brief with blocking errors says so above the answer"
+    )
     assert any("No claims were extracted" in i.value for i in app.info)

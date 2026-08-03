@@ -609,8 +609,11 @@ def test_resuming_still_calls_for_what_is_missing(case: Path) -> None:
         resume_from=partial,
     )
 
-    assert live.calls == ["alternatives", "recommendation"]
-    assert len(summary.reused) == 6
+    # `challenger` is re-recorded too: it reads the alternatives and the
+    # recommendation, so a cached one would have been produced from state that
+    # no longer exists.
+    assert live.calls == ["alternatives", "recommendation", "challenger"]
+    assert len(summary.reused) == 5
     assert len(summary.keys) == 8
 
 
@@ -666,3 +669,124 @@ def test_without_resume_everything_is_called_again(case: Path) -> None:
     )
     assert len(live.calls) == 8
     assert summary.reused == []
+
+
+# --------------------------------------------------------------------------- #
+# Resume must not stitch together stages that never saw each other
+# --------------------------------------------------------------------------- #
+
+
+def test_stages_after_a_gap_are_not_reusable() -> None:
+    from decision_lens.recorder import stages_worth_reusing
+
+    cached = {"relevance", "classification", "contradictions", "recommendation", "baseline"}
+    # missing_evidence is the gap; everything chained after it is stale.
+    assert stages_worth_reusing(cached) == {
+        "relevance",
+        "classification",
+        "contradictions",
+        "baseline",
+    }
+
+
+def test_the_baseline_is_reusable_however_broken_the_chain_is() -> None:
+    """It is one call over the same evidence and depends on none of the chain."""
+    from decision_lens.recorder import stages_worth_reusing
+
+    assert stages_worth_reusing({"baseline"}) == {"baseline"}
+
+
+def test_a_complete_cache_is_entirely_reusable() -> None:
+    from decision_lens.recorder import EXPECTED_STAGES, stages_worth_reusing
+
+    assert stages_worth_reusing(set(EXPECTED_STAGES)) == set(EXPECTED_STAGES)
+
+
+def test_re_recording_a_stage_forces_everything_downstream_to_re_record(case: Path) -> None:
+    """The bug this prevents produced a recommendation selecting nothing.
+
+    A live run re-recorded `alternatives` and reused the `recommendation` and
+    `challenger` from a run where alternatives had failed. The cache then held
+    eleven options beside a recommendation that selected none of them.
+    """
+    loaded = load_case(case)
+    complete = DemoCache()
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=complete,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+    # Only `alternatives` is missing; the stages after it are present but stale.
+    del complete.responses[f"{CASE_ID}::alternatives::v1"]
+
+    live = FakeLive(_script(case))
+    record_case(
+        loaded.request,
+        loaded.sources,
+        live,
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        resume_from=complete,
+    )
+
+    assert live.calls == ["alternatives", "recommendation", "challenger"], (
+        "recommendation and challenger must be recorded again, not reused"
+    )
+
+
+def test_a_re_record_is_announced_as_such(case: Path) -> None:
+    loaded = load_case(case)
+    complete = DemoCache()
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=complete,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+    del complete.responses[f"{CASE_ID}::alternatives::v1"]
+
+    lines: list[str] = []
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        resume_from=complete,
+        progress=lines.append,
+    )
+    assert any("an earlier stage it depends on was re-recorded" in line for line in lines)
+
+
+def test_the_baseline_is_still_reused_when_the_chain_is_re_recorded(case: Path) -> None:
+    loaded = load_case(case)
+    complete = DemoCache()
+    record_case(
+        loaded.request,
+        loaded.sources,
+        FakeLive(_script(case)),
+        cache=complete,
+        as_of=loaded.as_of,
+        clock=CLOCK,
+    )
+    del complete.responses[f"{CASE_ID}::relevance::v1"]
+
+    live = FakeLive(_script(case))
+    summary = record_case(
+        loaded.request,
+        loaded.sources,
+        live,
+        cache=DemoCache(),
+        as_of=loaded.as_of,
+        clock=CLOCK,
+        resume_from=complete,
+    )
+    assert "baseline" not in live.calls
+    assert f"{CASE_ID}::baseline::v1" in summary.reused

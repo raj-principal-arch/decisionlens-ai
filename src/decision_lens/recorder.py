@@ -44,7 +44,9 @@ from decision_lens.models import (
 from decision_lens.orchestrator import DecisionLens
 
 __all__ = [
+    "CHAINED_STAGES",
     "EXPECTED_STAGES",
+    "INDEPENDENT_STAGES",
     "LIVE_SKILL_TIMEOUT_SECONDS",
     "ProgressFn",
     "RecordingProvider",
@@ -52,6 +54,7 @@ __all__ = [
     "estimate_run",
     "merge_into",
     "record_case",
+    "stages_worth_reusing",
 ]
 
 #: A live model reasoning over a full evidence corpus is far slower than replaying
@@ -79,8 +82,11 @@ _CHARS_PER_TOKEN = 4
 #: recorder does not care whether it is writing to a terminal, a log, or nothing.
 ProgressFn = Callable[[str], None]
 
-#: The stages a full recording makes, in order, for the progress counter.
-EXPECTED_STAGES: tuple[str, ...] = (
+#: The DecisionLens stages, in the order they run. Each is fed by the ones before
+#: it: alternatives sees the classified claims, the recommendation sees the
+#: alternatives, the challenger sees all of it. Re-recording any of them makes
+#: every later one stale.
+CHAINED_STAGES: tuple[str, ...] = (
     "relevance",
     "classification",
     "contradictions",
@@ -88,8 +94,31 @@ EXPECTED_STAGES: tuple[str, ...] = (
     "alternatives",
     "recommendation",
     "challenger",
-    "baseline",
 )
+
+#: One well-prompted call over the same evidence, depending on none of the above.
+#: Safe to reuse however much of the chain was re-recorded.
+INDEPENDENT_STAGES: tuple[str, ...] = ("baseline",)
+
+#: The stages a full recording makes, in order, for the progress counter.
+EXPECTED_STAGES: tuple[str, ...] = CHAINED_STAGES + INDEPENDENT_STAGES
+
+
+def stages_worth_reusing(cached: set[str]) -> set[str]:
+    """Which cached stages a resumed run may serve, given what is missing.
+
+    Everything up to the first gap in the chain, plus the independent stages.
+    A stage after the gap was produced from different upstream state — reusing
+    it stitches together a brief whose parts never saw each other, which is
+    exactly how a recommendation selecting nothing ended up beside eleven
+    perfectly good options.
+    """
+    usable = set(INDEPENDENT_STAGES) & cached
+    for stage in CHAINED_STAGES:
+        if stage not in cached:
+            break
+        usable.add(stage)
+    return usable
 
 
 class RecordingProvider:
@@ -124,6 +153,7 @@ class RecordingProvider:
         self._progress = progress
         self._total = total
         self._resume_from = resume_from
+        self._chain_broken = False
         self._calls = 0
         self.recorded: list[str] = []
         self.reused: list[str] = []
@@ -154,6 +184,12 @@ class RecordingProvider:
             return None
         entry = self._resume_from.responses.get(request.cache_key)
         if entry is None:
+            return None
+        if request.skill in CHAINED_STAGES and self._chain_broken:
+            self._say(
+                f"  [{self._calls}/{self._total}] {request.skill} — recording again: an "
+                "earlier stage it depends on was re-recorded"
+            )
             return None
 
         self.cache.add(entry)
@@ -194,6 +230,9 @@ class RecordingProvider:
                 f"{elapsed:.0f}s: {type(exc).__name__}"
             )
             raise
+
+        if request.skill in CHAINED_STAGES:
+            self._chain_broken = True
 
         elapsed = time.perf_counter() - started
         self._say(
