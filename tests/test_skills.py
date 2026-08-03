@@ -21,10 +21,15 @@ import pytest
 from decision_lens.connectors import LocalFileEvidenceSource
 from decision_lens.llm import ModelRequest, ModelResponse, ModelUnavailable, ModelUsage
 from decision_lens.models import (
+    Alternative,
     AssessmentState,
+    Citation,
     ClaimType,
+    Contradiction,
+    ContradictionKind,
     DecisionRequest,
     Dimension,
+    DimensionAssessment,
     EvidenceRecord,
     EvidenceRequest,
     EvidenceType,
@@ -1208,3 +1213,140 @@ class TestRetrievalBoundaryIsStructural:
             "challenger",
         }
         assert len(SKILL_NAMES) == len(set(SKILL_NAMES))
+
+
+class TestCitationRepair:
+    """Re-labelling a citation that quotes real text against the wrong record.
+
+    From a live run that failed twice on exactly this: the model quoted a
+    delivery comment word for word and attributed it to a neighbouring record.
+    The quote is verifiable, so the correct id is a fact rather than a guess —
+    but only when one record contains it.
+    """
+
+    @staticmethod
+    def _context() -> SkillContext:
+        return _context(
+            _record("EV-1", "Gate was locked and the driver did not have the code."),
+            _record("EV-2", "Would be helpful to know the delivery window."),
+            _record("EV-3", "Address errors account for 40% of exceptions."),
+        )
+
+    def test_a_quote_found_in_exactly_one_other_record_is_re_pointed(self) -> None:
+        from decision_lens.skills.base import repair_citations
+
+        context = self._context()
+        # Correct quote, wrong id — the shape the live run produced.
+        citation = Citation(
+            evidence_id="EV-2", quote="Gate was locked and the driver did not have the code."
+        )
+        fixed: list[str] = []
+        repaired = repair_citations(citation, context, fixed)
+
+        assert isinstance(repaired, Citation)
+        assert repaired.evidence_id == "EV-1"
+        assert repaired.quote == citation.quote, "the quote is never altered"
+        assert "was found in EV-1" in fixed[0]
+
+    def test_a_correct_citation_is_untouched_and_unremarked(self) -> None:
+        from decision_lens.skills.base import repair_citations
+
+        context = self._context()
+        citation = Citation(evidence_id="EV-3", quote="Address errors account for 40%")
+        fixed: list[str] = []
+        assert repair_citations(citation, context, fixed) is citation
+        assert fixed == []
+
+    def test_an_invented_quote_is_left_alone_to_be_rejected(self) -> None:
+        """Repair is for mislabelling. A quote in no record stays broken."""
+        from decision_lens.skills.base import repair_citations
+
+        context = self._context()
+        citation = Citation(evidence_id="EV-1", quote="Exceptions fell by half last quarter.")
+        fixed: list[str] = []
+
+        assert repair_citations(citation, context, fixed) is citation
+        assert fixed == []
+        assert context.unresolvable((citation,)) == (citation,)
+
+    def test_an_ambiguous_quote_is_left_alone(self) -> None:
+        """Two records contain it, so which one was meant is not knowable."""
+        from decision_lens.skills.base import repair_citations
+
+        context = _context(
+            _record("EV-1", "Delivery failed."),
+            _record("EV-2", "Delivery failed."),
+        )
+        citation = Citation(evidence_id="EV-9", quote="Delivery failed.")
+        fixed: list[str] = []
+
+        assert repair_citations(citation, context, fixed) is citation
+        assert fixed == []
+
+    def test_repair_reaches_citations_nested_deep_in_an_output(self) -> None:
+        """Alternatives carry citations three levels down, inside assessments."""
+        from decision_lens.skills.alternatives import AlternativesOutput
+        from decision_lens.skills.base import repair_citations
+
+        context = self._context()
+        misattributed = Citation(
+            evidence_id="EV-3", quote="Gate was locked and the driver did not have the code."
+        )
+        output = AlternativesOutput(
+            alternatives=(
+                Alternative(
+                    id="ALT-1",
+                    name="Validate addresses",
+                    kind=OptionKind.DATA_QUALITY,
+                    supporting=(misattributed,),
+                    assessments=(
+                        DimensionAssessment(
+                            dimension=Dimension.RISK,
+                            state=AssessmentState.ASSESSED,
+                            summary="Bounded.",
+                            citations=(misattributed,),
+                        ),
+                    ),
+                ),
+            )
+        )
+        fixed: list[str] = []
+        repaired = repair_citations(output, context, fixed)
+
+        assert isinstance(repaired, AlternativesOutput)
+        alt = repaired.alternatives[0]
+        assert alt.supporting[0].evidence_id == "EV-1"
+        assert alt.assessments[0].citations[0].evidence_id == "EV-1"
+        assert len(fixed) == 2
+
+    def test_a_stage_survives_a_mislabelled_citation_and_says_so(self) -> None:
+        """End to end: the run succeeds, and the correction is reported."""
+        from decision_lens.skills.contradictions import ContradictionsOutput
+
+        context = self._context()
+        good = Citation(evidence_id="EV-3", quote="Address errors account for 40% of exceptions.")
+        wrong = Citation(
+            evidence_id="EV-3", quote="Gate was locked and the driver did not have the code."
+        )
+        text = ContradictionsOutput(
+            contradictions=(
+                Contradiction(
+                    id="CN-1",
+                    topic="cause",
+                    kind=ContradictionKind.CLAIM_CONFLICT,
+                    side_a=good,
+                    side_b=wrong,
+                    how_to_resolve="Recount by cause.",
+                ),
+            )
+        ).model_dump_json()
+
+        run = ContradictionsSkill(FakeProvider(text)).run(context)
+
+        assert run.output.contradictions[0].side_b.evidence_id == "EV-1"
+        assert any("was found in EV-1" in w for w in run.warnings)
+        assert not run.retried, "the stage was not thrown away over a label"
+
+    def test_a_blank_quote_resolves_to_nothing(self) -> None:
+        """Guard: an empty string is contained by every record."""
+        assert self._context().source_of("   ") is None
