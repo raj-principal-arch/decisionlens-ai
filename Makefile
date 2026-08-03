@@ -3,11 +3,11 @@ VENV   := .venv
 BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help setup setup-live check test coverage lint typecheck format demo ui record record-resume clean
+.PHONY: help setup setup-live check test coverage lint typecheck format demo ui record record-resume eval-record eval clean
 
 help: ## Show available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
-		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-13s\033[0m %s\n", $$1, $$2}'
+		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
 setup: ## Create .venv and install the package with dev and UI dependencies
 	$(PYTHON) -m venv $(VENV)
@@ -83,6 +83,17 @@ record: ## Call a real model once and record its responses for offline replay
 # fails whenever the editable install is in the broken state described above.
 record-resume: ## Re-record only the stages the cache can no longer replay
 	@$(DL) record --resume || test $$? -eq 2
+
+# The expensive one. Records every evaluation case, both arms, into
+# evals/recordings/. Hours, and real money. Resumable: re-running reuses
+# whatever already landed, so an interruption costs time and not budget.
+eval-record: ## Record every evaluation case against a live model (costs money)
+	@bash scripts/record_all_cases.sh
+
+# Free, offline, deterministic. Deliberately separate from recording: an answer
+# key can be corrected and everything re-scored without re-buying a single call.
+eval: ## Score every recorded case and write evals/results/
+	@$(BIN)/python scripts/score_all_cases.py
 
 clean: ## Remove the virtualenv and build artifacts
 	rm -rf $(VENV) build dist .pytest_cache .ruff_cache .mypy_cache

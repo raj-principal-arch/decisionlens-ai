@@ -18,10 +18,14 @@ Three properties the contract enforces rather than suggests:
 
 from __future__ import annotations
 
+import json
+import re
 import time
 from abc import ABC, abstractmethod
+from collections import Counter
 from datetime import datetime
-from typing import Protocol, TypeVar, runtime_checkable
+from enum import Enum
+from typing import Protocol, TypeVar, get_args, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -229,6 +233,160 @@ class BaseModelProvider(ABC):
 # --------------------------------------------------------------------------- #
 
 
+def _field_key(name: str) -> str:
+    """Fold a field name to what it means, ignoring how it was punctuated."""
+    return "".join(c for c in name.lower() if c.isalnum())
+
+
+def _repair_keys(value: object, schema: type[BaseModel]) -> object:
+    """Snap near-miss field names onto the ones the schema declares.
+
+    A live run lost an entire stage — every contradiction it had found — because
+    the model wrote ``how_to resolve`` with a space instead of an underscore.
+    One character, and the work was discarded.
+
+    Rejecting that is defensible but pointless. The name is unambiguous: exactly
+    one declared field folds to the same letters, and no judgment is involved in
+    identifying it. So it is corrected here rather than thrown away. What is NOT
+    done is inventing a value, dropping an unrecognised key, or guessing between
+    two plausible fields — a name that folds onto two candidates, or onto none,
+    is left exactly as it arrived and fails validation as before.
+
+    Only key spelling is touched. Every value passes through untouched, so this
+    cannot turn malformed content into content that merely looks valid.
+    """
+    if isinstance(value, list):
+        return [_repair_keys(v, schema) for v in value]
+    if not isinstance(value, dict):
+        return value
+
+    declared = {_field_key(n): n for n in schema.model_fields}
+    # A folded name shared by two declared fields identifies neither.
+    ambiguous = {
+        k for k in declared if sum(1 for n in schema.model_fields if _field_key(n) == k) > 1
+    }
+
+    out: dict[str, object] = {}
+    for key, item in value.items():
+        target = key
+        if key not in schema.model_fields:
+            folded = _field_key(key)
+            if folded in declared and folded not in ambiguous:
+                target = declared[folded]
+        field = schema.model_fields.get(target)
+        nested = _nested_model(field.annotation) if field is not None else None
+        out[target] = _repair_keys(item, nested) if nested is not None else item
+    return out
+
+
+def _nested_model(annotation: object) -> type[BaseModel] | None:
+    """The BaseModel inside ``X``, ``X | None``, ``tuple[X, ...]``, ``list[X]``."""
+    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+        return annotation
+    for arg in get_args(annotation):
+        found = _nested_model(arg)
+        if found is not None:
+            return found
+    return None
+
+
+def _enum_values(annotation: object) -> tuple[str, ...]:
+    """The string values of an Enum inside ``X``, ``X | None``, ``tuple[X, ...]``."""
+    if isinstance(annotation, type) and issubclass(annotation, Enum):
+        return tuple(str(m.value) for m in annotation)
+    for arg in get_args(annotation):
+        found = _enum_values(arg)
+        if found:
+            return found
+    return ()
+
+
+def _closest_enum(written: str, allowed: tuple[str, ...]) -> str | None:
+    """The one allowed value a near-miss unambiguously means, or None.
+
+    A live stage was lost three times, retry included, because the model wrote
+    `would_change_scope` where the vocabulary offers `would_change_recommendation`,
+    `would_change_support_level` and `would_refine_scope`. The prompt lists all
+    three explicitly. It still happened, so this is corrected rather than
+    re-explained.
+
+    Plain word overlap cannot do it — every candidate shares exactly two words
+    with what was written. What identifies the intended value is that `scope`
+    occurs in only one of them, while `would` occurs in all three and carries no
+    information. So each shared word is weighted by how rare it is across the
+    vocabulary, and two conditions must both hold before anything is changed:
+
+    - one candidate scores strictly highest, and
+    - the match includes a word unique to that candidate.
+
+    The second condition is what stops a value being snapped on the strength of
+    filler alone. `would_change_everything` shares only `would` and `change`
+    with two candidates and is refused, which is correct: nobody can say which
+    was meant, and guessing would put a fabricated impact rating into a brief.
+    """
+    if not allowed or written in allowed:
+        return None
+    # Exact match once punctuation is ignored — `wouldRefineScope` for
+    # `would_refine_scope`. Same rule as field names, and equally safe: the
+    # letters are identical, only the separators moved.
+    folded = {_field_key(v): v for v in allowed}
+    counts = Counter(_field_key(v) for v in allowed)
+    key = _field_key(written)
+    if key in folded and counts[key] == 1:
+        return folded[key]
+
+    words = {w for w in re.split(r"[^a-z0-9]+", written.lower()) if w}
+    if not words:
+        return None
+
+    frequency = Counter(
+        w for value in allowed for w in set(re.split(r"[^a-z0-9]+", value.lower())) if w
+    )
+    scored: list[tuple[float, bool, str]] = []
+    for value in allowed:
+        shared = words & {w for w in re.split(r"[^a-z0-9]+", value.lower()) if w}
+        if not shared:
+            continue
+        score = sum(1.0 / frequency[w] for w in shared)
+        distinctive = any(frequency[w] == 1 for w in shared)
+        scored.append((score, distinctive, value))
+
+    if not scored:
+        return None
+    scored.sort(reverse=True)
+    best_score, distinctive, best = scored[0]
+    if not distinctive:
+        return None
+    if len(scored) > 1 and abs(scored[1][0] - best_score) < 1e-9:
+        return None
+    return best
+
+
+def _repair_enums(value: object, schema: type[BaseModel]) -> object:
+    """Snap near-miss enum values onto the vocabulary the schema declares."""
+    if isinstance(value, list):
+        return [_repair_enums(v, schema) for v in value]
+    if not isinstance(value, dict):
+        return value
+
+    out: dict[str, object] = {}
+    for key, item in value.items():
+        field = schema.model_fields.get(key)
+        if field is None:
+            out[key] = item
+            continue
+        nested = _nested_model(field.annotation)
+        if nested is not None:
+            out[key] = _repair_enums(item, nested)
+            continue
+        allowed = _enum_values(field.annotation)
+        if allowed and isinstance(item, str):
+            out[key] = _closest_enum(item, allowed) or item
+        else:
+            out[key] = item
+    return out
+
+
 def parse_structured(response: ModelResponse, schema: type[T]) -> T:
     """Validate a response into a typed model.
 
@@ -239,6 +397,19 @@ def parse_structured(response: ModelResponse, schema: type[T]) -> T:
     # One branch, not two: pydantic reports malformed JSON and a missing field
     # through the same ValidationError, so a separate "not valid JSON" handler
     # would be unreachable.
+    try:
+        return schema.model_validate_json(response.text)
+    except ValidationError:
+        pass
+
+    # Second chance, for punctuation only. If the text is not even JSON this
+    # raises again below with the original kind of message.
+    try:
+        repaired = _repair_enums(_repair_keys(json.loads(response.text), schema), schema)
+        return schema.model_validate(repaired)
+    except (ValidationError, json.JSONDecodeError, TypeError):
+        pass
+
     try:
         return schema.model_validate_json(response.text)
     except ValidationError as exc:

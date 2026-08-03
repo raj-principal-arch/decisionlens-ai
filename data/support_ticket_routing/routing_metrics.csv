@@ -1,0 +1,22 @@
+period,metric,value,unit,segment,note
+2025-Q1,routing_accuracy_department_level,78.2,percent,all,definition retired 2025-04-01 - department level - not comparable with queue level figures - synthetic
+2025-Q2,routing_accuracy_queue_level,70.8,percent,all,synthetic
+2025-Q3,routing_accuracy_queue_level,71.5,percent,all,synthetic
+2025-Q4,routing_accuracy_queue_level,71.9,percent,all,synthetic
+2026-Q1,routing_accuracy_queue_level,71.2,percent,all,synthetic
+2026-Q2,routing_accuracy_queue_level,71.4,percent,all,synthetic
+2025-Q2,median_time_to_resolution_hours,19.4,hours,all,synthetic
+2025-Q3,median_time_to_resolution_hours,19.9,hours,all,synthetic
+2025-Q4,median_time_to_resolution_hours,21.2,hours,all,synthetic
+2026-Q1,median_time_to_resolution_hours,22.0,hours,all,synthetic
+2026-Q2,median_time_to_resolution_hours,22.6,hours,all,synthetic
+2025-Q2,p90_time_to_resolution_hours,81.7,hours,all,synthetic
+2026-Q2,p90_time_to_resolution_hours,96.4,hours,all,synthetic
+2026-Q2,median_time_to_resolution_hours,14.2,hours,correctly_routed,tickets resolved in the queue they were first assigned to - synthetic
+2026-Q2,median_time_to_resolution_hours,51.8,hours,misrouted,tickets reassigned at least once before resolution - synthetic
+2026-Q2,median_time_to_resolution_hours,34.1,hours,technical_faults,synthetic
+2026-Q2,median_time_to_resolution_hours,11.3,hours,billing_and_payments,synthetic
+2025-Q2,reassignments_per_ticket,0.58,count,all,synthetic
+2026-Q2,reassignments_per_ticket,0.62,count,all,synthetic
+2026-Q2,tickets_reopened_within_14_days_percent,14.0,percent,all,each reopen creates a new record in the volume export - synthetic
+2026-Q2,csat_after_reassignment,,score,all,synthetic - field exists but was never populated

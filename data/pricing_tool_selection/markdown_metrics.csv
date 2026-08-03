@@ -1,0 +1,41 @@
+period,metric,value,unit,segment,note
+2026-Q2,markdown_loss_rate,4.9,percent,fresh_all,synthetic
+2026-Q1,markdown_loss_rate,4.4,percent,fresh_all,synthetic
+2025-Q4,markdown_loss_rate,4.0,percent,fresh_all,synthetic
+2025-Q3,markdown_loss_rate,5.1,percent,fresh_all,synthetic
+2025-Q2,markdown_loss_rate,4.2,percent,fresh_all,synthetic
+2025-Q1,markdown_loss_rate,3.9,percent,fresh_all,synthetic
+2026-Q2,waste_rate,3.3,percent,fresh_all,synthetic
+2026-Q1,waste_rate,2.9,percent,fresh_all,synthetic
+2025-Q4,waste_rate,2.5,percent,fresh_all,synthetic
+2025-Q3,waste_rate,3.2,percent,fresh_all,synthetic
+2025-Q2,waste_rate,2.7,percent,fresh_all,synthetic
+2025-Q1,waste_rate,2.6,percent,fresh_all,synthetic
+2026-Q2,total_fresh_loss_rate,8.2,percent,fresh_all,synthetic - markdown plus waste
+2026-Q1,total_fresh_loss_rate,7.3,percent,fresh_all,synthetic - markdown plus waste
+2025-Q4,total_fresh_loss_rate,6.5,percent,fresh_all,synthetic - markdown plus waste
+2025-Q3,total_fresh_loss_rate,8.3,percent,fresh_all,synthetic - markdown plus waste
+2025-Q2,total_fresh_loss_rate,6.9,percent,fresh_all,synthetic - markdown plus waste
+2025-Q1,total_fresh_loss_rate,6.5,percent,fresh_all,synthetic - markdown plus waste
+2026-Q2,on_shelf_availability_1700,92.6,percent,fresh_all,synthetic
+2026-Q1,on_shelf_availability_1700,93.4,percent,fresh_all,synthetic
+2025-Q4,on_shelf_availability_1700,94.0,percent,fresh_all,synthetic
+2025-Q2,on_shelf_availability_1700,93.8,percent,fresh_all,synthetic
+2024-Q3,markdown_loss_rate,11.4,percent,prepared_salads_and_cut_fruit,synthetic
+2024-Q4,markdown_loss_rate,8.2,percent,prepared_salads_and_cut_fruit,synthetic
+2025-Q1,markdown_loss_rate,7.6,percent,prepared_salads_and_cut_fruit,synthetic
+2025-Q2,markdown_loss_rate,9.1,percent,prepared_salads_and_cut_fruit,synthetic
+2025-Q3,markdown_loss_rate,11.8,percent,prepared_salads_and_cut_fruit,synthetic
+2025-Q4,markdown_loss_rate,8.4,percent,prepared_salads_and_cut_fruit,synthetic
+2026-Q1,markdown_loss_rate,7.9,percent,prepared_salads_and_cut_fruit,synthetic
+2026-Q2,markdown_loss_rate,9.6,percent,prepared_salads_and_cut_fruit,synthetic
+2026-Q2,markdown_loss_rate,6.4,percent,sandwiches_and_food_to_go,synthetic
+2026-Q2,markdown_loss_rate,5.2,percent,bakery,synthetic
+2026-Q2,markdown_loss_rate,3.6,percent,chilled_ready_meals,synthetic
+2026-Q2,markdown_loss_rate,2.6,percent,dairy,synthetic
+2026-Q2,category_share_of_fresh_sales,27.0,percent,sandwiches_and_food_to_go,synthetic
+2026-Q2,category_share_of_fresh_sales,31.0,percent,dairy,synthetic
+2026-Q2,category_share_of_fresh_sales,17.0,percent,chilled_ready_meals,synthetic
+2026-Q2,category_share_of_fresh_sales,14.0,percent,bakery,synthetic
+2026-Q2,category_share_of_fresh_sales,11.0,percent,prepared_salads_and_cut_fruit,synthetic
+2026-Q2,markdown_to_sale_conversion_rate,,percent,fresh_all,synthetic - never populated; the till does not distinguish a marked-down sale from a full-price sale

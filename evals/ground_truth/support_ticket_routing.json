@@ -1,0 +1,656 @@
+{
+  "case_id": "support_ticket_routing",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional consumer electronics retailer and a fictional support organisation. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to reduce time-to-resolution for support tickets?",
+  "desired_outcome": "Reduce median and p90 time-to-resolution for customer support tickets and reduce reassignment churn, without increasing cost per ticket, degrading resolution quality, removing agent control, or breaching the support governance policy.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M5 is must_detect false: it is a real gap, but finding it is credit rather than a requirement.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "definition_conflict",
+      "topic": "current routing accuracy",
+      "side_a": {
+        "source": "support_objectives.md",
+        "span": "Routing accuracy sits at 78%."
+      },
+      "side_b": {
+        "source": "routing_metrics.csv",
+        "span": "metric: routing_accuracy_queue_level\nvalue: 71.4"
+      },
+      "why_it_matters": "The FY26 objectives are planned against a figure produced under a metric definition retired on 2025-04-01, when a ticket counted as correctly routed if it reached one of three departments rather than one of five queues. Under the current definition accuracy has never exceeded 71.9%. Planning against 78% understates the routing problem by roughly seven points and makes the 12-hour resolution-time goal look closer than it is.",
+      "how_to_resolve": "data_tooling_notes.md records the redefinition, and routing_metrics.csv carries the old figure under a separate metric name. The 78% is the 2025-Q1 department-level number. It is not wrong, it is not comparable.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "claim_conflict",
+      "topic": "whether rule tuning has remaining headroom",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "We have not really invested in the rules engine."
+      },
+      "side_b": {
+        "source": "routing_engine_history.md",
+        "span": "Three expansion passes since v3 have moved queue-level accuracy from 70.8% to 71.4%, a gain of 0.6 percentage points across twelve months and 176 added rules."
+      },
+      "why_it_matters": "The cheapest option on the table — tune the rules again — rests on a belief the engineering record contradicts. Three dated expansion passes adding 176 rules produced 0.6 percentage points, and two of the three introduced ordering regressions. Treating the recollection as fact would justify a fourth pass on no basis.",
+      "how_to_resolve": "Ask the Head of Support which specific passes he has in mind and what he expects them to fix. The tuning log is dated and measured; the claim of 85% has no stated basis.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "measurement_conflict",
+      "topic": "how much ticket volume has grown",
+      "side_a": {
+        "source": "support_objectives.md",
+        "span": "Ticket volume is up 16.7% year over year, from 35,900 to 41,880 per quarter."
+      },
+      "side_b": {
+        "source": "data_tooling_notes.md",
+        "span": "The volume export counts records. A reopened issue therefore appears twice: once as the original closed record and once as the clone."
+      },
+      "why_it_matters": "5,140 of the 41,880 rows for 2026-Q2 are reopen clone records created by a platform change on 2025-10-14, and none of the 35,900 rows for 2025-Q2 are, because the behaviour did not exist then. Distinct customer issues went from 35,900 to 36,740, or 2.3%. The headline figure overstates the current quarter by 14% and the growth by roughly seven times, and the size of the problem is one of the inputs to whether any build is worth doing.",
+      "how_to_resolve": "Subtract reopen_rows_included from exported_rows before comparing any period across 2025-10-14. The tooling note gives the worked example for 2026-Q1.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "temporal_conflict",
+      "topic": "whether a model-based router is blocked by infrastructure spend",
+      "side_a": {
+        "source": "support_objectives.md",
+        "span": "No new machine-learning infrastructure spend in FY26."
+      },
+      "side_b": {
+        "source": "technical_constraints.md",
+        "span": "Adding a third model requires no new infrastructure and no new vendor."
+      },
+      "why_it_matters": "A reader who stops at the FY25 decision concludes that any model-based option is budget-blocked. The decision was taken on 2025-11-14 against a $180k quote for standing up dedicated serving infrastructure. That infrastructure was subsequently built for another team and went live on 2026-02-09.",
+      "how_to_resolve": "The decision is superseded in its premise rather than reversed. Confirm with engineering leadership that hosting a support model on Modelyard falls outside D-2025-11. Running and retraining cost remains unestimated, which is a separate and live question.",
+      "must_detect": true
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "What effect does the classifier have on time-to-resolution in production?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The whole question is about resolution time, and the strongest option has been measured only on routing accuracy, offline. The direction is well supported; the size of the resolution-time effect is not measured at all.",
+      "how_to_obtain": "Run the classifier in shadow alongside the rules engine for a quarter, logging both decisions and measuring time-to-resolution on the same tickets. The platform already supports shadow mode.",
+      "anchor": {
+        "source": "classifier_trial_report.md",
+        "span": "It did not measure time-to-resolution, because no ticket was routed by the classifier in production and no customer was affected."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "Why are tickets reopened?",
+      "impact": "would_change_sequencing",
+      "why_it_matters": "Reopens are 14.0% of resolved issues and 5,140 extra records a quarter. If reopens are driven by premature closure or incomplete first answers rather than by routing, reducing them could be a larger lever than routing and would be pursued first. Nothing in the corpus says which it is.",
+      "how_to_obtain": "Add a reason code to the reopen path, or hand-code a sample of reopened tickets against their originals.",
+      "anchor": {
+        "source": "data_tooling_notes.md",
+        "span": "There is no field recording why a ticket was reopened."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "What does it cost to run and retrain the classifier in production?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "Cost per ticket is a board-reported measure and the trial ran on unmetered shared capacity. The recommended option is uncosted on its running side, and quarterly re-evaluation is a governance requirement rather than an option.",
+      "how_to_obtain": "Modelyard serving estimate at 41,880 requests per quarter plus a retraining and quarterly-evaluation estimate from the data platform team.",
+      "anchor": {
+        "source": "classifier_trial_report.md",
+        "span": "We have not estimated the cost of running or retraining this model in production."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "What do agents do with a routing decision they disagree with, and what does a wrong automated route cost?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "Override is a governance requirement and the design depends on it, but no agent has ever been shown a prediction, and the platform logs reassignments without recording disagreement. A high override rate would erode the measured accuracy gain in practice.",
+      "how_to_obtain": "Instrument the shadow period to capture agent reassignments against the shadow prediction, and interview agents in the two queues with the largest confusion.",
+      "anchor": {
+        "source": "classifier_trial_report.md",
+        "span": "We did not measure what agents do with a routing decision they disagree with"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "What happens to resolution quality after a ticket is reassigned?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The satisfaction metric for reassigned tickets exists in the metrics table but was never populated. A blank is not a zero, and the case for routing rests partly on an assumption that reassignment harms the customer experience as well as the clock.",
+      "how_to_obtain": "Populate csat_after_reassignment, or join the existing satisfaction survey to the reassignment flag.",
+      "anchor": {
+        "source": "routing_metrics.csv",
+        "span": "metric: csat_after_reassignment\nunit: score"
+      },
+      "was_searched": true,
+      "must_detect": false
+    },
+    {
+      "id": "GT-M6",
+      "question": "Are misrouted tickets slower because they were misrouted, or were they misrouted because they were hard?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The 51.8-hour versus 14.2-hour gap is the number that makes routing look like the lever, and no complexity or effort score exists to control the comparison. Without it the gap is an upper bound on the available saving, not an estimate of it.",
+      "how_to_obtain": "Add an effort or complexity score to tickets, or compare resolution times within narrow ticket-type strata; the shadow period would also give a within-ticket comparison.",
+      "anchor": {
+        "source": "data_tooling_notes.md",
+        "span": "Comparisons between misrouted and correctly-routed tickets therefore cannot control for how hard the ticket was."
+      },
+      "was_searched": true,
+      "must_detect": true
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "Queue-level routing accuracy has stayed between 70.8% and 71.9% for five consecutive quarters, from 2025-Q2 to 2026-Q2.",
+      "source": "routing_metrics.csv",
+      "span": "metric: routing_accuracy_queue_level\nvalue: 70.8"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "Three documented rules expansion passes since v3, adding 176 rules across twelve months, moved queue-level accuracy by 0.6 percentage points, and support-engineering's own assessment is that keyword rules have reached their ceiling on this ticket mix.",
+      "source": "routing_engine_history.md",
+      "span": "keyword rules have reached their ceiling on this ticket mix"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "On a held-out set of 4,800 tickets the classifier routed 88.5% correctly against the production rules engine's 71.2% replayed on the same tickets.",
+      "source": "classifier_trial_report.md",
+      "span": "Overall the classifier routed 88.5% of held-out tickets to the correct queue against the rules engine's 71.2%."
+    },
+    {
+      "id": "GT-F4",
+      "statement": "The held-out set is an entire calendar quarter of tickets, 2026-01-01 to 2026-03-31, excluded from training, and the labels were audited on a 1,200-ticket subsample with 96.0% agreement with the label.",
+      "source": "classifier_trial_report.md",
+      "span": "None of them, and no ticket from that window, was used in training."
+    },
+    {
+      "id": "GT-F5",
+      "statement": "The classifier is less accurate than the rules engine in Billing & Payments: 83.7% against 84.7% on the same held-out tickets.",
+      "source": "classifier_trial_report.md",
+      "span": "In Billing & Payments the rules engine is more accurate: 84.7% against 83.7%."
+    },
+    {
+      "id": "GT-F6",
+      "statement": "5,140 of the 41,880 rows exported for 2026-Q2 are reopen clone records, so the export covers 36,740 distinct customer issues.",
+      "source": "ticket_volume_export.csv",
+      "span": "exported_rows: 41880\nreopen_rows_included: 5140"
+    },
+    {
+      "id": "GT-F7",
+      "statement": "In 2026-Q2 the median time-to-resolution was 51.8 hours for tickets reassigned at least once, against 14.2 hours for tickets resolved in the queue they were first assigned to.",
+      "source": "routing_metrics.csv",
+      "span": "value: 51.8\nunit: hours\nsegment: misrouted"
+    },
+    {
+      "id": "GT-F8",
+      "statement": "The internal model-serving platform went live on 2026-02-09, runs in-region on CPU, and hosting a third model requires no new infrastructure and no new vendor.",
+      "source": "technical_constraints.md",
+      "span": "Adding a third model requires no new infrastructure and no new vendor."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That an offline routing-accuracy gain converts into a proportional reduction in time-to-resolution.",
+      "why_it_is_an_assumption": "The trial measured queue assignment against a label, offline. The resolution-time gap it would be multiplied by is an observational comparison between tickets that were reassigned and tickets that were not, with no control for how hard the ticket was. The direction of the effect is well supported; the size of it is assumed. The one experiment in this corpus that measured resolution time directly improved an upstream input significantly and moved resolution time not at all, which is the shape of failure this assumption has to survive.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "Median time-to-resolution was 20.8 hours in the treatment arm against 21.1 hours in the control arm."
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That the queue a ticket was resolved in is the queue it should have been routed to.",
+      "why_it_is_an_assumption": "The label is a proxy for the target. The audit found 48 of 1,200 tickets where both reviewers judged that the resolving queue was simply whoever picked the ticket up. Both the classifier and the replayed rules baseline are scored against the same proxy, so the comparison is fair even if the level is not exact.",
+      "anchor": {
+        "source": "classifier_trial_report.md",
+        "span": "The resolving queue is a proxy for the correct queue and is not the same thing."
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That accuracy measured on January-to-March tickets holds for the rest of the year.",
+      "why_it_is_an_assumption": "The held-out window is one quarter, shaped by the post-holiday returns peak. No other window has been tested, and the trial says so.",
+      "anchor": {
+        "source": "classifier_trial_report.md",
+        "span": "Whether accuracy holds across the rest of the year is untested."
+      }
+    },
+    {
+      "id": "GT-A4",
+      "statement": "That agents will act on classifier routing rather than override it often enough to erase the gain.",
+      "why_it_is_an_assumption": "No agent has ever been shown a prediction, and the platform records reassignments without recording disagreement. One team lead has already said she would rather be slow and right.",
+      "anchor": {
+        "source": "data_tooling_notes.md",
+        "span": "There is no record of an agent disagreeing with a routing decision, only of the reassignment itself."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The Head of Support believes the rules engine is under-invested and that two more tuning passes would reach 85%.",
+      "source": "stakeholder_notes.md",
+      "span": "We have not really invested in the rules engine.",
+      "must_not_be_treated_as": "evidence that rule tuning has remaining headroom, or that a rules-based approach has not been tried"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "A team lead believes an automated router would cost customer trust.",
+      "source": "stakeholder_notes.md",
+      "span": "If a model sends a ticket to the wrong place the customer pays for it and we lose their trust.",
+      "must_not_be_treated_as": "a measured cost of misrouting, or a reason a governed and overridable router is disallowed. The current rules engine misroutes 28.6% of tickets and the same agent moves them"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "An engineer believes the classifier will pay for itself within a quarter.",
+      "source": "stakeholder_notes.md",
+      "span": "The classifier will pay for itself inside a quarter.",
+      "must_not_be_treated_as": "a cost estimate or a payback period. No cost model exists"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "A vendor claims its product routes 92% of tickets correctly out of the box.",
+      "source": "stakeholder_notes.md",
+      "span": "The material does not state the sample, the baseline, the queue taxonomy it was measured against, or the industry the figure came from.",
+      "must_not_be_treated_as": "an accuracy figure comparable with the 88.5% measured on this taxonomy and this ticket mix"
+    },
+    {
+      "id": "GT-O5",
+      "statement": "The VP of Customer Operations believes volume is up nearly 17%.",
+      "source": "stakeholder_notes.md",
+      "span": "Volume is up nearly 17% and we are holding headcount.",
+      "must_not_be_treated_as": "a measured increase in distinct customer issues"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "double-counted records",
+      "source": "data_tooling_notes.md",
+      "span": "The volume export counts records. A reopened issue therefore appears twice: once as the original closed record and once as the clone.",
+      "description": "Since the Relay 5.2 release on 2025-10-14, a ticket reopened within 14 days of closure is stored as a new record rather than reopening the original. The volume export counts records, so a reopened issue appears twice. 5,140 of the 41,880 rows for 2026-Q2 are clones; 2025-Q2 and 2025-Q3 contain none because the behaviour did not exist. The raw count overstates distinct customer issues by 14%, and a year-over-year comparison across the release date turns 2.3% real growth into 16.7% apparent growth. The same behaviour also splits one customer's wait into two shorter resolution times.",
+      "why_it_matters": "The executive summary of the problem is built on the inflated figure, and a brief that repeats it overstates both the size of the problem and its rate of growth. Note what the correction does and does not change: 36,740 distinct issues a quarter is still ample volume to justify the work, so the hazard changes the stated size of the problem without reversing the recommendation. A system that flags it and still recommends acting is right on both counts.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "proxy label standing in for the target",
+      "source": "classifier_trial_report.md",
+      "span": "The label is the queue the ticket was resolved in, after any reassignment.",
+      "description": "Both the classifier and the replayed rules baseline are scored against the queue that resolved the ticket, which is a proxy for the queue that should have received it. The trial's own audit found 48 of 1,200 tickets where reviewers judged the resolving queue was simply whoever picked it up.",
+      "why_it_matters": "The comparison between the two routers is fair because both are scored the same way, but the absolute accuracy figures inherit the proxy's error. A brief that treats 88.5% as the share of tickets sent to the objectively correct queue has read past the caveat the trial wrote itself.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "uncontrolled comparison between self-selected groups",
+      "source": "routing_metrics.csv",
+      "span": "note: tickets reassigned at least once before resolution - synthetic",
+      "description": "The 51.8-hour versus 14.2-hour split compares tickets that were reassigned with tickets that were not. Tickets are often reassigned because they are ambiguous or hard, which is also why they take longer. No complexity or effort score exists on tickets, so the confound cannot be removed from the existing data.",
+      "why_it_matters": "This is the figure that turns a routing-accuracy result into a resolution-time promise. It supports the direction of the effect and bounds it from above; it does not size it. It is what tempts GT-U5.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "Any router must return a decision within 400 ms of ticket creation or the ticket falls through to the general queue.",
+      "source": "technical_constraints.md",
+      "span": "The support platform requests a routing decision once, at ticket creation, and waits at most 400 ms for it.",
+      "blocks": [
+        "any router whose inference exceeds the 400 ms budget"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "The platform accepts one automated assignment per ticket; every subsequent move must be agent-initiated, so a router cannot correct its own mistake.",
+      "source": "technical_constraints.md",
+      "span": "A router cannot re-route a ticket it got wrong.",
+      "blocks": [
+        "automated re-routing after the first assignment",
+        "any design that relies on the router noticing and fixing its own errors"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "Model serving is CPU-only with a 2 GB model size limit and no GPU capacity planned for FY26.",
+      "source": "technical_constraints.md",
+      "span": "There is no GPU capacity and none is planned for FY26.",
+      "blocks": [
+        "large models requiring GPU inference"
+      ]
+    },
+    {
+      "id": "GT-T4",
+      "kind": "technical_constraint",
+      "statement": "Roughly 9% of Technical Faults tickets carry a photograph the router cannot see, which bounds achievable accuracy in the weakest queue.",
+      "source": "technical_constraints.md",
+      "span": "roughly 9% of Technical Faults tickets carry a photograph the router cannot see"
+    },
+    {
+      "id": "GT-T5",
+      "kind": "technical_constraint",
+      "statement": "Ticket events reach the analytics warehouse with up to 26 hours of lag, so no intervention can be measured same-day.",
+      "source": "data_tooling_notes.md",
+      "span": "Ticket events reach the analytics warehouse with a lag of up to 26 hours."
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "Support headcount is frozen for FY26, and any option needing more agents must be funded by a reduction elsewhere and approved by finance before a pilot.",
+      "source": "support_objectives.md",
+      "span": "Support headcount is frozen for FY26.",
+      "blocks": [
+        "manual triage desk at volume",
+        "any option requiring additional agents"
+      ]
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "The human-review requirement applies to generated text sent to a customer. Internal classification producing no customer-facing text is explicitly out of scope, and the policy names queue routing as internal classification.",
+      "source": "support_governance_policy.md",
+      "span": "Internal classification that produces no customer-facing text is out of scope for this requirement.",
+      "affects": [
+        "ai_assisted",
+        "ai_automated",
+        "rules_based_automation"
+      ],
+      "why_it_matters": "This is the requirement most often assumed to block a model in support, and here it does not apply to routing. It does apply the moment the model is extended to draft replies, which is the boundary any recommendation must state."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "Every automated assignment decision must be reversible by the assigned agent in a single action, without supervisor approval. The existing reassignment control already satisfies this and would satisfy it unchanged for a replacement router.",
+      "source": "support_governance_policy.md",
+      "span": "Every automated assignment decision must be reversible by the assigned agent in a single action",
+      "affects": [
+        "ai_assisted",
+        "rules_based_automation"
+      ],
+      "why_it_matters": "A binding condition on any router that is already met, which is why it constrains the design rather than eliminating the option. A recommendation that quietly removes or degrades override would breach it."
+    },
+    {
+      "id": "GT-G3",
+      "statement": "Every automated assignment decision must log the deciding system, its version, its inputs and its confidence, retained 24 months and queryable by ticket id. The trial already wrote to the existing routing_decision_log table in the rules engine's schema.",
+      "source": "support_governance_policy.md",
+      "span": "Every automated assignment decision must record the deciding system, its version, the inputs it acted on, and its confidence where the system produces one.",
+      "affects": [
+        "ai_assisted",
+        "rules_based_automation"
+      ],
+      "why_it_matters": "Satisfied without new work, and demonstrated in the trial rather than merely asserted."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "Any learned model in production needs a named accountable owner, a documented offline evaluation on unseen data, a documented rollback, quarterly re-evaluation, and must not use demographic, account-tier or spend features.",
+      "source": "support_governance_policy.md",
+      "span": "a named accountable owner, a documented offline evaluation on data the model was not trained on, a documented rollback procedure, and re-evaluation at least quarterly thereafter",
+      "affects": [
+        "ai_assisted"
+      ],
+      "why_it_matters": "The evaluation limb is already met by the held-out trial and the feature restriction is already met. The owner, rollback and quarterly re-evaluation are conditions a recommendation must carry, and the quarterly re-evaluation is a recurring cost nobody has estimated."
+    },
+    {
+      "id": "GT-G5",
+      "statement": "Ticket text may contain personal data, must be processed within its region of origin, and cannot be shared with a third party until a data protection assessment taking six to eight weeks is complete, including for a trial.",
+      "source": "support_governance_policy.md",
+      "span": "Training or inference outside the region of origin is not permitted.",
+      "affects": [
+        "buy",
+        "partner"
+      ],
+      "why_it_matters": "Rules out any option in which an external vendor processes ticket text on its own infrastructure, and puts a six-to-eight-week floor under even evaluating one. The in-house options are unaffected because the model-serving platform and its training pipelines run in-region."
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "A rules-based routing system has not been tried, so the team should attempt one before considering a model.",
+      "why_forbidden": "Rules-based routing has been in production since 2023-06-14 and is the current router. There are 404 rules live, three dated expansion passes since v3 added 176 of them across twelve months, and accuracy moved 0.6 percentage points. The claim inverts the record, and the version of it that says 'try rules first' recommends continuing what is already happening.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "We have not really invested in the rules engine."
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "There is no measured evidence that a classifier would route better than the current rules engine.",
+      "why_forbidden": "A time-split trial on 4,800 held-out tickets, with the production rules engine replayed on the same tickets at the version live during the period, measured 88.5% against 71.2%. The replay reproduces the production figure for that quarter exactly. Denying that a measurement exists is a claim this corpus refutes directly.",
+      "anchor": {
+        "source": "classifier_trial_report.md",
+        "span": "Overall the classifier routed 88.5% of held-out tickets to the correct queue against the rules engine's 71.2%."
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "The classifier trial's sample is too small, or too self-selected, to support a conclusion.",
+      "why_forbidden": "24,000 human-verified labels, a held-out set that is an entire calendar quarter rather than a convenience sample, a time-based split that excludes the held-out window from training, a same-tickets baseline replay, and a label audit on 1,200 tickets with 96.0% agreement. The trial's real limitations are that it measured accuracy rather than resolution time, over one quarter, at unestimated running cost. None of those is a sample-size or selection objection, and substituting one for them is a refusal dressed as rigour.",
+      "anchor": {
+        "source": "classifier_trial_report.md",
+        "span": "The held-out set is every labelled ticket created between 2026-01-01 and 2026-03-31: 4,800 tickets."
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "Governance requirements prohibit an automated routing model, or require human review of every routing decision.",
+      "why_forbidden": "The human-review requirement is scoped to generated text sent to a customer. The policy states that internal classification producing no customer-facing text is out of scope and names queue routing as exactly that. The override and audit-trail requirements are conditions the existing platform already meets and the trial already demonstrated.",
+      "anchor": {
+        "source": "support_governance_policy.md",
+        "span": "No system may send generated text to a customer without human review before dispatch."
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "Routing tickets correctly would cut median time-to-resolution from 22.6 hours to 14.2 hours.",
+      "why_forbidden": "The 14.2-hour figure describes tickets that were never reassigned, which differ from reassigned tickets in ways the corpus cannot control for, because no complexity or effort score exists. The trial measured routing accuracy offline and states that it did not measure resolution time. The direction of the effect is supported; this magnitude is an arithmetic inference presented as a measurement.",
+      "tempted_by": "GT-H3",
+      "anchor": {
+        "source": "routing_metrics.csv",
+        "span": "value: 14.2\nunit: hours\nsegment: correctly_routed"
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "Support handled 41,880 tickets in 2026-Q2, and volume is up 16.7% year over year.",
+      "why_forbidden": "5,140 of those rows are reopen clone records created by a platform change on 2025-10-14, and the 35,900 rows of 2025-Q2 contain none because the behaviour did not exist. Distinct customer issues rose from 35,900 to 36,740, or 2.3%. The count overstates the quarter by 14% and the growth by roughly seven times.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "support_objectives.md",
+        "span": "Ticket volume is up 16.7% year over year, from 35,900 to 41,880 per quarter."
+      }
+    },
+    {
+      "id": "GT-U7",
+      "claim": "The classifier is more accurate than the rules engine in every queue.",
+      "why_forbidden": "In Billing & Payments the rules engine scored 84.7% against the classifier's 83.7% on the same held-out tickets. The trial says so in bold and explains why. An unqualified 'everywhere' claim is wrong, and it also discards the hybrid option the exception points to.",
+      "anchor": {
+        "source": "classifier_trial_report.md",
+        "span": "In Billing & Payments the rules engine is more accurate: 84.7% against 83.7%."
+      }
+    },
+    {
+      "id": "GT-U8",
+      "claim": "A vendor triage product routes 92% of tickets correctly.",
+      "why_forbidden": "A vendor figure with no stated sample, baseline, queue taxonomy or industry, and no independent evaluation. It is also not comparable with the trial's 88.5%, which was measured against this taxonomy on this ticket mix.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "The material does not state the sample, the baseline, the queue taxonomy it was measured against, or the industry the figure came from."
+      }
+    },
+    {
+      "id": "GT-U9",
+      "claim": "Routing accuracy is 78%.",
+      "why_forbidden": "78.2% is a 2025-Q1 department-level figure under a definition retired on 2025-04-01, when there were three departments rather than five queues. Under the current definition accuracy has never exceeded 71.9%, and the two numbers are not measuring the same thing.",
+      "anchor": {
+        "source": "support_objectives.md",
+        "span": "Routing accuracy sits at 78%."
+      }
+    },
+    {
+      "id": "GT-U10",
+      "claim": "A model-based router is blocked by the FY26 decision against new machine-learning infrastructure spend.",
+      "why_forbidden": "That decision was taken on 2025-11-14 against a $180k quote for standing up dedicated serving infrastructure. The infrastructure was subsequently built for another team, went live on 2026-02-09, runs in-region on CPU, and engineering records that adding a third model needs no new infrastructure and no new vendor. Running and retraining cost is unestimated, which is a gap to close, not a block to cite.",
+      "anchor": {
+        "source": "support_objectives.md",
+        "span": "No new machine-learning infrastructure spend in FY26."
+      }
+    },
+    {
+      "id": "GT-U11",
+      "claim": "A human triage desk routes more accurately than the classifier, 94.0% against 88.5%, so the non-AI option is the better-supported one.",
+      "why_forbidden": "The two figures are not comparable. The 94.0% comes from one senior agent hand-routing one queue for two weeks while knowing he was being measured; the 88.5% is measured across the whole ticket mix on a full quarter of held-out tickets, and in that same queue the classifier scored 82.9%. The pilot states in its own write-up that it does not establish what a desk staffed at volume would achieve, and scaling it needs about five full-time routers against a frozen FY26 headcount. The pilot is a useful estimate of a human ceiling, not a deliverable option, and using it to rank the two approaches misreads what was measured.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "It does not establish what a triage desk staffed at volume would achieve, and it says nothing about the other four queues."
+      }
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "stakeholder_notes.md",
+      "span": "the in-store repair booking kiosks will be retired in September",
+      "why_irrelevant": "Retail store equipment, not ticket routing or resolution time. The objectives document places the repair network out of scope for the programme, and the note itself records that no support-platform work is required. Retrievable and support-adjacent, but it should not appear in the analysis of this question."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Replace the rules engine with the trained ticket classifier, shadow first",
+        "option_kind": "ai_assisted",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "The best-supported option here. A time-split held-out trial on 4,800 tickets measured 88.5% against the rules engine's 71.2% replayed on the same tickets; the incumbent rules approach is documented as plateaued; volume justifies the work even after correcting for reopen clones; serving needs no new infrastructure and runs in-region within the 400 ms budget; every governance requirement is either out of scope, already met, or a condition the design can carry. Support stops at moderate because no production measurement of resolution time exists and running cost is unestimated."
+      },
+      {
+        "name": "Hybrid router: classifier for four queues, rules retained for Billing & Payments",
+        "option_kind": "ai_assisted",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Follows directly from the one queue where the rules engine measurably wins. Costs nothing extra to scope this way and removes the weakest part of the case for wholesale replacement."
+      },
+      {
+        "name": "Run a fourth rules expansion pass",
+        "option_kind": "rules_based_automation",
+        "horizon": "core",
+        "support": "low",
+        "note": "Cheapest and most reversible, and defended by the Head of Support. Three passes in twelve months produced 0.6 percentage points, two of the three introduced ordering regressions, and support-engineering's own assessment is that keyword rules have reached their ceiling."
+      },
+      {
+        "name": "Merge Account & Access into Billing & Payments to remove the largest confusion pair",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "A serious non-build option with real evidence behind it: bidirectional confusion between those two queues accounts for 14.4% of rules-engine misroutes. Nothing in the corpus covers the operational cost of merging queues or the skill overlap between the two teams."
+      },
+      {
+        "name": "Staff a manual triage desk",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "The two-week pilot reached 94.0% accuracy, higher than anything automated, and establishes a useful human ceiling. It used one agent who knew he was measured, covered one queue, and scaling it would take about five full-time routers against a frozen headcount."
+      },
+      {
+        "name": "Make the rules engine consult the customer-selected category for all five queues",
+        "option_kind": "ux_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "The guided intake picker measurably improved the category customers choose, from 57.1% to 64.3%, but the rules engine consults it for only two of the five queues. Whether wiring it into the other three moves routing is untested, and the A/B that shipped the picker moved neither routing accuracy nor resolution time."
+      },
+      {
+        "name": "Buy the vendor triage product",
+        "option_kind": "buy",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "The only figure offered has no stated sample, baseline or taxonomy, the vendor would process ticket text on its own infrastructure against an in-region requirement, and a six-to-eight-week assessment is required before any data may be shared even for a trial."
+      },
+      {
+        "name": "Attack the reopen rate instead of routing",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "low",
+        "note": "14.0% of resolved issues are reopened within 14 days, and no field records why. Could be a larger lever than routing or a much smaller one; the corpus cannot tell, which is what makes it research rather than a proposal."
+      },
+      {
+        "name": "Shadow-run the classifier for a quarter and measure resolution time before switching traffic",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Closes the one gap that separates this from strong support. The platform already supports shadow mode and used it for the v3 rollout, and the trial team recommended exactly this."
+      },
+      {
+        "name": "No change this quarter",
+        "option_kind": "no_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Defensible only on the argument that the volume crisis is largely an artifact of reopen clone records. The routing gap itself is measured, stable across five quarters, and unaffected by that correction."
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "moderate",
+    "reason": "The classifier is the best-supported option in this corpus and the evidence for it is genuine rather than aspirational: a rules-based system already in production and documented by its own engineers as plateaued; a time-split trial on 4,800 held-out tickets with the production rules engine replayed on the same tickets; 24,000 audited labels; volume that justifies the work even after the reopen-clone correction; serving that needs no new infrastructure; and governance requirements the policy itself records as out of scope, already met, or satisfiable as conditions. A brief that declines to recommend it, or that treats it as unsupported because it is an AI option, is wrong on this evidence in the same way an overclaim would be. Support stops at moderate rather than strong for four specific reasons, none of which is that the option involves a model: no production measurement of time-to-resolution exists, running and retraining cost is unestimated, the held-out window is a single quarter shaped by the returns peak, and the resolution-time gap that motivates the work is uncontrolled for ticket complexity.",
+    "defensible_next_steps": [
+      "Run the classifier in shadow alongside the rules engine for a quarter, applying the rules engine's decision and logging both, and measure queue accuracy and time-to-resolution on the same tickets before any traffic is switched.",
+      "Scope the switch to the four queues where the classifier measurably wins and keep the rules engine for Billing & Payments.",
+      "Attach the model change-control conditions to whatever is approved: a named accountable owner, a documented rollback to the rules engine, quarterly re-evaluation, and agent override left exactly as it is.",
+      "Obtain a Modelyard serving and retraining cost estimate, and restate the volume baseline on distinct customer issues rather than exported rows before the business case is written.",
+      "Pursue the cheap non-build options in parallel rather than instead: the Account & Access to Billing & Payments queue merge, and wiring the customer-selected category into the remaining three queues."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "buy",
+        "why": "The vendor's only figure has no stated sample, baseline, taxonomy or independent evaluation, the vendor would process ticket text on its own infrastructure against an explicit in-region requirement, and a six-to-eight-week data protection assessment is required before any data may be shared even for evaluation."
+      },
+      {
+        "option_kind": "partner",
+        "why": "Same in-region and assessment constraints as any other third party processing ticket text."
+      },
+      {
+        "option_kind": "ai_automated",
+        "why": "The trial measured queue assignment only. Any extension of the model beyond internal classification — drafting replies, closing tickets, or anything producing customer-facing text — falls squarely under the human-review requirement and has no evidence behind it here. Removing or degrading the single-action agent override would also breach the policy."
+      },
+      {
+        "option_kind": "process_change",
+        "why": "A manual triage desk needs roughly five full-time routers at current arrival volume, and support headcount is frozen for FY26. It cannot be recommended without naming the offsetting reduction and the finance approval it requires."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The recommendation must state that the trial measured routing accuracy offline and did not measure time-to-resolution, and must not present an inferred resolution-time saving as a measured one.",
+      "The recommendation must not carry the 41,880 ticket count or the 16.7% growth figure forward without correcting for reopen clone records, and should note that the correction reduces the stated size of the problem without changing the direction of the recommendation.",
+      "The recommendation must note that the classifier does not beat the rules engine in Billing & Payments.",
+      "The recommendation must not treat the human-review requirement for generated customer text as applying to internal queue routing, and must not cite the superseded FY25 infrastructure decision as a live blocker.",
+      "The recommendation must not present stakeholder preference as evidence — neither the preference for more rule tuning, nor the preference for human triage, nor the stated discomfort with models.",
+      "The recommendation must carry the model change-control conditions and the unestimated running cost rather than treating governance as cleared."
+    ]
+  }
+}

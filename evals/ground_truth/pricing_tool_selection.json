@@ -1,0 +1,662 @@
+{
+  "case_id": "pricing_tool_selection",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional convenience-store chain and two fictional vendors. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to reduce markdown losses on perishables?",
+  "desired_outcome": "Reduce fresh markdown losses without moving the loss into waste, while holding on-shelf availability at or above the 93% floor and adding no hours to the store labour model.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M5 is must_detect false: it is a real gap, but finding it is credit rather than a requirement.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "temporal_conflict",
+      "topic": "the current fresh markdown loss rate",
+      "side_a": {
+        "source": "business_objectives.md",
+        "span": "Fresh markdown losses currently run at 4.0% of fresh sales."
+      },
+      "side_b": {
+        "source": "markdown_metrics.csv",
+        "span": "metric: markdown_loss_rate\nvalue: 4.9\nunit: percent\nsegment: fresh_all"
+      },
+      "why_it_matters": "The objectives document sets the FY26 target against a figure that is two quarters out of date and moving the wrong way. Planning against 4.0% understates the size of the problem and makes the 5.5% total-loss goal look nearer than it is.",
+      "how_to_resolve": "The 4.0% matches 2025-Q4 in markdown_metrics.csv, which was the latest complete quarter when the objectives were last updated on 2026-01-20. The figure is stale, not wrong. Markdown loss has risen in each of the two quarters since.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "claim_conflict",
+      "topic": "whether the two-stage markdown trial reduced waste",
+      "side_a": {
+        "source": "prior_experiments.md",
+        "span": "The trial cannot separate these effects from the effect of the markdown change."
+      },
+      "side_b": {
+        "source": "stakeholder_notes.md",
+        "span": "The two-stage markdown trial cut waste by a fifth. We all saw it."
+      },
+      "why_it_matters": "The arithmetic in the recollection is right — waste in the trial stores fell from 3.6% to 2.9%, which is about a fifth — but the attribution is not. Treating the recollection as a measured effect would justify rolling out a change to the labour model on a result the trial could not produce.",
+      "how_to_resolve": "Re-run the two-stage round with control stores held on the single 17:00 window, after the Ashcombe shelf-life change has been in place long enough to stop moving.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "feasibility_conflict",
+      "topic": "whether the tool can be built in-house on the existing forecasting platform",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "We can build this ourselves on the forecasting platform in one quarter."
+      },
+      "side_b": {
+        "source": "technical_constraints.md",
+        "span": "Demand forecasts are produced at depot level. There is no store-level forecast, and the forecasting platform holds no shelf-life or expiry data."
+      },
+      "why_it_matters": "The build option rests entirely on this estimate. The platform named in it has neither the store-level granularity nor the expiry data that a markdown recommendation needs, and no effort estimate was tabled.",
+      "how_to_resolve": "Ask engineering to scope the store-level forecast and the expiry data feed separately. Until those exist there is nothing for a markdown model to run on, in-house or bought.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "temporal_conflict",
+      "topic": "whether electronic shelf labels are blocked by capital cost",
+      "side_a": {
+        "source": "prior_decisions.md",
+        "span": "the capital cost of £2,100 per store, or about £865,000 across the estate, exceeded the FY25 estate budget"
+      },
+      "side_b": {
+        "source": "technical_constraints.md",
+        "span": "carries the hardware cost centrally, so there is no incremental capital cost to the fresh programme for those stores"
+      },
+      "why_it_matters": "A reader working from the FY25 decision would rule out any shelf-label-dependent option on cost. For the 120 stores inside the estate refresh the cost objection no longer applies; for the other 292 it still does.",
+      "how_to_resolve": "The prior decision is superseded for refresh stores only. Confirm the refresh schedule and treat shelf labels as available in 120 stores by Q1 2027 and unfunded elsewhere.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C5",
+      "kind": "claim_conflict",
+      "topic": "whether on-shelf availability is still above the 93% floor",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "Availability has never dropped below the 93% floor."
+      },
+      "side_b": {
+        "source": "markdown_metrics.csv",
+        "span": "metric: on_shelf_availability_1700\nvalue: 92.6"
+      },
+      "why_it_matters": "The floor is the protected measure. It was already breached in 2026-Q2, which removes headroom from any option that reduces loss by holding less stock and changes what a pilot has to be watched for.",
+      "how_to_resolve": "Check the 2026-Q2 availability series. The floor has been breached once; whether that is a trend or a quarter needs the 2026-Q3 figure.",
+      "must_detect": true
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "Do marked-down items actually sell at the reduced price?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Every option in front of the team changes when or how deeply an item is reduced. Nothing in the corpus records whether a reduction converts into a sale, so no option can be evaluated on the mechanism it relies on.",
+      "how_to_obtain": "Change the till to flag a marked-down line at the point of sale, or run a scanned sample in a set of stores for a fortnight.",
+      "anchor": {
+        "source": "markdown_metrics.csv",
+        "span": "note: synthetic - never populated; the till does not distinguish a marked-down sale from a full-price sale"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "What would each option cost?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Neither vendor has quoted a price, the in-house build has no effort estimate, and the programme has £180,000 of revenue and no capital for FY26. Options cannot be ranked without knowing which of them fit inside that envelope.",
+      "how_to_obtain": "Request commercial terms from both vendors and an engineering estimate for the store-level forecast and expiry feed.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "neither has quoted commercial terms"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "Does reducing markdown loss reduce total fresh loss, or move it into waste?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "The goal in the objectives is total fresh loss; the question in front of the team is markdown. Nothing in the corpus measures an intervention against both lines at once, and the redistribution partnership already books diverted stock as waste rather than markdown.",
+      "how_to_obtain": "Report markdown loss, waste and total fresh loss together for any trial, and for the redistribution stores separately.",
+      "anchor": {
+        "source": "category_review.md",
+        "span": "the diverted volume is recorded as waste, not as markdown"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "What does either vendor's product do against a like-for-like comparison?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Neither case study reports a same-quarter-prior-year comparison, a control group or a holdout. One reports a quarter-on-quarter change in a category the corpus shows is strongly seasonal, and the other reports an average across an unnamed number of self-selected customers. Neither figure can be read as an effect.",
+      "how_to_obtain": "Require both vendors to supply a result measured against the same quarter of the previous year, or against non-deployed stores in the same period, before any selection.",
+      "anchor": {
+        "source": "vendor_case_studies.md",
+        "span": "Markdown losses in prepared salads and cut fruit fell 22% against the preceding quarter, July to September 2025."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "Why is markdown compliance bimodal across the estate?",
+      "impact": "would_change_sequencing",
+      "why_it_matters": "137 stores execute the markdown round well and 121 barely execute it at all. Nothing in the corpus explains the difference. If it is a staffing or delivery-timing problem, no pricing tool will fix it in the stores that need it most.",
+      "how_to_obtain": "Compare the low-compliance and high-compliance store lists against delivery slot, shift pattern, store size and manager tenure.",
+      "anchor": {
+        "source": "store_execution_export.csv",
+        "span": "note: synthetic - compliance spread is wide: 137 stores are above 90 percent and 121 stores are below 40 percent"
+      },
+      "was_searched": true,
+      "must_detect": false
+    },
+    {
+      "id": "GT-M6",
+      "question": "Do markdown losses differ between morning-delivery and evening-delivery stores?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "Delivery timing sets how much of an item's life is spent on shelf before the 17:00 round. The question was raised in the review and nobody had the split, so the scope of any intervention is being chosen without it.",
+      "how_to_obtain": "Join the store delivery schedule to the existing markdown and waste export. The data exists on both sides.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Nobody present had the split."
+      },
+      "was_searched": true,
+      "must_detect": true
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "Fresh markdown loss was 4.9% of fresh sales in 2026-Q2, up from 4.2% in 2025-Q2.",
+      "source": "markdown_metrics.csv",
+      "span": "metric: markdown_loss_rate\nvalue: 4.9\nunit: percent\nsegment: fresh_all"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "Fresh waste was 3.3% of fresh sales in 2026-Q2, up from 2.7% in 2025-Q2. Markdown and waste have risen together.",
+      "source": "markdown_metrics.csv",
+      "span": "metric: waste_rate\nvalue: 3.3\nunit: percent\nsegment: fresh_all"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "Total fresh loss was 8.2% of fresh sales in 2026-Q2, against an FY26 goal of 5.5%.",
+      "source": "markdown_metrics.csv",
+      "span": "metric: total_fresh_loss_rate\nvalue: 8.2"
+    },
+    {
+      "id": "GT-F4",
+      "statement": "Markdown on prepared salads and cut fruit is strongly seasonal: it peaks in July to September and falls by roughly a quarter to a third in October to December, in each of the last three years.",
+      "source": "category_review.md",
+      "span": "The rate peaks in July to September, when volumes are highest and shelf life is shortest, and falls by roughly a quarter to a third in October to December."
+    },
+    {
+      "id": "GT-F5",
+      "statement": "In Larkfield's own estate, prepared salad and cut fruit markdown fell from 11.8% in 2025-Q3 to 8.4% in 2025-Q4 — a fall of about 29% — with no intervention recorded in that period.",
+      "source": "markdown_metrics.csv",
+      "span": "period: 2025-Q4\nmetric: markdown_loss_rate\nvalue: 8.4\nunit: percent\nsegment: prepared_salads_and_cut_fruit"
+    },
+    {
+      "id": "GT-F6",
+      "statement": "On-shelf availability at 17:00 was 92.6% in 2026-Q2, below the 93% floor set in the objectives.",
+      "source": "markdown_metrics.csv",
+      "span": "metric: on_shelf_availability_1700\nvalue: 92.6"
+    },
+    {
+      "id": "GT-F7",
+      "statement": "Markdown compliance varies widely by format: 63.2% in commuter stores against 84.6% in neighbourhood stores.",
+      "source": "store_execution_export.csv",
+      "span": "store_format: commuter\nstores: 118\nmarkdown_compliance_pct: 63.2"
+    },
+    {
+      "id": "GT-F8",
+      "statement": "Electronic shelf labels are fitted in 43 of 412 stores, reaching 120 by the end of Q1 2027.",
+      "source": "technical_constraints.md",
+      "span": "Electronic shelf labels are fitted in 43 stores."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That a percentage reduction a vendor reports at another retailer would transfer to Larkfield's estate.",
+      "why_it_is_an_assumption": "Neither case study states the deployed estate's starting loss rate, its category mix, its markdown policy or its execution quality. A percentage improvement is a ratio against a baseline nobody has seen.",
+      "anchor": {
+        "source": "vendor_case_studies.md",
+        "span": "Verdant Pricing Cloud customers reduce perishable markdown losses by an average of 34%."
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That fresh loss originates in markdown execution rather than in store-level ordering.",
+      "why_it_is_an_assumption": "The corpus contains no store-level forecast, no ordering accuracy measure and no comparison of ordered against sold. Execution is the only part of the chain that is instrumented, which is not evidence that it is the part that is broken.",
+      "anchor": {
+        "source": "technical_constraints.md",
+        "span": "Demand forecasts are produced at depot level."
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That an option which lowers markdown loss also lowers total fresh loss.",
+      "why_it_is_an_assumption": "Markdown and waste are two accounting lines over the same stock. Nothing in the corpus measures an intervention against both, and the one internal trial reported only one of them.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "Markdown loss in the trial stores was not reported separately."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The Retail Director wants a dynamic pricing platform live before Christmas trading.",
+      "source": "stakeholder_notes.md",
+      "span": "I want a dynamic pricing platform live before Christmas trading.",
+      "must_not_be_treated_as": "evidence that dynamic pricing is the right intervention, or that the timeline is achievable"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "The Head of Data believes the tool can be built in-house in one quarter.",
+      "source": "stakeholder_notes.md",
+      "span": "We can build this ourselves on the forecasting platform in one quarter.",
+      "must_not_be_treated_as": "an effort estimate"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "A regional manager believes the two-stage markdown trial cut waste by a fifth.",
+      "source": "stakeholder_notes.md",
+      "span": "The two-stage markdown trial cut waste by a fifth.",
+      "must_not_be_treated_as": "an attributed effect of the markdown change"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "A store manager representative believes colleagues will not trust an automated reduction recommendation.",
+      "source": "stakeholder_notes.md",
+      "span": "Colleagues will not trust a system that tells them to discount something they know will sell.",
+      "must_not_be_treated_as": "colleague research, or a measured adoption risk"
+    },
+    {
+      "id": "GT-O5",
+      "statement": "A vendor claims its customers reduce perishable markdown losses by an average of 34%.",
+      "source": "vendor_case_studies.md",
+      "span": "Verdant Pricing Cloud customers reduce perishable markdown losses by an average of 34%.",
+      "must_not_be_treated_as": "a measured result, or an expected outcome for Larkfield Markets"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "seasonally confounded comparison",
+      "source": "vendor_case_studies.md",
+      "span": "Markdown losses in prepared salads and cut fruit fell 22% against the preceding quarter, July to September 2025.",
+      "description": "The Halcyon pilot ran October to December and is compared against the immediately preceding July to September, in prepared salads and cut fruit. category_review.md states that markdown in exactly this category peaks in July to September and falls by roughly a quarter to a third in October to December every year, and markdown_metrics.csv shows Larkfield's own prepared salad rate falling from 11.8% to 8.4% between those two quarters of 2025 — about 29% — with no intervention. The claimed 22% improvement is smaller than the seasonal movement it is measured across. Neither document mentions the other, and neither points out the confound.",
+      "why_it_matters": "This is the difference between the two vendor claims. Verdant's figure is unmethodical; Halcyon's looks methodical — it names a period, a category and a comparison — and is worse, because the comparison window is chosen so that the season does the work. A brief that discounts Verdant for having no method but accepts Halcyon for having one has been caught by the shape of the evidence rather than its content.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "proxy metric standing in for the thing that matters",
+      "source": "category_review.md",
+      "span": "Collections are made at close and the diverted volume is recorded as waste, not as markdown.",
+      "description": "The question asks about markdown loss; the objective is total fresh loss. The two lines are separate accounts over the same stock, and moving stock between them changes the markdown rate without changing the loss. The redistribution partnership already does this in 68 stores, and late markdown execution raises both lines together rather than trading one for the other.",
+      "why_it_matters": "An option can win on the stated metric while doing nothing for the goal. This is what tempts GT-U7.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "self-selected result sample",
+      "source": "vendor_case_studies.md",
+      "span": "Figures are aggregated from customers who elected to share results with us.",
+      "description": "Verdant's 34% is an average over an unstated number of customers who chose to report. Customers whose deployments went badly are absent by construction, and no measurement period or baseline is given.",
+      "why_it_matters": "The figure has no denominator and no comparison group. It is a marketing average, not an effect size, and it tempts GT-U1.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "The till price file is regenerated once nightly at 02:00, so intra-day price changes are not possible on the current EPOS release.",
+      "source": "technical_constraints.md",
+      "span": "The till price file is regenerated once nightly at 02:00.",
+      "blocks": [
+        "intra-day dynamic pricing",
+        "any tool that changes shelf prices during the trading day"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "Electronic shelf labels are fitted in 43 stores, rising to 120 by the end of Q1 2027, with no funded route for the remaining 292.",
+      "source": "technical_constraints.md",
+      "span": "Stores outside the refresh schedule have no funded route to shelf labels.",
+      "blocks": [
+        "estate-wide automated price changes at the fixture",
+        "Verdant Pricing Cloud at estate scale"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "There is no item-level remaining shelf life feed; expiry exists only where a colleague scanned the item, and 18% of audited items had no scanned record.",
+      "source": "technical_constraints.md",
+      "span": "There is no supplier or inventory feed of item-level remaining shelf life.",
+      "blocks": [
+        "Halcyon Shelf Intelligence",
+        "any in-house shelf-life model"
+      ]
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "Store colleague hours are capped at the FY25 level and no proposal may add hours.",
+      "source": "business_objectives.md",
+      "span": "Store colleague hours are capped at the FY25 level.",
+      "blocks": [
+        "estate-wide two-stage markdown rounds",
+        "any option that adds a markdown round"
+      ]
+    },
+    {
+      "id": "GT-B2",
+      "kind": "business_constraint",
+      "statement": "The fresh loss programme has £180,000 of revenue expenditure for FY26 and no capital allocation.",
+      "source": "prior_decisions.md",
+      "span": "fund the fresh loss programme at £180,000 of revenue expenditure for FY26. No capital allocated.",
+      "blocks": [
+        "any capital purchase in FY26"
+      ]
+    },
+    {
+      "id": "GT-B3",
+      "kind": "business_constraint",
+      "statement": "On-shelf availability at 17:00 must stay at or above 93% in every format, and it is already at 92.6% chain-wide.",
+      "source": "business_objectives.md",
+      "span": "Hold on-shelf availability at 17:00 at or above 93% in every format.",
+      "blocks": [
+        "reducing loss by ordering less"
+      ]
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "Shelf price and till price must match at all times, and a change may not reach the till before the shelf edge is updated.",
+      "source": "governance_requirements.md",
+      "span": "A price change may not take effect at the till before the shelf edge has been updated.",
+      "affects": [
+        "buy",
+        "build",
+        "dynamic pricing"
+      ],
+      "why_it_matters": "In the 369 stores without electronic shelf labels this makes automated price change a paper-label exercise, which costs the colleague hours the labour cap forbids."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "A reduction greater than 50% requires store manager authorisation recorded against the till transaction, with no automated exemption.",
+      "source": "governance_requirements.md",
+      "span": "There is no automated exemption.",
+      "affects": [
+        "dynamic pricing",
+        "automated reduction schedules"
+      ],
+      "why_it_matters": "Caps how much of a reduction schedule any tool can execute without a human in the loop."
+    },
+    {
+      "id": "GT-G3",
+      "statement": "No reduction may be applied after an item's use-by time has passed, and reduction labels must show the original price.",
+      "source": "governance_requirements.md",
+      "span": "No reduction may be applied to an item after its use-by time has passed.",
+      "affects": [
+        "late markdown rounds",
+        "automated reduction schedules"
+      ]
+    },
+    {
+      "id": "GT-G4",
+      "statement": "Any system issuing work instructions to store colleagues requires colleague forum consultation, which has taken six to twelve weeks.",
+      "source": "governance_requirements.md",
+      "span": "Recent consultations have taken between six and twelve weeks.",
+      "affects": [
+        "buy",
+        "build",
+        "process_change"
+      ],
+      "why_it_matters": "Both vendor products and the in-house build issue instructions to colleagues, so none of them can be live before Christmas trading."
+    },
+    {
+      "id": "GT-G5",
+      "statement": "A vendor processing colleague or transaction data needs a data protection assessment taking eight to ten weeks.",
+      "source": "governance_requirements.md",
+      "span": "Assessments currently take eight to ten weeks.",
+      "affects": [
+        "buy",
+        "partner"
+      ],
+      "why_it_matters": "Runs concurrently with, not instead of, the colleague consultation. A vendor option cannot be deployed this quarter."
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "A dynamic pricing platform would reduce perishable markdown losses by around a third, or by 34%.",
+      "why_forbidden": "The 34% is a vendor average with no stated sample size, measurement period, baseline or comparison group, aggregated only from customers who chose to report their results.",
+      "tempted_by": "GT-H3",
+      "anchor": {
+        "source": "vendor_case_studies.md",
+        "span": "Verdant Pricing Cloud customers reduce perishable markdown losses by an average of 34%."
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "Halcyon Shelf Intelligence reduced markdown losses on prepared salads and cut fruit by 22%.",
+      "why_forbidden": "The pilot ran October to December and is measured against the immediately preceding July to September, in a category the corpus documents as falling by roughly a quarter to a third between exactly those quarters every year. Larkfield's own prepared salad markdown fell 29% across the same two quarters of 2025 with no intervention. The comparison cannot separate the product from the season, and the claimed improvement is smaller than the seasonal movement.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "vendor_case_studies.md",
+        "span": "Markdown losses in prepared salads and cut fruit fell 22% against the preceding quarter, July to September 2025."
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "Halcyon Shelf Intelligence had no effect, or performed worse than doing nothing.",
+      "why_forbidden": "The seasonal pattern is documented for Larkfield's estate, not for the vendor's client, and no like-for-like figure exists in either direction. The confound removes the support for the vendor's claim; it does not establish the opposite one. Overcorrection is as unsupported as the original claim.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "category_review.md",
+        "span": "The pattern has held in each of the last three years."
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "The two-stage markdown trial cut waste by a fifth.",
+      "why_forbidden": "Twelve stores, no control group, and a supplier shelf-life extension plus two store refits inside the same window. The write-up states the effects cannot be separated.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "Waste in the trial stores fell from 3.6% to 2.9% of fresh sales over the trial."
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "Fresh markdown losses run at 4.0% of fresh sales.",
+      "why_forbidden": "Stale by two quarters. Markdown loss was 4.9% in 2026-Q2 and has risen in each quarter since the objectives were written.",
+      "anchor": {
+        "source": "business_objectives.md",
+        "span": "Fresh markdown losses currently run at 4.0% of fresh sales."
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "Electronic shelf labels are unaffordable, or ruled out on capital cost.",
+      "why_forbidden": "Superseded for the 120 stores inside the estate refresh, which carries the hardware cost centrally. The claim is true only of the 292 stores outside the refresh schedule and is wrong without that qualifier.",
+      "anchor": {
+        "source": "prior_decisions.md",
+        "span": "the capital cost of £2,100 per store, or about £865,000 across the estate, exceeded the FY25 estate budget"
+      }
+    },
+    {
+      "id": "GT-U7",
+      "claim": "Reducing markdown loss will reduce total fresh loss.",
+      "why_forbidden": "Markdown and waste are separate accounts over the same stock and have risen together, not traded against each other. No option in the corpus has been measured against total fresh loss, and diverted stock is already booked as waste rather than markdown.",
+      "tempted_by": "GT-H2",
+      "anchor": {
+        "source": "markdown_metrics.csv",
+        "span": "metric: total_fresh_loss_rate\nvalue: 8.2"
+      }
+    },
+    {
+      "id": "GT-U8",
+      "claim": "Prepared salads and cut fruit is the largest source of fresh markdown loss.",
+      "why_forbidden": "It has the highest markdown rate at 9.6%, but only 11% of fresh sales. Sandwiches and food to go, at 6.4% of a 27% share, contribute about 1.7 percentage points of the 4.9% chain rate against about 1.1 from prepared salads. Highest rate is not largest source.",
+      "anchor": {
+        "source": "markdown_metrics.csv",
+        "span": "metric: markdown_loss_rate\nvalue: 9.6\nunit: percent\nsegment: prepared_salads_and_cut_fruit"
+      }
+    },
+    {
+      "id": "GT-U9",
+      "claim": "Markdown execution is broadly adequate, at about 75% compliance across the estate.",
+      "why_forbidden": "The chain average hides a wide split: 137 stores are above 90% and 121 are below 40%. No store is near the average, and the stores that would benefit most from a tool are the ones least likely to run it.",
+      "anchor": {
+        "source": "store_execution_export.csv",
+        "span": "markdown_compliance_pct: 75.4"
+      }
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "prior_decisions.md",
+      "span": "adopt automated fuel price setting at the 61 forecourt sites",
+      "why_irrelevant": "Retrievable on any query about pricing automation and tempting as internal precedent, but fuel does not perish, the pricing engine belongs to the fuel supplier under the supply contract, and the forecourt is named out of scope in the objectives. It carries no evidence about perishable markdown."
+    },
+    {
+      "id": "GT-I2",
+      "source": "governance_requirements.md",
+      "span": "Store-level price variation and promotional mechanics are not permitted on tobacco lines.",
+      "why_irrelevant": "A pricing-compliance rule, and therefore a plausible hit for this question, but tobacco is outside the fresh programme and does not perish. It constrains nothing the fresh team can do."
+    },
+    {
+      "id": "GT-I3",
+      "source": "category_review.md",
+      "span": "The tray supplier consolidation completed in May 2026 reduced packaging unit cost by 4% across the chilled range.",
+      "why_irrelevant": "A cost improvement in the same category, in the same document, in the same period — but explicitly with no change to specification, material or shelf life. It bears on unit cost, not on when or whether stock is marked down."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Buy Verdant Pricing Cloud",
+        "option_kind": "buy",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Requires electronic shelf labels and a real-time till price feed, neither of which exists at scale. The only evidence is a self-selected vendor average with no method."
+      },
+      {
+        "name": "Buy Halcyon Shelf Intelligence",
+        "option_kind": "buy",
+        "horizon": "core",
+        "support": "low",
+        "note": "Needs no hardware, which makes it the more feasible purchase, but it consumes an item-level shelf-life feed that does not exist, and its only result is a seasonally confounded quarter-on-quarter comparison."
+      },
+      {
+        "name": "Build store-level markdown recommendations in-house",
+        "option_kind": "build",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "The one-quarter estimate is a stakeholder opinion contradicted by the platform's depot-level scope and absent expiry data. Would require building the missing data before building the model."
+      },
+      {
+        "name": "Partner with Ashcombe Foods on further shelf-life extension and order profile",
+        "option_kind": "partner",
+        "horizon": "core",
+        "support": "low",
+        "note": "The April 2026 extension from three days to four is documented, but prepared salad markdown still rose year on year afterwards, so the mechanism is plausible and the effect unmeasured."
+      },
+      {
+        "name": "Extend the food redistribution partnership beyond the 68 neighbourhood stores",
+        "option_kind": "partner",
+        "horizon": "core",
+        "support": "low",
+        "note": "Changes the disposition of unsold stock rather than the loss. Diverted volume is booked as waste, so this would move the markdown rate without moving total fresh loss."
+      },
+      {
+        "name": "Fix markdown execution in the 121 lowest-compliance stores",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "The largest measured variation in the corpus is execution, not tooling. Needs no vendor, no capital and no new data, but the cause of the split is unknown."
+      },
+      {
+        "name": "Reinstate the two-stage markdown round with control stores",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Countermanded by D-2025-11 on labour grounds and constrained by the FY25 hours cap. Its only supporting result could not be attributed."
+      },
+      {
+        "name": "Instrument markdown-to-sale conversion before selecting any tool",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "The mechanism every option relies on is currently unmeasured."
+      },
+      {
+        "name": "Require a like-for-like result from both vendors before shortlisting",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Same quarter prior year, or non-deployed comparison stores. Costs nothing and settles the strongest disagreement in the corpus."
+      },
+      {
+        "name": "Defer tool selection to the FY27 planning round",
+        "option_kind": "defer",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Aligns with the EPOS intra-day pilot in Q1 2027, the shelf-label refresh and the capital cycle. Costs a peak trading quarter."
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "moderate",
+    "reason": "No option has strong support. The two vendor figures carry no usable method between them — one is a self-selected average with no baseline, the other a quarter-on-quarter comparison across the steepest seasonal decline in the category. The only internal trial had twelve stores, no control group and two confounds inside its own window. The best-evidenced observation in the corpus is not about tooling at all: markdown execution varies from below 40% to above 90% between stores, and nothing explains why. A brief claiming strong support for any option is overconfident on this evidence.",
+    "defensible_next_steps": [
+      "Work the execution split first: identify what separates the 121 stores below 40% compliance from the 137 above 90%, since no tool will run in stores that do not run the round.",
+      "Instrument markdown-to-sale conversion and report markdown, waste and total fresh loss together, so any later option can be measured against the goal rather than the proxy.",
+      "Ask both vendors for a like-for-like result — same quarter prior year, or non-deployed stores in the same period — and treat neither current figure as an effect size.",
+      "Sequence any dynamic pricing purchase behind the Q1 2027 EPOS intra-day pilot and the shelf-label refresh, and behind the colleague consultation and data protection assessment that both run for at least six weeks."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "buy",
+        "why": "Intra-day price changes are impossible on the nightly till price file, shelf and till prices must match with only 43 stores carrying electronic shelf labels, no item-level shelf-life feed exists, neither vendor has quoted a price, and colleague consultation plus the data protection assessment take at least six weeks each."
+      },
+      {
+        "option_kind": "build",
+        "why": "The only feasibility estimate is a stakeholder opinion, and it is contradicted by the forecasting platform's depot-level scope and its lack of any shelf-life data. No effort estimate exists."
+      },
+      {
+        "option_kind": "process_change",
+        "why": "Adding a markdown round breaches the FY25 colleague hours cap and reverses D-2025-11, which was taken on exactly those labour grounds."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The recommendation must state that neither vendor figure is a measured effect, and must say why for each separately rather than dismissing them as one.",
+      "The recommendation must state that the Halcyon comparison is quarter-on-quarter across a documented seasonal decline in the same category.",
+      "The recommendation must not present the two-stage markdown trial as a measured result.",
+      "The recommendation must distinguish markdown loss from total fresh loss and note that no option has been measured against the latter.",
+      "The recommendation must not present executive preference or the in-house one-quarter estimate as evidence."
+    ]
+  }
+}

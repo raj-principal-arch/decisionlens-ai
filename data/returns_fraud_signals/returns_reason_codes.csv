@@ -1,0 +1,17 @@
+period,segment,reason_code,returns_count,share_of_returns_percent,capture_method,note
+2026-Q2,all,did_not_fit,63600,34.1,"customer-selected at initiation, not verified",synthetic
+2026-Q2,all,not_as_described,33600,18.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,all,quality_or_defect,26100,14.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,all,changed_mind,22400,12.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,all,wrong_item_received,16800,9.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,all,damaged_in_transit,13100,7.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,all,other_or_none_given,10900,5.8,"customer-selected at initiation, not verified",no reason code exists for suspected abuse and an associate has no field in which to record one - synthetic
+2026-Q2,apparel,did_not_fit,51900,42.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,apparel,not_as_described,24700,20.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,apparel,quality_or_defect,19800,16.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,apparel,changed_mind,13600,11.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,apparel,wrong_item_received,7400,6.0,"customer-selected at initiation, not verified",synthetic
+2026-Q2,apparel,damaged_in_transit,3100,2.5,"customer-selected at initiation, not verified",synthetic
+2026-Q2,apparel,other_or_none_given,3000,2.4,"customer-selected at initiation, not verified",synthetic
+2026-Q2,tarnside_line,did_not_fit,22800,58.0,"customer-selected at initiation, not verified",Tarnside apparel line introduced 2025-Q3 - synthetic
+2026-Q2,tarnside_line,quality_or_defect,6300,16.0,"customer-selected at initiation, not verified",synthetic

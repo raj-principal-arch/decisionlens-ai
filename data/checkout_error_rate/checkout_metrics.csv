@@ -1,0 +1,18 @@
+period,metric,value,unit,surface,note
+2025-Q3,checkout_failure_rate,3.9,percent,web,synthetic - defn v2
+2025-Q4,checkout_failure_rate,4.1,percent,web,synthetic - defn v2
+2026-Q1,checkout_failure_rate,6.8,percent,web,synthetic - defn v3
+2026-Q2,checkout_failure_rate,6.4,percent,web,synthetic - defn v3
+2026-Q3-to-date,checkout_failure_rate,5.9,percent,web,synthetic - defn v3; covers 2026-07-01 to 2026-07-31 only
+2025-Q4,checkout_completion_rate,76.1,percent,web,synthetic
+2026-Q1,checkout_completion_rate,73.5,percent,web,synthetic
+2026-Q2,checkout_completion_rate,74.3,percent,web,synthetic
+2026-Q3-to-date,checkout_completion_rate,75.0,percent,web,synthetic - incomplete period
+2025-Q4,payment_auth_completion_rate,91.4,percent,web,synthetic
+2026-Q1,payment_auth_completion_rate,91.0,percent,web,synthetic
+2026-Q2,payment_auth_completion_rate,91.9,percent,web,synthetic - includes six weeks of EXP-2026-04 treatment exposure
+2026-Q1,payment_processing_cost_index,99.7,index,all,synthetic
+2026-Q2,payment_processing_cost_index,100.0,index,all,synthetic
+2026-Q2,orders_completed,920800,count,web,synthetic
+2026-Q3-to-date,app_payment_step_completion,,percent,app,synthetic - not instrumented; the app checkout emits no step-level events
+2026-Q2,repeat_failure_customers,,count,web,synthetic - field defined but never populated

@@ -1,0 +1,632 @@
+{
+  "case_id": "loyalty_programme_refresh",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional pharmacy chain, a fictional loyalty programme and a fictional acquisition. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to improve loyalty programme engagement?",
+  "desired_outcome": "Increase the number of members who actively earn and redeem, and grow member share of transactions, without increasing promotional margin and without creating pharmacy-data, consent or promotions-compliance risk.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M5 is must_detect false: it is a real gap, but finding it is credit rather than a requirement.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "measurement_conflict",
+      "topic": "whether loyalty engagement has improved since autumn 2025",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "The rate went from 26.9% to over 40% and it has held for three quarters."
+      },
+      "side_b": {
+        "source": "engagement_metrics.csv",
+        "span": "period: 2026-Q2\nmetric: engaged_members_quarter\nvalue: 691000"
+      },
+      "why_it_matters": "The count of engaged members has fallen in every quarter of the series, from 748,000 in 2024-Q2 to 691,000 in 2026-Q2. The rate rose because 918,000 accounts were removed from the denominator on 15 October 2025. Treating the rate movement as a behavioural improvement would justify repeating an account-closure exercise as an engagement intervention.",
+      "how_to_resolve": "Compare the numerator, engaged_members_quarter, across the boundary, or recompute the rate on a single member definition for the whole series. Both show continued decline.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "definition_conflict",
+      "topic": "what the active-member base counts, and whether the FY26 target can be assessed against it",
+      "side_a": {
+        "source": "programme_objectives.md",
+        "span": "Brackenhill Care Club has 2,318,000 active members."
+      },
+      "side_b": {
+        "source": "engagement_metrics.csv",
+        "span": "period: 2026-Q2\nmetric: active_members_base\nvalue: 1781000"
+      },
+      "why_it_matters": "The FY26 target of 38% was written against a base of 2,318,000 accounts. The base is now 1,781,000 after 251,000 accounts were added by the merger and 918,000 were closed. The reported 38.8% is not the same measurement the target was set against, so reading the target as met is reading a definition change as progress.",
+      "how_to_resolve": "Restate the whole engagement series on one definition of an active member, applying the 24-month dormancy rule to every period or to none, before reporting progress against the FY26 target.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "temporal_conflict",
+      "topic": "the own-brand points earn rate",
+      "side_a": {
+        "source": "member_research_2023.md",
+        "span": "Increase points earned per pound on own-brand health and household lines, which members recognise and buy repeatedly."
+      },
+      "side_b": {
+        "source": "prior_decisions.md",
+        "span": "The own-brand earn rate was reduced from 4 points per pound to 1 point per pound to fund the price reduction, and till coupon printing was retired at the same time."
+      },
+      "why_it_matters": "The 2023 study's lead recommendation was reversed by a trading decision taken in December 2025 and effective 5 January 2026. Repeating the recommendation is proposing to undo a six-month-old pricing decision, which has to be argued on its merits rather than presented as an existing research finding.",
+      "how_to_resolve": "Treat the earn-rate increase as a new proposal that must be reconciled with the everyday-low-price decision, the FY26 promotional margin constraint and the 30-day member notification requirement, not as a research finding awaiting implementation.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "temporal_conflict",
+      "topic": "whether competitors offer paid or subscription tiers",
+      "side_a": {
+        "source": "competitive_scan_2024.md",
+        "span": "No competitor in our catchment offers a paid or subscription tier."
+      },
+      "side_b": {
+        "source": "stakeholder_notes.md",
+        "span": "A colleague said that two of the three chains in the scan have launched paid tiers since it was written. Nobody could say which two, or when."
+      },
+      "why_it_matters": "The white-space argument for a paid tier rests on a scan completed on 2024-03-22 whose scheduled March 2025 refresh does not appear in the corpus. The counter-claim is unverified recall. Neither side can currently be relied on, and the differentiation case for tiering rests on whichever is true.",
+      "how_to_resolve": "Refresh the competitive scan. It is desk research on public programme terms and can be redone quickly.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C5",
+      "kind": "measurement_conflict",
+      "topic": "what the 2025-Q2 fall in the engagement rate measures",
+      "side_a": {
+        "source": "engagement_metrics.csv",
+        "span": "period: 2025-Q2\nmetric: engagement_rate\nvalue: 27.4"
+      },
+      "side_b": {
+        "source": "membership_operations_log.md",
+        "span": "251,000 Pellworth Chemists member accounts were loaded into the Care Club database and became addressable the same day."
+      },
+      "why_it_matters": "The 3.6-point drop between 2025-Q1 and 2025-Q2 coincides with 251,000 accounts entering the denominator on 22 April 2025, none of which had ever transacted in this programme. Reading it as a deterioration in member behaviour attributes a population change to member behaviour, in the opposite direction from the 2025-Q4 jump.",
+      "how_to_resolve": "Split the series into legacy and migrated cohorts, or exclude migrated accounts until they have a full quarter of exposure.",
+      "must_detect": false
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "What do members say motivates them now, after the merger, the app rebuild and the January 2026 earn-rate change?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Every statement of member preference in the corpus comes from fieldwork conducted in October and November 2023. All three of that study's recommendations concern mechanics that have since changed: the own-brand earn rate was cut, the app was rebuilt, and till coupon printing was retired. The best-quality evidence in the corpus describes a programme that no longer exists.",
+      "how_to_obtain": "Commission the deferred Wave 4 research against the current member base and the rebuilt app.",
+      "was_searched": true,
+      "anchor": {
+        "source": "member_research_2023.md",
+        "span": "Wave 4 was scheduled for autumn 2024 and was not commissioned."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "How do members acquired with Pellworth Chemists behave, and what is engagement in the 96 acquired stores?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "214,000 of the 251,000 migrated accounts failed the 24-month activity test and were closed within six months of migration. Nobody has asked why, and no legacy-versus-migrated split exists. Nearly a quarter of the estate may have almost no active members, which would point at a different intervention from anything the current evidence suggests.",
+      "how_to_obtain": "Split the engagement series by acquisition cohort and by store, and check earn activity in the 96 Pellworth-EPOS stores.",
+      "was_searched": true,
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Nobody in the room had the split."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "What effect did the 5 January 2026 own-brand pricing and earn-rate change have on engagement?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "The earn rate was cut and till coupon printing was retired on the same day, and redemption fell from 47.9% to 38.6% over the following two quarters. No before-and-after design was run, the two changes cannot be separated from each other, and the first post-change quarter is also the post-Christmas quarter with no prior-year comparison in the corpus.",
+      "how_to_obtain": "A cohort or difference-in-differences analysis against the prior year, and a store-level split for the coupon retirement.",
+      "was_searched": true,
+      "anchor": {
+        "source": "engagement_metrics.csv",
+        "span": "period: 2026-Q1\nmetric: points_redemption_rate\nvalue: 41.3"
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "How much member activity happens only at the pharmacy dispensing counter and is therefore never counted?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The engagement numerator is built from till scans that exclude the dispensing counter entirely, and the volume is unknown. The measure that the whole decision rests on is a proxy of unknown coverage, and the regular_prescription segment is the one most likely to be undercounted.",
+      "how_to_obtain": "Reconcile dispensary till scan logs against member accounts for a sample of stores and a sample of weeks.",
+      "was_searched": true,
+      "anchor": {
+        "source": "membership_operations_log.md",
+        "span": "Engagement counts therefore exclude any member activity that happens only at that counter. The volume is not known."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "Did the November 2025 app rebuild change member engagement, and did it resolve the usability problems the 2023 study found?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The rebuild released on 12 November 2025, in the same quarter as the 15 October dormancy purge, so 2025-Q4 cannot separate the two. No usability study has been run against the rebuilt app, and app monthly active users fell in the release quarter before recovering.",
+      "how_to_obtain": "A usability study on the rebuilt app, and a cohort comparison of members who adopted the new app against those who did not.",
+      "was_searched": true,
+      "anchor": {
+        "source": "membership_operations_log.md",
+        "span": "No usability study has been run against the rebuilt app."
+      },
+      "must_detect": false
+    },
+    {
+      "id": "GT-M6",
+      "question": "What does the member base look like today?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "The only segmentation was built on the base as at 30 June 2024. That base has since gained 251,000 migrated accounts and lost 918,000 closed ones, so none of its segment sizes or shares can be assumed to hold. Targeting any intervention at a named segment requires a current segmentation.",
+      "how_to_obtain": "Rebuild the segmentation on the post-purge base and report it alongside the surviving cohorts.",
+      "was_searched": true,
+      "anchor": {
+        "source": "member_segmentation_2024.csv",
+        "span": "note: synthetic - built on the Care Club member base as at 30 June 2024 and not refreshed since"
+      },
+      "must_detect": true
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "The number of members engaging each quarter has fallen in every quarter measured, from 748,000 in 2024-Q2 to 691,000 in 2026-Q2.",
+      "source": "engagement_metrics.csv",
+      "span": "period: 2026-Q2\nmetric: engaged_members_quarter\nvalue: 691000"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "The reported engagement rate rose from 26.9% in 2025-Q3 to 40.4% in 2025-Q4.",
+      "source": "engagement_metrics.csv",
+      "span": "period: 2025-Q4\nmetric: engagement_rate\nvalue: 40.4"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "918,000 accounts were closed on 15 October 2025 under a 24-month dormancy rule, cutting the active-member base from 2,646,000 to 1,728,000.",
+      "source": "membership_operations_log.md",
+      "span": "The active-member base fell from 2,646,000 to 1,728,000 on the day of the run. 918,000 accounts were closed, of which 214,000 were accounts migrated from Pellworth Chemists in April."
+    },
+    {
+      "id": "GT-F4",
+      "statement": "251,000 Pellworth Chemists accounts were migrated into the Care Club base on 22 April 2025 and counted as active from that day.",
+      "source": "membership_operations_log.md",
+      "span": "Migrated accounts were counted in the active-member base from the date of load."
+    },
+    {
+      "id": "GT-F5",
+      "statement": "The own-brand earn rate was cut from 4 points per pound to 1 point per pound with effect from 5 January 2026, and till coupon printing was retired the same day.",
+      "source": "prior_decisions.md",
+      "span": "The own-brand earn rate was reduced from 4 points per pound to 1 point per pound to fund the price reduction, and till coupon printing was retired at the same time."
+    },
+    {
+      "id": "GT-F6",
+      "statement": "Member share of transactions has fallen at every measured point, from 41.2% in 2024-Q2 to 37.1% in 2026-Q2.",
+      "source": "engagement_metrics.csv",
+      "span": "period: 2026-Q2\nmetric: member_share_of_transactions\nvalue: 37.1"
+    },
+    {
+      "id": "GT-F7",
+      "statement": "The points redemption rate fell from 47.9% in 2025-Q4 to 38.6% in 2026-Q2, across the January 2026 earn-rate change and coupon retirement.",
+      "source": "engagement_metrics.csv",
+      "span": "period: 2026-Q2\nmetric: points_redemption_rate\nvalue: 38.6"
+    },
+    {
+      "id": "GT-F8",
+      "statement": "96 of the 436 stores cannot read the Care Club barcode until the EPOS migration completes in 2026-Q4.",
+      "source": "platform_constraints.md",
+      "span": "96 of the 436 stores are still on the Pellworth EPOS build and will not read the Care Club barcode."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That what members said in the 2023 study still describes what members want.",
+      "why_it_is_an_assumption": "Fieldwork closed on 10 November 2023, before the acquisition, before the app rebuild and before the earn-rate change. Nothing in the corpus tests whether the findings still hold, and the study itself says the follow-up wave was never commissioned.",
+      "anchor": {
+        "source": "member_research_2023.md",
+        "span": "Fieldwork: 2 October to 10 November 2023. Report issued: 2023-11-28."
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That the November 2025 app rebuild resolved the usability problems the 2023 study identified.",
+      "why_it_is_an_assumption": "The rebuild happened; whether it fixed the balance-visibility problem was never measured. No usability study has been run against the rebuilt app.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "The app rebuild fixed the usability problems the 2023 study found."
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That the 2024 segmentation still describes the member base.",
+      "why_it_is_an_assumption": "It was built on a base of 2,262,000 accounts as at 30 June 2024. That base has since gained 251,000 accounts and lost 918,000, and the segment most affected by the closures is the one it sized at 530,000.",
+      "anchor": {
+        "source": "member_segmentation_2024.csv",
+        "span": "as_of: 2024-06-30\nsegment: registered_only_or_dormant\nmembers: 530000\nshare_of_base_percent: 23.4"
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The Programme Director believes members want a higher own-brand earn rate and that engagement will follow.",
+      "source": "stakeholder_notes.md",
+      "span": "Members told us the earn rate on own-brand is what makes them scan.",
+      "must_not_be_treated_as": "current evidence of member preference, or evidence that raising the earn rate would raise engagement"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "The Head of Retail Operations believes engagement is recovering and that the autumn 2025 change caused it.",
+      "source": "stakeholder_notes.md",
+      "span": "Engagement is already recovering.",
+      "must_not_be_treated_as": "a measured improvement in member behaviour"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "The Digital Lead believes the app rebuild resolved the 2023 usability findings and wants personalisation built on prescription data.",
+      "source": "stakeholder_notes.md",
+      "span": "The next thing is personalisation off prescription data, because we know what people take.",
+      "must_not_be_treated_as": "a post-rebuild usability measurement, or a permitted use of dispensing data"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "Trade press reported a competitor claim that a tiered programme lifted member visit frequency by 19%.",
+      "source": "competitive_scan_2024.md",
+      "span": "The figure comes from a Verity press release. No sample size, baseline, comparison group or measurement window is stated, and no independent evaluation has been published.",
+      "must_not_be_treated_as": "an expected outcome for a Care Club tier structure"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "denominator changed mid-series",
+      "source": "engagement_metrics.csv",
+      "span": "period: 2025-Q4\nmetric: active_members_base\nvalue: 1742000",
+      "description": "The active-member base drops from 2,638,000 to 1,742,000 between 2025-Q3 and 2025-Q4 because 918,000 dormant accounts were closed on 15 October 2025. The engagement_rate series is reported on the closing base for each period and was not restated, so a 13.5-point jump appears at that boundary while engaged_members_quarter falls from 709,000 to 704,000. The merger produced the same effect in reverse in 2025-Q2.",
+      "why_it_matters": "Every rate figure before 2025-Q4 and every rate figure after it are computed on different populations. Any trend statement, any comparison with the FY26 target, and any claim that the autumn intervention worked crosses that boundary and is measuring an account-closure exercise rather than member behaviour.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "survivorship in the surviving member base",
+      "source": "membership_operations_log.md",
+      "span": "Accounts with no recorded earn or redeem event in the preceding 24 months were closed, counting activity in the predecessor programme for migrated accounts.",
+      "description": "The closure rule selected the remaining base on prior engagement, and removed 214,000 of the 251,000 migrated accounts. The current base is therefore disproportionately long-tenured, legacy, already-engaged members.",
+      "why_it_matters": "Any behaviour measured on the post-purge base overstates engagement relative to the whole customer population, and the acquired catchment has been all but removed from the measurement without anyone deciding that it should be.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "seasonally confounded comparison",
+      "source": "engagement_metrics.csv",
+      "span": "period: 2026-Q1\nmetric: points_redemption_rate\nvalue: 41.3",
+      "description": "The pricing and earn-rate change took effect on 5 January 2026, so the first post-change quarter is also the first quarter after Christmas. The corpus holds no 2025-Q1 redemption figure, so there is no prior-year Q1 to compare against.",
+      "why_it_matters": "The redemption fall across the change is the only quantitative signal about the pricing decision, and it cannot be separated from the seasonal pattern with the data present.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "96 of the 436 stores are on the Pellworth EPOS build and cannot read the Care Club barcode until migration completes in 2026-Q4.",
+      "source": "platform_constraints.md",
+      "span": "Members shopping in those stores cannot earn or redeem at the till.",
+      "blocks": [
+        "any till-based earn or redeem mechanic in the acquired estate",
+        "a group-wide launch before 2026-Q4"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "The rebuilt app has no feature-flag or A/B framework, so experiments must be run as manual store-level splits.",
+      "source": "platform_constraints.md",
+      "span": "The rebuilt app has no feature-flag or A/B framework.",
+      "blocks": [
+        "in-app randomised experiments"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "The app reads balances from the legacy ledger through a read-only feed refreshed every four hours, so real-time and instant-award mechanics are not possible.",
+      "source": "platform_constraints.md",
+      "span": "Real-time balance display and instant-award mechanics are not possible until the ledger is replaced.",
+      "blocks": [
+        "instant-win mechanics",
+        "real-time points display"
+      ]
+    },
+    {
+      "id": "GT-T4",
+      "kind": "technical_constraint",
+      "statement": "Member-level warehouse tables refresh weekly, so no member-facing change can be measured same-day.",
+      "source": "platform_constraints.md",
+      "span": "Member-level tables refresh weekly, on Sunday night."
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "Promotional margin is the binding FY26 constraint and no net increase is available, including anything funded from the points pool.",
+      "source": "programme_objectives.md",
+      "span": "no net increase in promotional margin is available this year",
+      "blocks": [
+        "raising the own-brand earn rate",
+        "any added discount funded from promotional budget"
+      ]
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "Dispensing and prescription data may not be used for marketing segmentation, targeting or personalisation, and Care Club consent does not cover it.",
+      "source": "governance_requirements.md",
+      "span": "Dispensing records, prescription history and any data originating in the dispensary system may not be used for marketing segmentation, targeting or personalisation.",
+      "affects": [
+        "personalisation",
+        "targeted offers",
+        "ai_assisted"
+      ],
+      "why_it_matters": "Rules out the personalisation option as the Digital Lead described it, and rules out repeat-prescription reminders as a loyalty mechanic without a separate, per-member consent that nothing in the corpus shows exists."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "Inferring a health condition from purchase history is special-category processing and requires a data protection impact assessment approved before launch, taking six weeks.",
+      "source": "governance_requirements.md",
+      "span": "Any feature that does so requires a completed data protection impact assessment, approved before launch.",
+      "affects": [
+        "personalisation",
+        "ai_assisted",
+        "basket-based targeting"
+      ]
+    },
+    {
+      "id": "GT-G3",
+      "statement": "Any mechanic with a chance element needs a promotions licence with a ten to twelve week lead time.",
+      "source": "governance_requirements.md",
+      "span": "Any mechanic with a chance element requires a promotions licence. Current lead time from application to approval is ten to twelve weeks.",
+      "affects": [
+        "gamification",
+        "prize draws",
+        "instant-win"
+      ],
+      "why_it_matters": "Nothing with a chance element can launch inside FY26, which ends on 31 August 2026."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "Any change to the earn or redeem rate must be notified to members at least 30 days before it takes effect.",
+      "source": "governance_requirements.md",
+      "span": "must be notified to members at least 30 days before it takes effect",
+      "affects": [
+        "earn-rate changes",
+        "redemption value changes"
+      ]
+    },
+    {
+      "id": "GT-G5",
+      "statement": "Member communications referencing a health condition, symptom or medicine require pharmacist sign-off before dispatch, with no volume exemption.",
+      "source": "governance_requirements.md",
+      "span": "A member communication that references a health condition, a symptom or a medicine requires pharmacist sign-off before dispatch.",
+      "affects": [
+        "ai_assisted",
+        "personalised health messaging",
+        "repeat-purchase reminders"
+      ]
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "Loyalty engagement has improved since autumn 2025, or the engagement rate recovered from 26.9% to 40.4%.",
+      "why_forbidden": "The rise follows the closure of 918,000 accounts on 15 October 2025 and a reporting series that was not restated. Engaged members fell from 709,000 to 704,000 across the same boundary and have fallen in every quarter since 2024-Q2.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "engagement_metrics.csv",
+        "span": "period: 2025-Q4\nmetric: engagement_rate\nvalue: 40.4"
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "The FY26 engagement target has been met, or engagement is at 38.8% against a 38% target.",
+      "why_forbidden": "The target was set against a base of 2,318,000 active members and the current figure is computed on 1,781,000. The two numbers count different populations and cannot be compared without restating the series.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "engagement_metrics.csv",
+        "span": "period: 2026-Q2\nmetric: engagement_rate\nvalue: 38.8"
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "Members want a higher points-per-pound rate on own-brand lines, or 68% of members say earning rate is what makes them scan.",
+      "why_forbidden": "The figure is from fieldwork that closed on 10 November 2023, before the acquisition, the app rebuild and the January 2026 earn-rate cut. It is a stated preference about a programme that has since changed on exactly the dimension being quoted.",
+      "anchor": {
+        "source": "member_research_2023.md",
+        "span": "68% named money off everyday health and household lines as their main reason for scanning."
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "The app's usability problems have been fixed, or the app is no longer a barrier to engagement.",
+      "why_forbidden": "No usability study has been run against the rebuilt app. The only usability evidence in the corpus describes an app that was replaced on 12 November 2025.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "The app rebuild fixed the usability problems the 2023 study found."
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "Any current statement of segment size or share, such as that occasional convenience shoppers are 26.0% of the base or that dormant members are 23.4% of it.",
+      "why_forbidden": "The segmentation was built on the base as at 30 June 2024. 918,000 accounts have since been closed, disproportionately from the segments with the lowest engagement, and 251,000 were added by the merger. None of the shares survive those changes.",
+      "anchor": {
+        "source": "member_segmentation_2024.csv",
+        "span": "as_of: 2024-06-30\nsegment: occasional_convenience\nmembers: 587000\nshare_of_base_percent: 26.0"
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "The January 2026 earn-rate cut caused the fall in redemption.",
+      "why_forbidden": "Two changes landed on the same day, the earn-rate cut and the retirement of till coupon printing, and the first post-change quarter is also the post-Christmas quarter with no prior-year comparison in the corpus. The fall is real; the attribution is not established.",
+      "tempted_by": "GT-H3",
+      "anchor": {
+        "source": "membership_operations_log.md",
+        "span": "Coupon printing at the till was switched off in all stores on the same day the own-brand price change took effect."
+      }
+    },
+    {
+      "id": "GT-U7",
+      "claim": "A tiered programme would lift member visit frequency by around 19%.",
+      "why_forbidden": "A competitor press-release figure repeated in trade press in January 2024, with no stated sample, baseline, comparison group or measurement window, and no independent evaluation.",
+      "anchor": {
+        "source": "competitive_scan_2024.md",
+        "span": "Trade press reported in January 2024 that the Verity Health Stores tiered programme increased member visit frequency by 19% in its first two quarters."
+      }
+    },
+    {
+      "id": "GT-U8",
+      "claim": "No competitor offers a paid or subscription tier, so a paid tier is open white space.",
+      "why_forbidden": "The scan was completed on 2024-03-22, its scheduled March 2025 refresh does not appear in the corpus, and the only later comment on it says the position has changed.",
+      "anchor": {
+        "source": "competitive_scan_2024.md",
+        "span": "This scan is refreshed annually. The next refresh was scheduled for March 2025."
+      }
+    },
+    {
+      "id": "GT-U9",
+      "claim": "Members do not engage at the pharmacy dispensing counter, or counter engagement is negligible.",
+      "why_forbidden": "Counter scans are not written back to the member account and the volume is explicitly not known. An unmeasured channel is not an empty one.",
+      "anchor": {
+        "source": "engagement_metrics.csv",
+        "span": "metric: counter_only_engaged_members\nunit: count"
+      }
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "prior_decisions.md",
+      "span": "withdraw the in-store photo printing service from all stores by 31 December 2025",
+      "why_irrelevant": "A lease-expiry decision about a retail service with no loyalty mechanic attached. Retrievable and dated within the window, but it bears on nothing in this question."
+    },
+    {
+      "id": "GT-I2",
+      "source": "membership_operations_log.md",
+      "span": "Average answer time improved from 4m 10s to 1m 55s.",
+      "why_irrelevant": "A contact-centre telephony metric. It is one of the few genuinely current numbers in the corpus, which makes it tempting to use, but the same entry records that no member-facing programme mechanic changed."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Restate the engagement series on one member definition before choosing an intervention",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "The numerator and denominator are both in the metrics export and the purge date is in the operations log, so this is arithmetic rather than new collection."
+      },
+      {
+        "name": "Commission the deferred Wave 4 member research against the current base and the rebuilt app",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "The only member-voice evidence is nearly three years old and describes mechanics that have since changed."
+      },
+      {
+        "name": "Fix dispensing-counter scan capture so member activity at the counter is measured",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Closes a known blind spot in the metric the decision rests on. Effort is not estimated anywhere in the corpus."
+      },
+      {
+        "name": "Prioritise the EPOS migration for the 96 acquired stores so members there can earn and redeem",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "22% of the estate cannot participate at all. Currently scheduled for 2026-Q4 and owned outside the programme."
+      },
+      {
+        "name": "Targeted re-engagement contact to the surviving low-activity cohort",
+        "option_kind": "marketing_campaign",
+        "horizon": "core",
+        "support": "low",
+        "note": "Reach is limited by the 34.2% notification opt-in rate and by the absence of a current segmentation."
+      },
+      {
+        "name": "Restore an own-brand earn uplift on a limited basket",
+        "option_kind": "pricing_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Rests on 2023 stated preference, reverses a December 2025 trading decision, breaches the FY26 margin constraint and needs 30 days' member notice."
+      },
+      {
+        "name": "Rules-based basket-linked offers using non-dispensary purchase data only",
+        "option_kind": "rules_based_automation",
+        "horizon": "core",
+        "support": "low",
+        "note": "Avoids GT-G1 only if it makes no health inference; otherwise it triggers the DPIA requirement."
+      },
+      {
+        "name": "Personalised repeat-purchase and health reminders in the app",
+        "option_kind": "ai_assisted",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Blocked as described by the dispensing-data prohibition, and any health-referencing message needs pharmacist sign-off with no volume exemption."
+      },
+      {
+        "name": "Tiered membership structure",
+        "option_kind": "programme_design",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Deferred in June 2025 pending integration; supported only by a competitor press figure with no method and a stale white-space claim."
+      },
+      {
+        "name": "No new intervention this quarter; repair the measurement and reassess",
+        "option_kind": "defer",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Defensible given that the headline metric cannot currently distinguish improvement from an account closure."
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "moderate",
+    "reason": "Moderate support is available only for repairing the measurement, refreshing the member evidence and closing the EPOS and counter-scan gaps. No member-facing mechanic rises above low: the only member-preference evidence is 2023 fieldwork that predates the merger, the app rebuild and the earn-rate cut; the only competitive figure is an unmethodical press claim from 2024; the only segmentation is from June 2024; and the single current quantitative series changes denominator mid-way, so it cannot yet show whether anything is working.",
+    "defensible_next_steps": [
+      "Restate the engagement series on a single member definition across the whole period before quoting any trend or reporting against the FY26 target.",
+      "Commission the deferred member research against the current base and the rebuilt app, and refresh the competitive scan.",
+      "Close the two measurement gaps that bound everything else: dispensing-counter scan capture, and the legacy-versus-migrated cohort split."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "pricing_change",
+        "why": "Raising the own-brand earn rate reverses a December 2025 trading decision, breaches the FY26 no-net-increase constraint on promotional margin, requires 30 days' member notice, and is supported only by stated preference collected in 2023."
+      },
+      {
+        "option_kind": "ai_assisted",
+        "why": "Personalisation built on dispensing or prescription data is prohibited without a separate per-member consent, health inference from purchase data requires an approved DPIA, and any health-referencing message requires pharmacist sign-off with no volume exemption."
+      },
+      {
+        "option_kind": "gamification",
+        "why": "A chance-element mechanic needs a promotions licence with a ten to twelve week lead time, and the ledger feed cannot support instant awards."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The brief must state that the rise in the engagement rate at 2025-Q4 follows a change in the active-member denominator and is not evidence of improved member behaviour.",
+      "The brief must date the member research and say that it predates the acquisition, the app rebuild and the January 2026 earn-rate change.",
+      "The brief must not present the FY26 engagement target as met.",
+      "The brief must not present stakeholder recollection, executive preference or a competitor press figure as measurement."
+    ]
+  }
+}

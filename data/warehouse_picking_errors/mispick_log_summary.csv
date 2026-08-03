@@ -1,0 +1,33 @@
+period,shift,aisle_range,error_type,mispick_count,lines_picked,rate_per_1000_lines,share_of_group_percent,note
+2026-Q2,day_shift_a,aisles_31_44,all,923,97200,9.5,100.0,synthetic
+2026-Q2,day_shift_a,all_other_aisles,all,1573,982800,1.6,100.0,synthetic
+2026-Q2,twilight_shift_b,aisles_31_44,all,1760,187200,9.4,100.0,synthetic
+2026-Q2,twilight_shift_b,all_other_aisles,all,869,532800,1.6,100.0,synthetic
+2026-Q2,night_shift_c,aisles_31_44,all,4090,426000,9.6,100.0,synthetic
+2026-Q2,night_shift_c,all_other_aisles,all,262,174000,1.5,100.0,synthetic
+2026-Q2,all_shifts,aisles_31_44,all,6773,710400,9.5,100.0,synthetic
+2026-Q2,all_shifts,all_other_aisles,all,2704,1689600,1.6,100.0,synthetic
+2026-Q2,all_shifts,all_aisles,all,9477,2400000,3.9,100.0,synthetic
+2026-Q2,all_shifts,aisles_31_44,wrong_item_similar_sku,4335,710400,6.10,64.0,synthetic
+2026-Q2,all_shifts,aisles_31_44,wrong_quantity,1084,710400,1.53,16.0,synthetic
+2026-Q2,all_shifts,aisles_31_44,wrong_item_dissimilar,677,710400,0.95,10.0,synthetic
+2026-Q2,all_shifts,aisles_31_44,missed_line,406,710400,0.57,6.0,synthetic
+2026-Q2,all_shifts,aisles_31_44,other,271,710400,0.38,4.0,synthetic
+2026-Q2,all_shifts,all_other_aisles,wrong_quantity,1095,1689600,0.65,40.5,synthetic
+2026-Q2,all_shifts,all_other_aisles,wrong_item_similar_sku,595,1689600,0.35,22.0,synthetic
+2026-Q2,all_shifts,all_other_aisles,missed_line,446,1689600,0.26,16.5,synthetic
+2026-Q2,all_shifts,all_other_aisles,wrong_item_dissimilar,365,1689600,0.22,13.5,synthetic
+2026-Q2,all_shifts,all_other_aisles,other,203,1689600,0.12,7.5,synthetic
+2026-Q2,all_shifts,all_aisles,wrong_item_similar_sku,4930,2400000,2.05,52.0,synthetic
+2026-Q2,all_shifts,all_aisles,wrong_quantity,2179,2400000,0.91,23.0,synthetic
+2026-Q2,all_shifts,all_aisles,wrong_item_dissimilar,1042,2400000,0.43,11.0,synthetic
+2026-Q2,all_shifts,all_aisles,missed_line,852,2400000,0.36,9.0,synthetic
+2026-Q2,all_shifts,all_aisles,other,474,2400000,0.20,5.0,synthetic
+2025-Q4,all_shifts,aisles_31_44,all,810,300000,2.7,100.0,synthetic - before the February 2026 reslot
+2025-Q4,all_shifts,all_other_aisles,all,5715,2200000,2.6,100.0,synthetic - before the February 2026 reslot
+2025-Q4,all_shifts,all_aisles,all,6525,2500000,2.6,100.0,synthetic
+2025-Q4,all_shifts,all_aisles,wrong_quantity,2414,2500000,0.97,37.0,synthetic
+2025-Q4,all_shifts,all_aisles,wrong_item_similar_sku,1631,2500000,0.65,25.0,synthetic
+2025-Q4,all_shifts,all_aisles,missed_line,1109,2500000,0.44,17.0,synthetic
+2025-Q4,all_shifts,all_aisles,wrong_item_dissimilar,913,2500000,0.37,14.0,synthetic
+2025-Q4,all_shifts,all_aisles,other,458,2500000,0.18,7.0,synthetic

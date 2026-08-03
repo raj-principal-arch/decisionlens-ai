@@ -1,0 +1,21 @@
+period,metric,value,unit,segment,note
+2026-Q2,authorisation_success_rate,96.9,percent,all_methods,volume-weighted mean across payment methods - synthetic
+2026-Q1,authorisation_success_rate,97.0,percent,all_methods,first period reported on the revised denominator - synthetic
+2025-Q4,authorisation_success_rate,97.2,percent,all_methods,synthetic
+2025-Q3,authorisation_success_rate,97.4,percent,all_methods,synthetic
+2025-Q2,authorisation_success_rate,97.4,percent,all_methods,synthetic
+2025-Q1,authorisation_success_rate,97.5,percent,all_methods,synthetic
+2026-Q2,authorisation_success_rate_prior_basis,,percent,all_methods,not restated - the pre-2026-Q1 series has never been recomputed on the current denominator - synthetic
+2026-Q2,failed_authorisation_value_usd,7480557,usd,all_methods,attempted value of authorisations that did not succeed - synthetic
+2026-Q2,failed_authorisation_count,25908,count,all_methods,synthetic
+2026-Q2,retries_per_eligible_failure,1.3,count,all_methods,designed policy is up to four - synthetic
+2026-Q1,retries_per_eligible_failure,2.9,count,all_methods,synthetic
+2025-Q4,retries_per_eligible_failure,3.1,count,all_methods,synthetic
+2026-Q2,retry_recovery_rate,34.2,percent,card_methods_only,share of eligible card failures recovered by a later retry - synthetic
+2026-Q1,retry_recovery_rate,41.8,percent,card_methods_only,synthetic
+2026-Q2,retry_recovery_rate,,percent,bank_debit_mandate,not measured - mandate collections are not routed through the orchestrator - synthetic
+2026-Q2,checkout_completion_rate,71.3,percent,all_methods,synthetic
+2026-Q1,checkout_completion_rate,71.9,percent,all_methods,synthetic
+2026-Q2,orders_recovered_after_payment_failure,,count,all_methods,not measured - the field exists but was never populated - synthetic
+2026-Q2,payment_acceptance_cost_index,100.0,index,all_methods,synthetic
+2026-Q1,payment_acceptance_cost_index,99.1,index,all_methods,synthetic

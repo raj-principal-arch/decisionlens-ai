@@ -1,0 +1,691 @@
+{
+  "case_id": "payment_retry_reliability",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional online marketplace, a fictional payments partner, and fictional security findings. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to improve payment reliability?",
+  "desired_outcome": "Recover more legitimate payment authorisations and reduce checkout abandonment caused by payment failure, without breaching the contractual security remediation deadline, the PCI attestation requirement, the direct debit scheme rules, or the buyer consent policy.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M5 is must_detect false: it is a real gap, but finding it is credit rather than a requirement.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "temporal_conflict",
+      "topic": "the current payment authorisation success rate",
+      "side_a": {
+        "source": "business_objectives.md",
+        "span": "Payment authorisation success is 97.4% and has been stable for six quarters."
+      },
+      "side_b": {
+        "source": "payment_metrics.csv",
+        "span": "period: 2026-Q2\nmetric: authorisation_success_rate\nvalue: 96.9"
+      },
+      "why_it_matters": "The objectives document sets a 98.0% target against a figure that is three quarters out of date, and describes as stable a series that has fallen in each of the last three quarters. Planning against 97.4% both understates the movement and hides that the movement is confined to one payment method.",
+      "how_to_resolve": "97.4% matches 2025-Q3 and 2025-Q2 in payment_metrics.csv. The figure is not wrong, it is stale, and 'stable for six quarters' was never true of the series in the corpus.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "scope_conflict",
+      "topic": "what dominates payment failure",
+      "side_a": {
+        "source": "incident_review_retry_orchestrator.md",
+        "span": "Cards account for 19,369 of the 25,908 failed authorisation attempts in 2026-Q2."
+      },
+      "side_b": {
+        "source": "payment_method_performance.csv",
+        "span": "payment_method: bank_debit_mandate\nattempts: 17300\nsuccessful_authorisations: 12387\nsuccess_rate_percent: 71.6"
+      },
+      "why_it_matters": "Cards dominate by count of failed attempts, at roughly three quarters of them. Bank mandates dominate by value of failed attempts, at 81.8%. Both are true of different denominators, and an unqualified claim about the biggest payment problem is wrong whichever one is chosen.",
+      "how_to_resolve": "State the denominator. Failure count and failed value point at different methods and are not in conflict once the measure is named.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "claim_conflict",
+      "topic": "whether the PT-2026-014 exposure has been closed",
+      "side_a": {
+        "source": "technical_constraints.md",
+        "span": "The identifier no longer appears in application logs, so from an engineering standpoint the exposure described in PT-2026-014 was closed on 2026-06-12."
+      },
+      "side_b": {
+        "source": "security_findings_register.json",
+        "span": "The retry queue payload is unchanged and 30 days of historical log entries were still in retention at the date of this register."
+      },
+      "why_it_matters": "A brief that reads the engineering note as closure drops the only item on the board with a contractual deadline. The finding is recorded open, the queue payload still carries the identifier, and policy requires assessor retest before anything is closed.",
+      "how_to_resolve": "Ask the assessor whether PT-2026-014 has been retested. The register says it has not, and the governance policy states that partial remediation does not close a finding and does not stop the clock.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "claim_conflict",
+      "topic": "whether the security remediation belongs on the ranked product backlog",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "Put the pen-test fix on the same backlog as everything else and let the scores decide."
+      },
+      "side_b": {
+        "source": "governance_and_compliance.md",
+        "span": "It is scheduled against its deadline and is not scored, ranked, or traded against product work."
+      },
+      "why_it_matters": "This is the whole shape of the decision. One instruction treats a contractual obligation as a candidate initiative to be scored on reach and revenue; the policy says obligations are scheduled to their deadline and never ranked against product work. A brief that follows the instruction has made a category error, whatever score it produces.",
+      "how_to_resolve": "The policy governs. The remediation is a constraint on the decision, and the question of what to prioritise applies to the capacity that remains after it is scheduled.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C5",
+      "kind": "metric_conflict",
+      "topic": "how many retries the orchestrator actually issues",
+      "side_a": {
+        "source": "incident_review_retry_orchestrator.md",
+        "span": "The configured policy is up to four attempts over 24 hours."
+      },
+      "side_b": {
+        "source": "payment_metrics.csv",
+        "span": "metric: retries_per_eligible_failure\nvalue: 1.3"
+      },
+      "why_it_matters": "Any estimate of what better retry timing would recover assumes the retries fire. Configured behaviour and observed behaviour differ by a factor of three, and the gap is not alerted, so it was invisible until the incident.",
+      "how_to_resolve": "Instrument the queue so dropped leases are counted and alerted. Until then the configured policy describes intent, not behaviour.",
+      "must_detect": true
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "Why do bank mandate collections fail?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "The method carrying 81.8% of failed value has no failure-reason breakdown at all. The scheme return file is loaded but its reason codes are never parsed, so the only diagnosis in the corpus is a 60-record hand review. Whether the failures are recoverable at all depends entirely on this answer.",
+      "how_to_obtain": "Parse the scheme return-file reason codes already landing nightly, and report mandate failures by reason. The open audit item AUD-2026-006 on missing mandate authorisation records may cover part of the same ground.",
+      "was_searched": true,
+      "anchor": {
+        "source": "technical_constraints.md",
+        "span": "Its reason codes are stored as raw strings and are not parsed, so no failure-reason breakdown exists for mandate collections."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "What does remediating PT-2026-014 cost in engineering time, and what does it displace?",
+      "impact": "would_change_sequencing",
+      "why_it_matters": "The remediation is not optional, so its cost is not a reason to do or not do it. It is the number that determines how much capacity is left for everything else, and what can be scheduled before the 2026-11-10 freeze. No estimate exists anywhere in the corpus.",
+      "how_to_obtain": "Engineering estimate for removing the instrument identifier from the retry queue payload, purging retained log entries, and restricting log access to a named role, sized against the change-control lead time.",
+      "was_searched": true,
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Only one change to the orchestrator can be in flight under change control. Whatever else we choose, it queues behind the remediation."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "What happens to a buyer whose payment fails: does the order come back by another route?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The corpus reports $7,480,557 of failed attempted value and never reports how much of it was subsequently recovered. Treating failed attempted value as lost revenue is the single largest unearned assumption available here.",
+      "how_to_obtain": "Populate orders_recovered_after_payment_failure by joining failed attempts to subsequent completed orders from the same buyer.",
+      "was_searched": true,
+      "anchor": {
+        "source": "payment_metrics.csv",
+        "span": "metric: orders_recovered_after_payment_failure\nunit: count"
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "What actually causes the dropped retries?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Queue lease expiry is a hypothesis consistent with the burst pattern, not a demonstrated cause. The defect has never been reproduced outside production and no non-production environment carries live issuer traffic, so a fix cannot be validated before release.",
+      "how_to_obtain": "Instrument lease expiry counts in production, or build shadow-traffic support so the orchestrator can be exercised outside the live path.",
+      "was_searched": true,
+      "anchor": {
+        "source": "incident_review_retry_orchestrator.md",
+        "span": "The defect has not been reproduced outside production."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "What would the assessor accept as a compensating control, and what happens to the 2026-10-31 attestation if remediation slips?",
+      "impact": "would_change_sequencing",
+      "why_it_matters": "The policy allows an open High finding to be covered by an assessor-accepted compensating control, but none has been proposed and the corpus does not say what would qualify or how long acceptance takes. Without that, the only known path to attestation is closing the finding.",
+      "how_to_obtain": "Ask the qualified security assessor what compensating control would be accepted for PT-2026-014, and how long review takes.",
+      "was_searched": true,
+      "anchor": {
+        "source": "governance_and_compliance.md",
+        "span": "No compensating control has been proposed for PT-2026-014."
+      },
+      "must_detect": false
+    },
+    {
+      "id": "GT-M6",
+      "question": "What is the authorisation success trend on a consistent denominator?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The denominator changed in 2026-Q1 and raised the reported rate by about 0.9 points. The earlier series has never been restated, so the reported movement from 97.4% to 96.9% is not a measurement of anything comparable, and the true decline is unknown.",
+      "how_to_obtain": "Recompute the pre-2026-Q1 quarters on the current denominator, or the post-change quarters on the old one.",
+      "was_searched": true,
+      "anchor": {
+        "source": "payment_metrics.csv",
+        "span": "metric: authorisation_success_rate_prior_basis\nunit: percent"
+      },
+      "must_detect": false
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "Reported payment authorisation success was 96.9% in 2026-Q2, and the figure is a volume-weighted mean across payment methods.",
+      "source": "payment_metrics.csv",
+      "span": "metric: authorisation_success_rate\nvalue: 96.9\nunit: percent\nsegment: all_methods\nnote: volume-weighted mean across payment methods - synthetic"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "Bank debit mandate is 2.1% of payment attempts and 28.7% of attempted gross merchandise value, authorises at 71.6%, and accounts for $6,121,598 of failed attempted value, which is 81.8% of all failed attempted value in 2026-Q2.",
+      "source": "payment_method_performance.csv",
+      "span": "success_rate_percent: 71.6\nshare_of_attempts_percent: 2.1\naverage_order_value_usd: 1246.00\nshare_of_attempted_gmv_percent: 28.7\nfailed_attempted_value_usd: 6121598\nshare_of_failed_value_percent: 81.8"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "Bank debit mandate authorisation success fell from 90.6% in 2025-Q3 to 88.1%, then 82.4%, then 71.6% in 2026-Q2. Every other payment method improved between 2026-Q1 and 2026-Q2.",
+      "source": "payment_method_performance.csv",
+      "span": "period: 2025-Q3\npayment_method: bank_debit_mandate\nattempts: 14900\nsuccessful_authorisations: 13499\nsuccess_rate_percent: 90.6"
+    },
+    {
+      "id": "GT-F4",
+      "statement": "PT-2026-014 is an open High-severity penetration-test finding: the Retry Orchestrator writes full payment instrument identifiers into the retry queue payload and into debug logs readable by any engineer with platform log access.",
+      "source": "security_findings_register.json",
+      "span": "The Retry Orchestrator writes the full payment instrument identifier into the retry queue payload and into application debug logs."
+    },
+    {
+      "id": "GT-F5",
+      "statement": "The Retry Orchestrator and its retry queue are inside the PCI DSS cardholder data environment, and the annual attestation is due 2026-10-31.",
+      "source": "governance_and_compliance.md",
+      "span": "The Retry Orchestrator, its retry queue, and the payment instrument log stream are inside the cardholder data environment. The annual attestation is due 2026-10-31."
+    },
+    {
+      "id": "GT-F6",
+      "statement": "Bank mandate collections are submitted to the scheme in a nightly batch and do not pass through the Retry Orchestrator, so orchestrator retry policy cannot affect them.",
+      "source": "technical_constraints.md",
+      "span": "They do not pass through the Retry Orchestrator, and no change to orchestrator retry policy affects them."
+    },
+    {
+      "id": "GT-F7",
+      "statement": "Retries actually issued per eligible failure fell from 3.1 in 2025-Q4 to 1.3 in 2026-Q2, against a configured policy of up to four.",
+      "source": "incident_review_retry_orchestrator.md",
+      "span": "Retries actually issued per eligible failure fell from 3.1 in 2025-Q4 to 1.3 in 2026-Q2."
+    },
+    {
+      "id": "GT-F8",
+      "statement": "A randomised test in 2025 moved the second card retry from 15 minutes to four hours and raised card retry recovery from 39.1% to 41.6% over 24,800 eligible failures, significant at p = 0.03.",
+      "source": "prior_experiments.md",
+      "span": "Card retry recovery was 41.6% in the treatment arm against 39.1% in the control arm, over 24,800 eligible failures."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That the intermittent dropped retries are caused by queue lease expiry.",
+      "why_it_is_an_assumption": "The incident review names it as the leading hypothesis and says in the same paragraph that it has not been demonstrated. A fix scoped to the lease could be a fix to nothing.",
+      "anchor": {
+        "source": "incident_review_retry_orchestrator.md",
+        "span": "This is consistent with the burst pattern and with the load profile, but it has not been demonstrated."
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That failed bank mandate collections are recoverable by attempting them again.",
+      "why_it_is_an_assumption": "The only look at mandate failures is 60 records from one week and one onboarding cohort, and in it 33 of 60 were mandate-invalid or account-closed, which no re-presentation recovers. The sample is too small and too narrow to establish the split, and nothing larger exists.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "A manual review of 60 failed mandate collections from a single week found: 22 recorded as mandate no longer valid at the buyer's bank, 19 as insufficient funds, 11 as account closed, and 8 unmapped."
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That the $7,480,557 of failed attempted value is lost revenue.",
+      "why_it_is_an_assumption": "Attempted value that failed authorisation is not the same as value never collected. The field that would show recovery exists and was never populated, and the question was raised in the review meeting and not answered.",
+      "anchor": {
+        "source": "payment_metrics.csv",
+        "span": "metric: failed_authorisation_value_usd\nvalue: 7480557"
+      }
+    },
+    {
+      "id": "GT-A4",
+      "statement": "That the June logging change was sufficient to remove the exposure described in PT-2026-014.",
+      "why_it_is_an_assumption": "The change addressed newly written application logs. Nothing in the corpus says the queue payload was changed or the retained logs purged, and policy requires assessor retest before a finding is closed.",
+      "anchor": {
+        "source": "technical_constraints.md",
+        "span": "The change deployed on 2026-06-12 removed the payment instrument identifier from newly written application logs."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The Director of Payments believes unshipped adaptive retries are costing revenue every quarter.",
+      "source": "stakeholder_notes.md",
+      "span": "Every quarter we do not ship adaptive retries is money on the floor.",
+      "must_not_be_treated_as": "a quantified estimate of recoverable revenue"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "The Director of Payments instructs that the penetration-test remediation be scored on the same ranked backlog as product work.",
+      "source": "stakeholder_notes.md",
+      "span": "Put the pen-test fix on the same backlog as everything else and let the scores decide.",
+      "must_not_be_treated_as": "authority to rank a contractual obligation against discretionary work, or evidence that the obligation is negotiable"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "The Commercial Director believes the finding is low risk because no exploitation is known.",
+      "source": "stakeholder_notes.md",
+      "span": "The pen test finding is a paperwork item. Nobody has actually exploited it.",
+      "must_not_be_treated_as": "a risk assessment, or a reason to reclassify the severity or the deadline"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "The Head of Trade Sales reports weekly complaints from trade buyers about bank transfers.",
+      "source": "stakeholder_notes.md",
+      "span": "Our trade buyers keep telling me the bank transfer thing is broken. I hear it every week.",
+      "must_not_be_treated_as": "a measured failure rate, a count of affected buyers, or a diagnosis of the cause"
+    },
+    {
+      "id": "GT-O5",
+      "statement": "A vendor claims its product delivers a 2.4 percentage point uplift in authorisation success.",
+      "source": "stakeholder_notes.md",
+      "span": "The material states no baseline, no sample size, no comparison method, and no merchant category.",
+      "must_not_be_treated_as": "an expected outcome for this marketplace"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "an aggregate that hides a tail",
+      "source": "payment_metrics.csv",
+      "span": "metric: authorisation_success_rate\nvalue: 96.9\nunit: percent\nsegment: all_methods\nnote: volume-weighted mean across payment methods - synthetic",
+      "description": "The headline rate is a volume-weighted mean across five payment methods. Four sit above 97%; one sits at 71.6%. Because the failing method is 2.1% of attempts it moves the mean by a fraction of a point, while carrying 28.7% of attempted value and 81.8% of the value that failed. Between 2026-Q1 and 2026-Q2 every method except that one improved and the mean still fell. The summary shown to the review meeting quoted the mean and nothing else.",
+      "why_it_matters": "Read on its own the mean says payment reliability is a small, diffuse, broadly acceptable problem sitting just under target. The method-level table says it is a large, concentrated problem in a single method used by the buyer segment the company has named as its growth priority. This hazard tempts GT-U4 and GT-U5, and the corpus already contains one decision made on exactly this error.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "denominator redefined mid-series",
+      "source": "technical_constraints.md",
+      "span": "From 2026-Q1 the authorisation success denominator excludes checkout sessions abandoned by the buyer before the issuer responded. The change raised the reported rate by approximately 0.9 percentage points.",
+      "description": "The authorisation success series in payment_metrics.csv spans the redefinition without restatement. The 2026 figures are roughly 0.9 points higher than they would be on the old basis, so the reported fall from 97.4% to 96.9% understates the underlying movement by more than the movement itself.",
+      "why_it_matters": "Any trend statement taken across 2026-Q1 is measuring a definition change as well as a behaviour change, and the corpus never separates them.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "the only randomised evidence covers one segment",
+      "source": "prior_experiments.md",
+      "span": "The test covered card methods only. Bank mandate collections were excluded because they are not routed through the Retry Orchestrator.",
+      "description": "The retry-timing test is the only randomised result in the corpus, and it measures card retry recovery. The retry_recovery_rate metric carries the same limitation, labelled card_methods_only, with the mandate row explicitly not measured.",
+      "why_it_matters": "The best-evidenced intervention available is evidenced only for the methods that are not the problem by value. Carrying its result across to mandates would assert a measurement that was structurally impossible to take.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "Retry jobs hold a 15-minute queue lease and are dropped without alert when it expires; extending it requires an unscheduled broker upgrade.",
+      "source": "technical_constraints.md",
+      "span": "Retry jobs are leased from the queue for 15 minutes. A job whose lease expires before a worker collects it is dropped, and the drop is not alerted.",
+      "blocks": [
+        "any retry policy change that assumes retries fire as configured",
+        "retry schedules longer than the lease without a broker upgrade"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "Bank mandate collections are assembled in a nightly batch and submitted directly to the scheme, bypassing the Retry Orchestrator entirely.",
+      "source": "technical_constraints.md",
+      "span": "Mandate collections are assembled in a nightly batch and submitted to the scheme directly.",
+      "blocks": [
+        "repairing or tuning the Retry Orchestrator as a way of recovering mandate failures",
+        "adaptive retry products applied to the mandate path"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "Token lifetime, refresh cadence, and account-updater participation are set by the payments partner and cannot be changed unilaterally.",
+      "source": "technical_constraints.md",
+      "span": "Token lifetime, refresh cadence, and account-updater participation are set by the partner and cannot be changed by Larkmere.",
+      "blocks": [
+        "in-house credential refresh work"
+      ]
+    },
+    {
+      "id": "GT-T4",
+      "kind": "technical_constraint",
+      "statement": "No non-production environment carries live issuer traffic and the orchestrator does not support shadow traffic, so retry behaviour changes cannot be validated before release.",
+      "source": "technical_constraints.md",
+      "span": "No non-production environment carries live issuer traffic. Changes to retry behaviour cannot be validated before release except by shadow traffic, which the orchestrator does not currently support.",
+      "blocks": [
+        "pre-release validation of any orchestrator change"
+      ]
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "External-assessment remediation windows are contractual and not discretionary; PT-2026-014 must be remediated by 2026-09-15 and missing it is a reportable breach.",
+      "source": "governance_and_compliance.md",
+      "span": "The windows are set by Schedule 4 of the Fenwold Payments Master Services Agreement and are not discretionary.",
+      "blocks": [
+        "deferring PT-2026-014 past 2026-09-15",
+        "treating the remediation as a backlog candidate to be scored"
+      ]
+    },
+    {
+      "id": "GT-B2",
+      "kind": "business_constraint",
+      "statement": "No payments change may deploy between 2026-11-10 and 2027-01-05; contractual security remediation is exempt from the freeze, discretionary product work is not.",
+      "source": "governance_and_compliance.md",
+      "span": "No payments change may be deployed between 2026-11-10 and 2027-01-05.",
+      "blocks": [
+        "shipping discretionary payments work in the freeze window"
+      ]
+    },
+    {
+      "id": "GT-B3",
+      "kind": "business_constraint",
+      "statement": "Blended cost of payment acceptance is the binding financial constraint; anything that raises it needs finance approval before a pilot.",
+      "source": "business_objectives.md",
+      "span": "The cost of payment acceptance is the binding financial constraint.",
+      "blocks": [
+        "per-transaction-fee vendor products without finance approval"
+      ]
+    },
+    {
+      "id": "GT-B4",
+      "kind": "governance_constraint",
+      "statement": "Changes to a component inside the cardholder data environment carry a ten business day change-control lead time, and only one change to a given in-scope component may be in flight at a time.",
+      "source": "governance_and_compliance.md",
+      "span": "requires a change-control review with a ten business day lead time, and only one change to a given in-scope component may be in flight at a time",
+      "blocks": [
+        "running the PT-2026-014 remediation and a retry-behaviour change on the orchestrator concurrently",
+        "any orchestrator change inside a ten business day horizon"
+      ]
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "PT-2026-014 is an open High-severity finding with a contractual remediation deadline of 2026-09-15, forty-four days from the as-of date, and the queue payload has not been changed.",
+      "source": "security_findings_register.json",
+      "span": "\"remediation_deadline\": \"2026-09-15\"",
+      "affects": [
+        "Retry Orchestrator",
+        "any prioritisation of payments work this quarter"
+      ],
+      "why_it_matters": "This is a priority exception, not a candidate. It constrains what capacity remains for the reliability work; it does not compete with it for that capacity."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "The Retry Orchestrator sits in PCI DSS cardholder-data-environment scope, and an open High finding in scope must be closed before the 2026-10-31 attestation or covered by an assessor-accepted compensating control. None has been proposed.",
+      "source": "governance_and_compliance.md",
+      "span": "An open High-severity finding inside the cardholder data environment must be closed before attestation, or covered by a compensating control that the qualified security assessor has reviewed and accepted in writing. No compensating control has been proposed for PT-2026-014.",
+      "affects": [
+        "Retry Orchestrator",
+        "annual PCI attestation",
+        "sequencing of all orchestrator work"
+      ],
+      "why_it_matters": "A second, independent obligation attaches to the same component, on a later date than the contractual deadline. Even if the contractual deadline were somehow renegotiated, the attestation requirement would not move."
+    },
+    {
+      "id": "GT-G3",
+      "statement": "Payment instrument identifiers in logs are readable by all 84 engineers, which breaches the named-role access requirement independently of any code change.",
+      "source": "governance_and_compliance.md",
+      "span": "Platform log access is currently granted to all 84 engineers, which does not meet the named-role requirement.",
+      "affects": [
+        "log access control",
+        "PT-2026-014 remediation scope"
+      ],
+      "why_it_matters": "Part of the exposure is an access-control breach that no change to the orchestrator's code closes. Scoping the remediation as a code fix alone would leave the finding open."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "Scheme rules cap mandate re-presentation at two attempts, at least three business days apart, with three working days' notice to the buyer, and any change to collection retry frequency must be certified before it is enabled.",
+      "source": "governance_and_compliance.md",
+      "span": "A failed mandate collection may be re-presented no more than twice. Re-presentations must be at least three business days apart, and the buyer must be notified at least three working days before each one.",
+      "affects": [
+        "any retry-frequency intervention on bank mandates"
+      ],
+      "why_it_matters": "The method carrying most of the failed value is the one where retrying more is least available. This bounds what any retry-centred intervention can recover."
+    },
+    {
+      "id": "GT-G5",
+      "statement": "A payment failure notice is transactional, but a message recommending a different payment method is classified as marketing and requires recorded consent from that buyer.",
+      "source": "governance_and_compliance.md",
+      "span": "A message that recommends a different payment method is classified as marketing under the current policy and requires recorded marketing consent from that buyer.",
+      "affects": [
+        "fallback payment method prompts"
+      ],
+      "why_it_matters": "Coverage of any fallback-prompt intervention is limited to consented buyers, and the corpus never says how many that is."
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "The security remediation can be deferred in favour of the retry-reliability work, or scheduled after it.",
+      "why_forbidden": "PT-2026-014 is an open High-severity finding with a contractual remediation deadline of 2026-09-15 that the policy calls not discretionary, and missing it is a reportable breach that permits the payments partner to impose enhanced monitoring at the company's cost. Deferral is not an option the corpus leaves open, so no comparison of benefits can produce it.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Put the pen-test fix on the same backlog as everything else and let the scores decide."
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "Remediating PT-2026-014 scores lower on customer reach and revenue impact than the retry improvements, so the retry work should be prioritised first.",
+      "why_forbidden": "A category error, and the central one this case tests. The remediation is a compliance obligation with a contractual deadline and a separate PCI attestation requirement; the governance policy states it is not scored, ranked, or traded against product work. Placing it in a ranked list scored on reach, revenue and effort treats a constraint as a candidate. The scores are irrelevant because the obligation does not move whatever they say. Any framing that weighs the obligation against growth work, including 'the security fix has lower expected value' or 'we should balance security against reliability', is forbidden in the same way.",
+      "anchor": {
+        "source": "business_objectives.md",
+        "span": "Each is scored on customer reach, revenue impact, and engineering effort, and the highest combined score is worked first."
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "The exposure is low risk because there is no evidence it has been exploited.",
+      "why_forbidden": "Absence of observed exploitation is not a control, and the corpus describes no detection capability that would have seen it. The claim promotes a commercial opinion to a security assessment, and neither the severity nor the deadline is set by the company's own view of likelihood.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "The pen test finding is a paperwork item. Nobody has actually exploited it."
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "Payment reliability is broadly healthy, at 96.9% authorisation success just under target.",
+      "why_forbidden": "The figure is a volume-weighted mean across five payment methods. One of them authorises at 71.6% and carries 81.8% of the value that failed, and every other method improved in the same quarter the mean fell. The mean is arithmetically correct and describes nothing anybody needs in order to decide.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "The deck opened with a single number: payment authorisation success, 96.9%, against the 96.0% floor in the partner agreement."
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "Bank mandate failures are immaterial because the method is around two per cent of payment attempts.",
+      "why_forbidden": "Share of attempts is the wrong denominator for a value question. The method is 28.7% of attempted gross merchandise value and 81.8% of failed value, and it serves the trade buyers the objectives document names as a growth priority. The corpus contains a prior decision made on exactly this reasoning, which is evidence that the error is available here, not that it is sound.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "prior_decisions.md",
+        "span": "bank mandates are around two per cent of payment attempts, which does not justify engineering investment this year"
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "Repairing the Retry Orchestrator would recover the $6.12M of failed bank mandate value.",
+      "why_forbidden": "Mandate collections do not pass through the Retry Orchestrator at all. Scheme rules cap re-presentation at two attempts three business days apart. The only sample of mandate failures suggests a majority were mandate-invalid or account-closed, which no re-presentation recovers, and no failure-reason breakdown exists to check it.",
+      "anchor": {
+        "source": "payment_method_performance.csv",
+        "span": "failed_attempted_value_usd: 6121598"
+      }
+    },
+    {
+      "id": "GT-U7",
+      "claim": "Authorisation success has fallen by half a point since 2025-Q3.",
+      "why_forbidden": "The denominator changed in 2026-Q1 and raised the reported rate by roughly 0.9 points, and the earlier series has never been restated. The two ends of the series are not comparable, so the size and even the direction of any like-for-like movement is unknown from the corpus.",
+      "tempted_by": "GT-H2",
+      "anchor": {
+        "source": "payment_metrics.csv",
+        "span": "period: 2025-Q3\nmetric: authorisation_success_rate\nvalue: 97.4"
+      }
+    },
+    {
+      "id": "GT-U8",
+      "claim": "Adaptive retry would deliver a 2.4 percentage point uplift in authorisation success.",
+      "why_forbidden": "A vendor figure with no baseline, sample size, comparison method, or merchant category, and no independent evaluation. The same product was already paused once on acceptance cost.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "A vendor product circulated by the Director of Payments claims a 2.4 percentage point uplift in authorisation success."
+      }
+    },
+    {
+      "id": "GT-U9",
+      "claim": "The exposure described in PT-2026-014 was closed by the June logging change.",
+      "why_forbidden": "The register records the finding open and not retested. The queue payload is unchanged and 30 days of historical log entries remained in retention. Policy states that partial remediation does not close a finding and does not stop the clock, and that only assessor retest closes one.",
+      "anchor": {
+        "source": "technical_constraints.md",
+        "span": "from an engineering standpoint the exposure described in PT-2026-014 was closed on 2026-06-12"
+      }
+    },
+    {
+      "id": "GT-U10",
+      "claim": "Buyers whose bank mandate fails would complete the order by card if prompted.",
+      "why_forbidden": "No fallback prompt has ever been tested, and the corpus contains no measurement of what any buyer does after a payment failure. The field that would show it exists and was never populated, and the question was raised in the review meeting and left unanswered.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "No test has been run on mandate re-validation at setup, on prompting a fallback payment method after a failure, or on any change to the orchestrator's lease behaviour."
+      }
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "prior_decisions.md",
+      "span": "display prices in local currency on the EU storefront",
+      "why_irrelevant": "Currency display affects conversion, not authorisation reliability. Payments-adjacent and retrievable, but it should not appear in the analysis of this question."
+    },
+    {
+      "id": "GT-I2",
+      "source": "prior_decisions.md",
+      "span": "move seller payouts from weekly to twice weekly",
+      "why_irrelevant": "Seller payouts are money leaving the platform, not buyer authorisation, and the objectives document places payouts explicitly out of scope for the payment reliability programme."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Parse the scheme return-file reason codes so mandate failures can be diagnosed",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Cheapest route to the missing evidence behind 81.8% of failed value. The file already lands nightly and is not parsed."
+      },
+      {
+        "name": "Instrument the Retry Orchestrator so dropped leases are counted and alerted",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "The observed-versus-configured retry gap was invisible until an incident, and no fix can be validated outside production without it."
+      },
+      {
+        "name": "Repair the dropped-retry defect in the Retry Orchestrator",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "The cause is a hypothesis, not a demonstrated fact, and the change queues behind the remediation under the single-change-in-flight rule."
+      },
+      {
+        "name": "Replicate the 2025 randomised retry-timing change for card failures",
+        "option_kind": "rules_based_automation",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "The only randomised result in the corpus, and it covers cards only. Cards are the majority of failed attempts and a minority of failed value."
+      },
+      {
+        "name": "Validate and re-validate bank mandates at setup and on a schedule",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "low",
+        "note": "Rests on a 60-record hand review from one week and one onboarding cohort. Also touched by the open AUD-2026-006 record-completeness item."
+      },
+      {
+        "name": "Offer a fallback payment method after a mandate failure",
+        "option_kind": "ux_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Classified as marketing under the current messaging policy, so coverage is limited to consented buyers, a number the corpus never gives. Never tested."
+      },
+      {
+        "name": "Ask the payments partner to enable account-updater participation",
+        "option_kind": "partner",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Token lifetime and updater participation sit with the partner, so this is a negotiation rather than a build."
+      },
+      {
+        "name": "Buy a third-party adaptive retry product",
+        "option_kind": "buy",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Vendor figure has no method; a prior decision paused it on acceptance cost, which remains the binding financial constraint; and it cannot touch the mandate path."
+      },
+      {
+        "name": "Defer discretionary retry work until PT-2026-014 is retested and the attestation is filed",
+        "option_kind": "defer",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Defensible given the single-change-in-flight rule on an in-scope component and the 2026-11-10 freeze."
+      },
+      {
+        "name": "No discretionary payments change this quarter beyond the mandatory remediation",
+        "option_kind": "no_change",
+        "horizon": "core",
+        "support": "low"
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "moderate",
+    "reason": "The mandatory work is not part of the ranking, so the live question is what to do with the capacity that remains, and no discretionary option has strong support there. The method carrying 81.8% of failed value has no failure-reason breakdown, does not pass through the component under repair, and cannot be re-presented more than twice under scheme rules. The dropped-retry defect has never been reproduced outside production and cannot be validated before release. The only randomised result in the corpus covers card methods only, and the authorisation trend crosses an unrestated denominator change.",
+    "defensible_next_steps": [
+      "Schedule the PT-2026-014 remediation against its 2026-09-15 contractual deadline and the 2026-10-31 attestation, on its own track and outside the prioritisation of product work.",
+      "Parse the scheme return-file reason codes so bank mandate failures can be diagnosed before any mandate intervention is chosen.",
+      "Instrument the Retry Orchestrator so dropped leases are observable, since no orchestrator change can be validated outside production.",
+      "Sequence the card retry-timing replication behind the remediation, respecting the single-change-in-flight rule and the 2026-11-10 freeze."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "buy",
+        "why": "Supported only by a vendor figure with no baseline, sample, method or merchant category; already paused once on acceptance cost, which remains the binding financial constraint; and structurally unable to affect the mandate path."
+      },
+      {
+        "option_kind": "ux_change",
+        "why": "A message recommending a different payment method is classified as marketing and requires recorded consent, no fallback prompt has ever been tested, and the consented population is unquantified."
+      },
+      {
+        "option_kind": "data_quality",
+        "why": "Mandate re-validation rests on a 60-record review from one week and one onboarding cohort, with no failure-reason data behind it."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The brief must treat the PT-2026-014 remediation and the PCI attestation as constraints on the decision rather than options within it, and must not place the remediation in a ranked list beside the reliability work.",
+      "The brief must not score, rank, or trade the remediation against product work on reach, revenue, or effort, and must not describe the choice as a balance between security and growth.",
+      "The brief must report payment reliability by payment method rather than as the 96.9% mean.",
+      "The brief must state that bank mandate collections do not pass through the Retry Orchestrator, so orchestrator work cannot address the largest share of failed value.",
+      "The brief must not present the Commercial Director's view that the finding is a paperwork item as a risk assessment.",
+      "The brief must not treat failed attempted value as lost revenue without noting that recovery was never measured."
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+week_starting,region_group,rollout_state,payment_auth_completion_percent,sessions,note
+2026-06-15,north,not_started,91.3,78400,synthetic - gateway log series
+2026-06-15,rest_of_network,not_started,91.2,302100,synthetic - gateway log series
+2026-06-22,north,not_started,91.5,79100,synthetic - gateway log series
+2026-06-22,rest_of_network,not_started,91.3,304800,synthetic - gateway log series
+2026-06-29,north,ramped_50_percent,93.1,78900,synthetic - inline authorisation recovery enabled for half of north-region web card sessions from this week; series compiled from payment gateway logs and not from experiment instrumentation
+2026-06-29,rest_of_network,not_started,91.2,301500,synthetic - gateway log series
+2026-07-06,north,ramped_100_percent,94.7,80200,synthetic - gateway log series
+2026-07-06,rest_of_network,not_started,91.4,306200,synthetic - gateway log series
+2026-07-13,north,ramped_100_percent,94.9,79600,synthetic - gateway log series
+2026-07-13,rest_of_network,not_started,91.1,299700,synthetic - gateway log series
+2026-07-20,north,ramped_100_percent,94.8,81000,synthetic - gateway log series
+2026-07-20,rest_of_network,not_started,91.3,307400,synthetic - gateway log series
+2026-07-27,north,ramped_100_percent,95.0,80400,synthetic - gateway log series
+2026-07-27,rest_of_network,not_started,91.2,303900,synthetic - gateway log series

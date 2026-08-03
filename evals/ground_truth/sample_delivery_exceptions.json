@@ -385,8 +385,12 @@
     },
     {
       "id": "GT-U7",
-      "claim": "Any statement about what drivers experience, prefer, or would do.",
-      "why_forbidden": "The corpus contains no driver-side evidence whatsoever."
+      "claim": "Any statement about what drivers prefer, would choose, find easy or hard, or would do differently — or any account of the exception workflow from the driver's point of view.",
+      "why_forbidden": "No driver research exists in this corpus: no interviews, no survey, no observation study, nothing authored by a driver. What does exist is an operational record of outcomes drivers encountered — support_ticket_summaries.csv categorises 720 exceptions in 2026-Q2 as driver_unable_to_locate, 12.1% overall and 17.8% for apartments — plus customers relaying what a driver told them. Those are legitimate evidence of what happened and a brief may cite them. They are not evidence of what drivers think, want, or would prefer, and the distinction is the whole point of this entry. An earlier wording of it claimed the corpus held no driver-side evidence at all, which was false and would have failed a brief for correctly reporting the ticket category.",
+      "anchor": {
+        "source": "support_ticket_summaries.csv",
+        "span": "address found but unit not identifiable"
+      }
     },
     {
       "id": "GT-U8",

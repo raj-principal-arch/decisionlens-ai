@@ -1,0 +1,17 @@
+feedback_id,received_on,account_type,trigger_page,comment,rating,note
+SF-001,2026-05-04,trade,zero-result search page,Searched for plasterboard and got nothing. You clearly sell it. I buy it in store every week.,2,synthetic - survey link appears only on a search page that returned no results
+SF-002,2026-05-07,consumer,zero-result search page,Typed mud and got zero results. Had to phone the store to learn you call it joint compound.,1,synthetic - survey link appears only on a search page that returned no results
+SF-003,2026-05-11,trade,zero-result search page,The site does not understand any of the words we actually use on a job.,1,synthetic - survey link appears only on a search page that returned no results
+SF-004,2026-05-15,consumer,zero-result search page,I mistyped it and got nothing at all. Every other site would have guessed what I meant.,2,synthetic - survey link appears only on a search page that returned no results
+SF-005,2026-05-18,trade,zero-result search page,I cannot search by size. I need half inch and I get a list of every fitting you sell or nothing at all.,2,synthetic - survey link appears only on a search page that returned no results
+SF-006,2026-05-22,consumer,zero-result search page,No results for cement backer board. The store told me it is special order.,2,synthetic - survey link appears only on a search page that returned no results
+SF-007,2026-05-26,trade,zero-result search page,The trade counter catalogue and the website do not use the same names for the same product.,1,synthetic - survey link appears only on a search page that returned no results
+SF-008,2026-05-29,consumer,zero-result search page,Zero results. I gave up and bought it somewhere else.,1,synthetic - survey link appears only on a search page that returned no results
+SF-009,2026-06-02,trade,zero-result search page,Search works fine when I use your words. I should not have to learn your words.,2,synthetic - survey link appears only on a search page that returned no results
+SF-010,2026-06-06,consumer,zero-result search page,Found nothing for bubble level which is what everyone I know calls it.,2,synthetic - survey link appears only on a search page that returned no results
+SF-011,2026-06-09,trade,zero-result search page,It would help if searching a part number worked. About half the time it does not.,2,synthetic - survey link appears only on a search page that returned no results
+SF-012,2026-06-13,consumer,zero-result search page,Nothing came up and the suggestions under the box were not related to what I typed either.,2,synthetic - survey link appears only on a search page that returned no results
+SF-013,2026-06-17,trade,zero-result search page,My delivery was two days late and nobody called me about it.,1,synthetic - survey link appears only on a search page that returned no results
+SF-014,2026-06-20,consumer,zero-result search page,Checkout would not accept my gift card.,1,synthetic - survey link appears only on a search page that returned no results
+SF-015,2026-06-24,trade,zero-result search page,Zero results for rebar chairs. Told at the desk they are trade counter only.,2,synthetic - survey link appears only on a search page that returned no results
+SF-016,2026-06-27,consumer,zero-result search page,I found it eventually by browsing the aisle categories. Search never showed it to me.,3,synthetic - survey link appears only on a search page that returned no results

@@ -1,0 +1,62 @@
+[
+  {
+    "assessment": "External penetration test - Cairnmoor Assurance - engagement CM-2026-031",
+    "component": "Retry Orchestrator and its retry queue",
+    "contractual_basis": "Fenwold Payments Master Services Agreement Schedule 4 clause 4.2",
+    "description": "The Retry Orchestrator writes the full payment instrument identifier into the retry queue payload and into application debug logs. Debug logs are retained for 30 days and are readable by any engineer holding platform log access.",
+    "disclosed_on": "2026-05-18",
+    "finding_id": "PT-2026-014",
+    "note": "synthetic - fictional finding raised against a fictional system",
+    "pci_scope": "in scope - cardholder data environment",
+    "remediation_deadline": "2026-09-15",
+    "remediation_progress": "A logging change shipped on 2026-06-12 removes the identifier from newly written application logs. The retry queue payload is unchanged and 30 days of historical log entries were still in retention at the date of this register.",
+    "retested_by_assessor": false,
+    "severity": "High",
+    "status": "open"
+  },
+  {
+    "assessment": "External penetration test - Cairnmoor Assurance - engagement CM-2026-031",
+    "component": "Checkout session service",
+    "contractual_basis": "Fenwold Payments Master Services Agreement Schedule 4 clause 4.2",
+    "description": "Checkout session identifiers were not rotated after authentication, permitting session fixation.",
+    "disclosed_on": "2026-05-18",
+    "finding_id": "PT-2026-011",
+    "note": "synthetic - fictional finding raised against a fictional system",
+    "pci_scope": "in scope - cardholder data environment",
+    "remediation_deadline": "2026-11-14",
+    "remediation_progress": "Session rotation shipped on 2026-06-30 and was retested by the assessor on 2026-07-08.",
+    "retested_by_assessor": true,
+    "severity": "Medium",
+    "status": "closed"
+  },
+  {
+    "assessment": "External penetration test - Cairnmoor Assurance - engagement CM-2026-031",
+    "component": "Seller portal",
+    "contractual_basis": "Fenwold Payments Master Services Agreement Schedule 4 clause 4.2",
+    "description": "Error responses on the seller portal disclose internal service names and stack frames.",
+    "disclosed_on": "2026-05-18",
+    "finding_id": "PT-2026-017",
+    "note": "synthetic - fictional finding raised against a fictional system",
+    "pci_scope": "out of scope",
+    "remediation_deadline": "2027-02-12",
+    "remediation_progress": "Not started.",
+    "retested_by_assessor": false,
+    "severity": "Low",
+    "status": "open"
+  },
+  {
+    "assessment": "Internal audit - payments controls review 2026",
+    "component": "Bank mandate onboarding",
+    "contractual_basis": "Internal audit committee action - no external contractual deadline",
+    "description": "Mandate authorisation records for buyers onboarded before 2025-03 do not record the authorisation channel or the mandate reference returned by the scheme.",
+    "disclosed_on": "2026-04-09",
+    "finding_id": "AUD-2026-006",
+    "note": "synthetic - fictional finding raised against a fictional system",
+    "pci_scope": "out of scope",
+    "remediation_deadline": "2026-12-31",
+    "remediation_progress": "Scoping in progress.",
+    "retested_by_assessor": false,
+    "severity": "Medium",
+    "status": "open"
+  }
+]

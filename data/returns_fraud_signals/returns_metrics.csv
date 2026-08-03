@@ -1,0 +1,32 @@
+period,metric,value,unit,segment,note
+2026-Q2,return_rate_percent,14.8,percent,all,returned units divided by units sold in the same period - synthetic
+2026-Q1,return_rate_percent,14.0,percent,all,synthetic
+2025-Q4,return_rate_percent,13.1,percent,all,synthetic
+2025-Q3,return_rate_percent,12.4,percent,all,synthetic
+2025-Q2,return_rate_percent,11.6,percent,all,synthetic
+2025-Q1,return_rate_percent,11.2,percent,all,synthetic
+2026-Q2,return_rate_percent,21.3,percent,apparel,category-level return rates before 2026-Q2 were not retained - synthetic
+2026-Q2,return_rate_percent,17.9,percent,footwear,synthetic
+2026-Q2,return_rate_percent,6.2,percent,hardgoods,synthetic
+2026-Q2,return_rate_percent,21.0,percent,online,synthetic
+2026-Q2,return_rate_percent,9.7,percent,store,synthetic
+2026-Q2,apparel_share_of_units_sold,46.0,percent,all,synthetic
+2026-Q1,apparel_share_of_units_sold,43.4,percent,all,synthetic
+2025-Q4,apparel_share_of_units_sold,40.1,percent,all,synthetic
+2025-Q3,apparel_share_of_units_sold,37.2,percent,all,synthetic
+2025-Q2,apparel_share_of_units_sold,33.5,percent,all,synthetic
+2025-Q1,apparel_share_of_units_sold,31.0,percent,all,synthetic
+2026-Q2,footwear_share_of_units_sold,14.0,percent,all,synthetic
+2026-Q2,hardgoods_share_of_units_sold,40.0,percent,all,synthetic
+2026-Q2,online_share_of_units_sold,45.0,percent,all,synthetic
+2026-Q2,units_sold,1260000,count,all,synthetic
+2025-Q1,units_sold,1042000,count,all,synthetic
+2026-Q2,returned_units,186500,count,all,synthetic
+2025-Q1,returned_units,116700,count,all,synthetic
+2026-Q2,refund_value_usd_millions,23.6,usd_millions,all,synthetic
+2026-Q1,refund_value_usd_millions,22.1,usd_millions,all,synthetic
+2025-Q4,refund_value_usd_millions,20.4,usd_millions,all,synthetic
+2025-Q3,refund_value_usd_millions,18.6,usd_millions,all,synthetic
+2025-Q2,refund_value_usd_millions,16.4,usd_millions,all,synthetic
+2025-Q1,refund_value_usd_millions,15.8,usd_millions,all,synthetic
+2026-Q2,confirmed_abuse_cases,,count,all,synthetic - field added to the returns dashboard in 2026-Q2 and never populated; there is no case management system in which an abuse case could be opened

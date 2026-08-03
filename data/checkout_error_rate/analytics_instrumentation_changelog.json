@@ -1,0 +1,53 @@
+[
+  {
+    "entry_id": "CHG-2025-24",
+    "effective_date": "2025-08-11",
+    "area": "checkout",
+    "change": "Session identifier unified across the cart and checkout services",
+    "detail": "Cart and checkout previously issued separate session identifiers, which split a single customer journey into two sessions in reporting. The identifier is now issued once at cart entry.",
+    "definition_version": "v2",
+    "backfill": "2025-Q1 and 2025-Q2 restated under v2",
+    "note": "synthetic changelog entry for a fictional organisation"
+  },
+  {
+    "entry_id": "CHG-2026-02",
+    "effective_date": "2026-01-01",
+    "area": "checkout",
+    "change": "checkout_failure_rate numerator amended",
+    "detail": "The numerator now also counts checkout sessions terminated by a client-side timeout, meaning the payment frame did not reach an interactive state within 20 seconds. These sessions raise no server-side error and were previously excluded from the numerator.",
+    "definition": "checkout_failure_rate = checkout sessions ending in a system-reported error, divided by all checkout sessions started. Sessions the customer abandons without an error are not counted in the numerator.",
+    "definition_version": "v3",
+    "backfill": "None. Periods before 2026-Q1 remain published under v2.",
+    "note": "synthetic changelog entry for a fictional organisation"
+  },
+  {
+    "entry_id": "CHG-2026-04",
+    "effective_date": "2026-02-10",
+    "area": "mobile-app",
+    "change": "App checkout event schema replaced",
+    "detail": "The replacement schema emits order-level events only. Step-level checkout events are no longer emitted by the app.",
+    "definition_version": "not applicable",
+    "backfill": "not applicable",
+    "note": "synthetic changelog entry for a fictional organisation"
+  },
+  {
+    "entry_id": "CHG-2026-07",
+    "effective_date": "2026-05-19",
+    "area": "reporting",
+    "change": "Basket value distribution tile added to the trading dashboard",
+    "detail": "Presentation only. No metric definition was changed and no series was affected.",
+    "definition_version": "not applicable",
+    "backfill": "not applicable",
+    "note": "synthetic changelog entry for a fictional organisation"
+  },
+  {
+    "entry_id": "CHG-2026-09",
+    "effective_date": "2026-06-30",
+    "area": "payments",
+    "change": "Weekly payment gateway extract published",
+    "detail": "The payments platform team now publishes a weekly payment authorisation completion series compiled directly from gateway logs. It is produced independently of experiment instrumentation.",
+    "definition_version": "not applicable",
+    "backfill": "not applicable",
+    "note": "synthetic changelog entry for a fictional organisation"
+  }
+]

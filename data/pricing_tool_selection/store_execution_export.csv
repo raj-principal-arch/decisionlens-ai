@@ -1,0 +1,9 @@
+period,store_format,stores,markdown_compliance_pct,colleague_hours_per_store_week,markdown_loss_rate_pct,waste_rate_pct,esl_equipped_stores,note
+2026-Q2,high_street,96,71.4,6.8,6.2,4.2,31,synthetic
+2026-Q2,commuter,118,63.2,5.9,5.5,3.8,12,synthetic
+2026-Q2,neighbourhood,198,84.6,4.1,3.9,2.5,0,synthetic
+2026-Q2,all_formats,412,75.4,5.2,4.9,3.3,43,synthetic - compliance spread is wide: 137 stores are above 90 percent and 121 stores are below 40 percent
+2025-Q2,high_street,94,74.9,7.1,5.4,3.5,0,synthetic
+2025-Q2,commuter,116,69.8,6.2,4.6,3.1,0,synthetic
+2025-Q2,neighbourhood,196,86.1,4.3,3.4,2.1,0,synthetic
+2025-Q2,all_formats,406,78.9,5.5,4.2,2.7,0,synthetic

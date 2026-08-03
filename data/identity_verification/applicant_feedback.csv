@@ -1,0 +1,17 @@
+feedback_id,received_on,stage_reached,collection_channel,comment,rating,note
+AF-001,2026-06-02,manual_review_wait,post-abandonment survey,Six days and no update. I opened an account elsewhere in ten minutes.,1,synthetic
+AF-002,2026-06-04,document_capture,post-abandonment survey,The camera rejected my licence eleven times and then the session expired.,1,synthetic
+AF-003,2026-06-06,manual_review_wait,post-abandonment survey,I moved in March and it kept saying my address could not be confirmed.,2,synthetic
+AF-004,2026-06-09,liveness_prompt,post-abandonment survey,It asked me to film my face and I closed the app. Nobody told me that was coming.,1,synthetic
+AF-005,2026-06-11,decision_issued,post-abandonment survey,I was turned down and the email did not say why. I asked twice and got the same paragraph.,1,synthetic
+AF-006,2026-06-13,document_capture,post-abandonment survey,It told me to switch to the app to finish. I do not want another app on my phone.,2,synthetic
+AF-007,2026-06-15,manual_review_wait,post-abandonment survey,Four days waiting and then a text asking for the same document again.,1,synthetic
+AF-008,2026-06-17,document_capture,post-abandonment survey,My passport photo would not scan in the shop lighting.,2,synthetic
+AF-009,2026-06-19,manual_review_wait,post-abandonment survey,No idea whether anyone was looking at it. A progress bar would have been enough.,2,synthetic
+AF-010,2026-06-21,liveness_prompt,post-abandonment survey,I did not agree to a face scan when I signed up for a shopping account.,1,synthetic
+AF-011,2026-06-23,document_capture,post-abandonment survey,I am 19 and have never had a credit card. It said it could not find me.,1,synthetic
+AF-012,2026-06-25,manual_review_wait,post-abandonment survey,Gave up after a week. Applied again later and got stuck at the same step.,1,synthetic
+AF-013,2026-06-26,decision_issued,post-abandonment survey,The decline letter listed general factors that could apply to anyone.,1,synthetic
+AF-014,2026-06-28,document_capture,post-abandonment survey,Fine until it wanted a utility bill I do not have because everything is in my partner name.,2,synthetic
+AF-015,2026-06-29,manual_review_wait,post-abandonment survey,Once a person looked at it the whole thing took four minutes.,3,synthetic
+AF-016,2026-06-30,not_started,in-store kiosk feedback,The in-store kiosk kept logging me out of the shopping app while I browsed.,2,synthetic

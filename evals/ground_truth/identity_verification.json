@@ -1,0 +1,674 @@
+{
+  "case_id": "identity_verification",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional retailer and a fictional regulated banking arm, with invented vendors, people, regulations and numbers. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to reduce abandonment during new-account onboarding?",
+  "desired_outcome": "Reduce the share of applications abandoned before identity verification completes, and shorten the time to a verified decision, without breaching the identity-record retention, adverse-action, biometric-consent, human-review or model-inventory obligations, and without putting the 2026-11-16 external model-risk review at risk.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M5 is must_detect false: it is a real gap, but finding it is credit rather than a requirement.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "temporal_conflict",
+      "topic": "the current verification abandonment rate",
+      "side_a": {
+        "source": "business_objectives.md",
+        "span": "Verification abandonment currently sits at 38%."
+      },
+      "side_b": {
+        "source": "onboarding_funnel_metrics.csv",
+        "span": "metric: verification_abandonment_rate\nvalue: 44.2"
+      },
+      "why_it_matters": "The FY27 objectives set a target against a figure that matches July 2025. Abandonment has risen every quarter since. Planning against 38% understates the size of the problem and the distance to the sub-25% goal.",
+      "how_to_resolve": "The 38% matches the 2025-07 row in onboarding_funnel_metrics.csv. The figure is not wrong, it is eleven months stale. Restate the objective against 44.2%.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "feasibility_conflict",
+      "topic": "whether an application may be declined by the risk score alone",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "Take the Veriphex score, approve or decline in ten seconds, done."
+      },
+      "side_b": {
+        "source": "regulatory_obligations.md",
+        "span": "No application may be declined solely by an automated process."
+      },
+      "why_it_matters": "The option that looks fastest is the one the obligation forbids as described. This is not a priority call between two features: the requirement bounds what may be built, and it has no confidence threshold and no volume exemption.",
+      "how_to_resolve": "Not resolvable by preference or by executive sponsorship. Instant Decision is admissible only as automatic approval plus a human-reviewed decline path, which removes most of the speed argument for the decline half of it.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "feasibility_conflict",
+      "topic": "whether the Veriphex score can support an adverse-action notice",
+      "side_a": {
+        "source": "technical_constraints.md",
+        "span": "No contributing factors, reason codes, or feature attributions are returned with it."
+      },
+      "side_b": {
+        "source": "regulatory_obligations.md",
+        "span": "must receive a written statement of the specific principal reasons for that outcome within 30 calendar days"
+      },
+      "why_it_matters": "A declined applicant is owed specific principal reasons. A score that exposes no contributing factors cannot produce them, and the vendor has confirmed in writing that it never will. Any decisioning option built on that score is inadmissible for declines until explainability is sourced elsewhere.",
+      "how_to_resolve": "Either obtain reason codes contractually, or keep the score out of the decline path and use it only to route or to auto-approve, where no adverse-action notice is owed.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "claim_conflict",
+      "topic": "whether the liveness pilot had valid biometric consent",
+      "side_a": {
+        "source": "prior_experiments.md",
+        "span": "Consent was captured through the standard terms-and-conditions acceptance at account creation."
+      },
+      "side_b": {
+        "source": "regulatory_obligations.md",
+        "span": "Consent bundled into general terms of service is not valid consent."
+      },
+      "why_it_matters": "The pilot that is being cited as evidence of applicant acceptance was run without valid consent, and no destruction schedule was published before collection. Its 1,893 stored templates are a live compliance exposure, not a proof point.",
+      "how_to_resolve": "Compliance review opened 2026-06-18 and has not concluded. Until it does, the pilot result cannot be used and no further biometric capture may start without a standalone disclosure and a published destruction schedule.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C5",
+      "kind": "scope_conflict",
+      "topic": "the largest trigger of manual identity review",
+      "side_a": {
+        "source": "manual_review_triggers.csv",
+        "span": "segment: all\ntrigger: address_mismatch\nroute_count: 3325"
+      },
+      "side_b": {
+        "source": "manual_review_triggers.csv",
+        "span": "segment: applicants_18_24\ntrigger: thin_credit_file\nroute_count: 774"
+      },
+      "why_it_matters": "Address mismatch leads overall at 41.2%; thin credit file leads for 18 to 24 year olds at 47.8%, and that group is the stated growth priority. An unqualified claim about the top trigger points the team at the wrong fix for the segment it most wants to win.",
+      "how_to_resolve": "State the segment. The two figures do not conflict once the population is named, and the segments overlap rather than partition the population.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C6",
+      "kind": "temporal_conflict",
+      "topic": "whether a second address document can be accepted",
+      "side_a": {
+        "source": "prior_decisions.md",
+        "span": "the document store accepts one document per application"
+      },
+      "side_b": {
+        "source": "technical_constraints.md",
+        "span": "The document store was migrated in February 2026 and now accepts up to four documents per application."
+      },
+      "why_it_matters": "The cheapest intervention aimed at the largest manual-review trigger was rejected in November 2025 for a platform reason that no longer holds. A PM reading only the prior decision would treat it as closed.",
+      "how_to_resolve": "D-2025-11 is superseded by the February 2026 migration. The storage objection is gone; the routing-rule change and its effect remain unmeasured.",
+      "must_detect": true
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "What did abandonment look like during and immediately after the June 2025 bureau connector outage?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The abandonment series starts at 2025-07, the month after an eleven-day outage that pushed 18,400 applications into manual review and left the queue eleven days deep until 2025-07-09. The worst known period is outside the measured window, so every trend read off the series understates the problem and no peak can be established from the numbers.",
+      "how_to_obtain": "Complete the backfill action from the postmortem, or reconstruct the period from application records and support contact volume. Neither has an owner.",
+      "was_searched": true,
+      "anchor": {
+        "source": "incident_postmortem.md",
+        "span": "No funnel metrics exist for the outage period."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "How many manual reviews would accepting a secondary address proof actually avoid?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Address mismatch is the largest trigger and 1,845 of its 3,325 routes come from applicants who moved within twelve months, but nothing measures how many of those would clear on a second document. The apparently strongest option is entirely unquantified.",
+      "how_to_obtain": "Back-test the proposed rule against completed manual reviews from the last quarter, or run a routing-rule experiment.",
+      "was_searched": true,
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "No experiment has tested changing the manual review routing rules."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "What does the manual review queue cost to run, and what is its capacity?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Adding reviewers is one of the two options pushed in the meeting, and the corpus contains no headcount, no cost per review, and no throughput figure. Neither the staffing option nor any automation business case can be assessed without them.",
+      "how_to_obtain": "Operations staffing model and queue throughput report.",
+      "was_searched": true,
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "No staffing model, cost per review, or queue capacity figure was tabled at the meeting or supplied afterwards."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "How does the Veriphex score perform on this applicant population, and at what false-decline rate?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Every automated-decisioning option rests on a score that has never been evaluated against these applicants. The only performance figure in the corpus is a vendor claim with no stated population. Without a back-test there is also no validation evidence to enter in the model inventory before 2026-10-17.",
+      "how_to_obtain": "Back-test the score against completed manual reviews with known outcomes, and record the result as model validation evidence.",
+      "was_searched": true,
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "no back-test of the Veriphex score against this applicant population has been run"
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "Is a stored biometric template an identity verification record subject to five-year retention, or biometric information subject to one-year destruction?",
+      "impact": "would_change_sequencing",
+      "why_it_matters": "The two rules in the same policy point in opposite directions for the 1,893 templates already held, and the records vault has no deletion API in any case. Nothing can be designed around biometrics until legal classifies them.",
+      "how_to_obtain": "A written classification from compliance-and-legal, ideally as an output of the review opened on 2026-06-18.",
+      "was_searched": true,
+      "anchor": {
+        "source": "regulatory_obligations.md",
+        "span": "Biometric identifiers must be destroyed within one year of the end of the account relationship."
+      },
+      "must_detect": false
+    },
+    {
+      "id": "GT-M6",
+      "question": "How many applicants who abandon come back and complete later?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "Abandonment is treated throughout as permanent loss. If a large share return, the value of the intervention is much smaller than the headline rate implies, and the ranking of options changes.",
+      "how_to_obtain": "Join application records across attempts on applicant identity and report a return-and-complete rate.",
+      "was_searched": true,
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Nobody could say how many applicants who abandon come back and complete later."
+      },
+      "must_detect": true
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "Verification abandonment was 44.2% in June 2026, the most recent measured month.",
+      "source": "onboarding_funnel_metrics.csv",
+      "span": "metric: verification_abandonment_rate\nvalue: 44.2"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "The abandonment series begins at 2025-07 with 38.2% and rises to 44.2% by 2026-06.",
+      "source": "onboarding_funnel_metrics.csv",
+      "span": "period: 2025-07\nmetric: verification_abandonment_rate\nvalue: 38.2"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "68.0% of applications routed to manual review are abandoned, against a 31.1% drop-off at document capture; the manual queue is where most of the loss that follows document submission occurs.",
+      "source": "onboarding_funnel_metrics.csv",
+      "span": "value: 68.0\nunit: percent\nsegment: routed_to_manual_review"
+    },
+    {
+      "id": "GT-F4",
+      "statement": "72.0% of applicants who submit documents get a decision in under ten minutes, while those routed to manual review average 92.6 hours.",
+      "source": "onboarding_funnel_metrics.csv",
+      "span": "metric: share_decisioned_under_10_minutes\nvalue: 72.0"
+    },
+    {
+      "id": "GT-F5",
+      "statement": "Address mismatch is the largest manual-review trigger overall, at 3,325 of 8,070 routes or 41.2%.",
+      "source": "manual_review_triggers.csv",
+      "span": "segment: all\ntrigger: address_mismatch\nroute_count: 3325"
+    },
+    {
+      "id": "GT-F6",
+      "statement": "Thin credit file is the largest manual-review trigger for applicants aged 18 to 24, at 47.8%.",
+      "source": "manual_review_triggers.csv",
+      "span": "segment: applicants_18_24\ntrigger: thin_credit_file\nroute_count: 774"
+    },
+    {
+      "id": "GT-F7",
+      "statement": "The Veriphex score is a single integer with no reason codes, and the vendor has confirmed the internals will not be exposed.",
+      "source": "technical_constraints.md",
+      "span": "The Veriphex risk score is returned as a single integer between 0 and 999."
+    },
+    {
+      "id": "GT-F8",
+      "statement": "No application is declined automatically today; every decline is issued by a human reviewer.",
+      "source": "technical_constraints.md",
+      "span": "No application is declined automatically today."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That shortening verification time would itself reduce abandonment.",
+      "why_it_is_an_assumption": "Long waits and high abandonment occur in the same population, but nothing in the corpus measures the effect of wait time on abandonment. The one status-update pilot that came closest was not randomised.",
+      "anchor": {
+        "source": "onboarding_funnel_metrics.csv",
+        "span": "value: 92.6\nunit: hours\nsegment: routed_to_manual_review"
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That applicants who abandoned would have been approved had they stayed.",
+      "why_it_is_an_assumption": "Only 690 applications were declined in June 2026, which tempts the reading that almost everyone is eventually approved. Abandoners never reached a decision, so their outcome distribution is unknown and may differ sharply from completers.",
+      "anchor": {
+        "source": "onboarding_funnel_metrics.csv",
+        "span": "metric: applications_declined\nvalue: 690"
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That 'Instant Decision' is a defined option that could be assessed.",
+      "why_it_is_an_assumption": "The corpus contains a sponsor's description and nothing else: no decision boundary, no fallback path for scores in the middle, no scope document, and no statement of which applicants it would cover given that liveness runs on mobile only.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Instant Decision is the whole answer."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The VP of Growth wants automated instant decisioning live before the holiday season and believes compliance work can run in parallel.",
+      "source": "stakeholder_notes.md",
+      "span": "I want it live before the holiday season.",
+      "must_not_be_treated_as": "evidence that automated decisioning is the right intervention, or that the obligations attached to it are sequencing preferences rather than gates"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "The Head of Onboarding Operations believes more reviewers would remove the wait.",
+      "source": "stakeholder_notes.md",
+      "span": "The queue is fine. We just need more reviewers.",
+      "must_not_be_treated_as": "a capacity analysis; no staffing model, cost per review or throughput figure exists"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "An engineering manager characterises verification as taking just over a day on average.",
+      "source": "stakeholder_notes.md",
+      "span": "Average verification takes just over a day. That is not a crisis.",
+      "must_not_be_treated_as": "a description of what applicants actually experience; the mean sits between two modes and describes almost nobody"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "Veriphex claims its score reduces manual review volume by 62%.",
+      "source": "stakeholder_notes.md",
+      "span": "The pack does not state the baseline, the population, the routing rules it was compared against, or the market the figure came from.",
+      "must_not_be_treated_as": "an expected outcome for this applicant population"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "date range excludes the incident everyone remembers",
+      "source": "onboarding_funnel_metrics.csv",
+      "span": "period: 2025-07\nmetric: verification_abandonment_rate\nvalue: 38.2",
+      "description": "The abandonment series begins at 2025-07. The bureau connector outage ran 2025-06-04 to 2025-06-15, pushed 18,400 applications into manual review, and left the queue eleven days deep until 2025-07-09. Telemetry was down for nine of the twelve affected days and the backfill was never completed, so the worst period in the product's history sits immediately outside the window. Nothing in the CSV marks the omission: the series simply starts in July and looks like a complete record of a slowly worsening problem.",
+      "why_it_matters": "Every trend statement drawn from this series is conditioned on a window that begins after the peak. The record understates both the size of the problem and the volatility of the queue, and the meeting participants who remember the outage are working from something the data cannot corroborate or refute.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "an averaged rate hiding a bimodal split",
+      "source": "onboarding_funnel_metrics.csv",
+      "span": "metric: mean_time_to_verify_hours\nvalue: 26.0",
+      "description": "The 26.0 hour mean is the average of two populations that share no middle ground: 72.0% of document submitters are decisioned in about six minutes, and those routed to manual review average 92.6 hours. Almost no applicant experiences anything near twenty-six hours.",
+      "why_it_matters": "The mean makes the problem look mild and uniform. It is severe and concentrated, and the intervention that follows from 'shave a few hours off the average' is not the intervention that follows from 'a quarter of applicants wait four days'.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "survivorship in the collection channel",
+      "source": "applicant_feedback.csv",
+      "span": "collection_channel: post-abandonment survey\ncomment: Once a person looked at it the whole thing took four minutes.",
+      "description": "Every feedback record but one comes from a post-abandonment survey, so applicants who completed onboarding are absent by construction, and applicants who abandoned without leaving contact details are absent twice over.",
+      "why_it_matters": "The feedback can say what abandoners complained about. It cannot say what share of applicants hit each problem, and it cannot be used to rank causes.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "The core banking platform is frozen from 2026-10-01 to 2027-01-15; nothing that writes to account records ships inside that window.",
+      "source": "technical_constraints.md",
+      "span": "A change freeze applies to the core banking platform from 2026-10-01 to 2027-01-15.",
+      "blocks": [
+        "any account-opening change delivered before the holiday season",
+        "automated decisioning launched in Q4"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "The bureau connector is contractually limited to 12 requests per second and sheds load rather than queuing.",
+      "source": "technical_constraints.md",
+      "span": "The Ridgemark Data Bureau connector is contractually limited to 12 requests per second.",
+      "blocks": [
+        "any design that re-queries the bureau in real time at campaign volume"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "Liveness capture runs in the mobile application only, and roughly 44% of applications start on the web.",
+      "source": "technical_constraints.md",
+      "span": "Liveness capture runs in the mobile application only.",
+      "blocks": [
+        "any biometric-first fast path presented as covering all applicants"
+      ]
+    },
+    {
+      "id": "GT-T4",
+      "kind": "technical_constraint",
+      "statement": "Verification funnel events reach the warehouse with up to 36 hours of lag, so same-day measurement is impossible.",
+      "source": "technical_constraints.md",
+      "span": "Verification funnel events land in the warehouse with a lag of up to 36 hours."
+    },
+    {
+      "id": "GT-T5",
+      "kind": "technical_constraint",
+      "statement": "The regulated records vault has no deletion API; records leave only on the scheduled retention cycle.",
+      "source": "technical_constraints.md",
+      "span": "The vault has no deletion API; records leave it only on the scheduled retention cycle.",
+      "blocks": [
+        "on-demand deletion of stored documents or biometric templates"
+      ]
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "No incremental vendor spend is approved before the Q3 planning review on 2026-09-15.",
+      "source": "business_objectives.md",
+      "span": "No incremental vendor spend is approved before the Q3 planning review on 2026-09-15.",
+      "blocks": [
+        "buy",
+        "partner"
+      ]
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "Identity verification records, including submitted document images, must be retained for five years after the account relationship ends.",
+      "source": "regulatory_obligations.md",
+      "span": "Identity verification records must be retained for five years after the account relationship ends.",
+      "affects": [
+        "any verify-and-discard design",
+        "data_quality",
+        "ux_change"
+      ],
+      "why_it_matters": "Rules out the storage-light variant of a fast verification path outright. It is a bound on the option set, not a cost to be weighed against speed."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "Any decline must carry a written statement of the specific principal reasons within 30 calendar days, and a generic reason is not one.",
+      "source": "regulatory_obligations.md",
+      "span": "must receive a written statement of the specific principal reasons for that outcome within 30 calendar days",
+      "affects": [
+        "ai_automated",
+        "ai_assisted",
+        "rules_based_automation",
+        "buy"
+      ],
+      "why_it_matters": "Makes explainability a precondition of any decline path, not a feature. The Veriphex score returns no contributing factors, and an existing audit finding already covers 61% of Q1 2026 declines."
+    },
+    {
+      "id": "GT-G3",
+      "statement": "No application may be declined solely by an automated process; a named human reviewer must record their own decision and its basis first, with no confidence threshold and no volume exemption.",
+      "source": "regulatory_obligations.md",
+      "span": "A named human reviewer must record their own decision and the basis for it before any decline is issued.",
+      "affects": [
+        "ai_automated",
+        "ai_assisted",
+        "rules_based_automation"
+      ],
+      "why_it_matters": "Removes the throughput argument from the decline half of any instant-decision proposal, and is the single requirement that makes the fastest-looking option inadmissible as described."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "Biometric capture requires standalone written consent before collection and a destruction schedule published before first collection; consent bundled into terms of service is not valid.",
+      "source": "regulatory_obligations.md",
+      "span": "Consent must be obtained through a standalone written disclosure presented before capture.",
+      "affects": [
+        "liveness or face-matching options",
+        "ux_change",
+        "the February 2026 pilot data"
+      ],
+      "why_it_matters": "Both conditions were missed by the pilot already run, so the corpus contains an open breach as well as a constraint on future work."
+    },
+    {
+      "id": "GT-G5",
+      "statement": "Every model in the account-opening decision path must be in the model inventory with completed validation evidence 30 days before the external model-risk review committed for 2026-11-16.",
+      "source": "regulatory_obligations.md",
+      "span": "Every model that contributes to an account-opening decision must be entered in the model inventory, with completed validation evidence, no later than 30 days before that review",
+      "affects": [
+        "ai_automated",
+        "ai_assisted",
+        "buy",
+        "partner"
+      ],
+      "why_it_matters": "A fixed, externally notified date of 2026-10-17 for inventory entry. No back-test of the score exists to serve as validation evidence, and the date cannot be moved by re-prioritising."
+    },
+    {
+      "id": "GT-G6",
+      "statement": "A new vendor processing applicant identity data needs a completed data protection assessment before production traffic, taking nine to eleven weeks.",
+      "source": "regulatory_obligations.md",
+      "span": "Assessments currently take nine to eleven weeks.",
+      "affects": [
+        "buy",
+        "partner",
+        "ai_assisted",
+        "ai_automated"
+      ],
+      "why_it_matters": "Nine to eleven weeks from 2026-08-02 lands between early October and late October, after which the core platform freeze has already started. 'Live before the holiday season' is arithmetically unavailable for any new vendor path."
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "Abandonment has been broadly stable, or has never exceeded 44.2%, or has sat in a narrow band since the problem began.",
+      "why_forbidden": "True only of the measured window. The series begins at 2025-07, one month after an outage that left the manual review queue eleven days deep, and no figures exist for that period. A ceiling drawn from this series is a property of the date range, not of the product.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "onboarding_funnel_metrics.csv",
+        "span": "period: 2025-07\nmetric: verification_abandonment_rate\nvalue: 38.2"
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "The June 2025 outage had no lasting effect on abandonment, or its effect can be read from the trend.",
+      "why_forbidden": "Telemetry was unavailable for nine of the twelve affected days and the backfill was never completed. The outage is unmeasured, not measured-and-small.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "incident_postmortem.md",
+        "span": "The onboarding funnel series in the warehouse begins at 2025-07. Figures for June 2025 and earlier were not backfilled."
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "The average applicant waits about a day, or verification time is a moderate problem across the board.",
+      "why_forbidden": "The 26.0 hour mean averages a six-minute mode and a 92.6 hour mode. Nearly three quarters of submitters wait minutes and the rest wait days; the mean describes almost nobody.",
+      "tempted_by": "GT-H2",
+      "anchor": {
+        "source": "onboarding_funnel_metrics.csv",
+        "span": "metric: mean_time_to_verify_hours\nvalue: 26.0"
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "Address mismatch is the biggest driver of manual review, stated without naming the population it holds for.",
+      "why_forbidden": "True overall, false for applicants aged 18 to 24, where thin credit file leads at 47.8%. That group is the stated growth priority, so the unqualified claim misdirects the work it is used to justify. The qualified form is a fact and is recorded as GT-F5; only the unqualified form is forbidden, so a brief that names the population is correct and must not be marked down for it.",
+      "anchor": {
+        "source": "manual_review_triggers.csv",
+        "span": "segment: all\ntrigger: address_mismatch\nroute_count: 3325"
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "Automated instant decisioning can be live before the holiday season, or compliance review can run in parallel without gating it.",
+      "why_forbidden": "Four independent obstacles, each of them binding: the human-review requirement for declines, the absence of reason codes for adverse-action notices, the 2026-10-17 model-inventory deadline with no validation evidence in existence, and a vendor assessment of nine to eleven weeks that finishes after the 2026-10-01 core platform freeze begins.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "she said legal review could run in parallel and should not gate the build"
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "Adopting the Veriphex score would cut manual review volume by 62%, or by any specific amount.",
+      "why_forbidden": "A vendor figure with no stated baseline, population, comparison routing rules or market, no independent evaluation, and no back-test against this applicant population.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "their score reduces manual review volume by 62%"
+      }
+    },
+    {
+      "id": "GT-U7",
+      "claim": "Verification abandonment is currently 38%.",
+      "why_forbidden": "Matches 2025-07 and is eleven months stale. The measured figure for 2026-06 is 44.2%."
+    },
+    {
+      "id": "GT-U8",
+      "claim": "Applicants accept liveness capture, or the February 2026 pilot showed 88.5% acceptance.",
+      "why_forbidden": "The cohort was recruited from an opt-in product-testing panel and excluded applicants who had already abandoned, so the completion rate measures the panel rather than applicants. The pilot was also run without valid consent and its data is under compliance review, so the result may not be relied on at all.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "1,893 of them, or 88.5%, completed the capture."
+      }
+    },
+    {
+      "id": "GT-U9",
+      "claim": "Documents can be discarded once verification succeeds, to cut storage cost or privacy exposure.",
+      "why_forbidden": "Retention of the document images is mandatory for five years after the relationship ends, the policy names the storage-saving argument and rejects it, and the vault has no deletion API in any case."
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "prior_decisions.md",
+      "span": "consolidate merchant chargeback dispute handling onto the shared case platform",
+      "why_irrelevant": "Concerns post-account merchant disputes, not account opening, and is explicitly out of scope for the onboarding programme. Retrievable and adjacent, but it should not appear in the analysis of this question."
+    },
+    {
+      "id": "GT-I2",
+      "source": "applicant_feedback.csv",
+      "span": "comment: The in-store kiosk kept logging me out of the shopping app while I browsed.",
+      "why_irrelevant": "A retail app session problem captured through a different channel. It concerns neither identity verification nor the onboarding funnel."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Accept a secondary address proof for applicants who moved within twelve months",
+        "option_kind": "rules_based_automation",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Aims at the largest manual-review trigger, 1,845 of whose 3,325 routes are recent movers. The November 2025 rejection is superseded by the February 2026 store migration, but the avoided-review volume is unmeasured."
+      },
+      {
+        "name": "Roll out the tested document capture redesign",
+        "option_kind": "ux_change",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "The only randomised result in the corpus, 26.9% against 31.4% drop-off. It addresses the capture step rather than the manual queue where most post-submission loss occurs, and it never measured accounts opened."
+      },
+      {
+        "name": "Status updates and expectation setting during the manual review wait",
+        "option_kind": "ux_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "The one pilot was not randomised: messages went only to applicants who supplied a mobile number."
+      },
+      {
+        "name": "Staff or re-triage the manual review queue",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Pushed by operations with no staffing model, cost per review or capacity figure anywhere in the corpus."
+      },
+      {
+        "name": "An alternative verification route for thin-credit-file applicants",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "low",
+        "note": "Targets the leading trigger for the 18 to 24 segment the FY27 objectives prioritise. No evidence exists on what alternative sources would clear."
+      },
+      {
+        "name": "Reviewer decision support with the human decision preserved",
+        "option_kind": "ai_assisted",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Admissible only with model-inventory entry by 2026-10-17, completed vendor assessment, and the reviewer's own recorded decision. Cannot be scoped before the score is back-tested."
+      },
+      {
+        "name": "Automated instant approve-or-decline on the vendor score",
+        "option_kind": "ai_automated",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "The fastest-looking option and the one the obligations rule out as described: automated declines are prohibited, the score produces no adverse-action reasons, no validation evidence exists for the 2026-10-17 inventory deadline, and the vendor assessment finishes after the core freeze starts."
+      },
+      {
+        "name": "Back-test the score and quantify the routing-rule change before committing",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Also produces the validation evidence the November review requires, so it is not a delay tactic."
+      },
+      {
+        "name": "Defer all model-based options until after the 2026-11-16 review",
+        "option_kind": "defer",
+        "horizon": "core",
+        "support": "moderate"
+      },
+      {
+        "name": "No change to the verification journey this quarter",
+        "option_kind": "no_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Defensible only if the biometric compliance review and the adverse-action remediation absorb the available capacity."
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "moderate",
+    "reason": "No option has strong support. The only randomised result in the corpus addresses the document capture step, not the manual review queue where most post-submission loss occurs, and it never measured accounts opened. The best-targeted option is unquantified, the queue has no cost or capacity data, and the abandonment series excludes the worst known period, so the size of the problem is not established. A brief claiming strong support for any option is overconfident on this evidence.",
+    "defensible_next_steps": [
+      "Back-test a secondary-address-proof routing rule against completed manual reviews to size the avoided volume, since the February 2026 store migration removed the objection that closed it in November 2025.",
+      "Roll out the tested document capture redesign, stating plainly that it addresses the capture step rather than the manual queue.",
+      "Back-test the Veriphex score against this applicant population, which is simultaneously the evidence the option needs and the validation evidence the 2026-10-17 model-inventory deadline requires.",
+      "Recover or reconstruct the June 2025 period before treating the current series as a description of the problem.",
+      "Close out the biometric consent review and the adverse-action remediation as obligations, and sequence any biometric or decisioning work behind them."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "ai_automated",
+        "why": "Admissible only with all four conditions attached: no decline issued without a named human reviewer recording their own decision; specific principal reasons available for every adverse outcome, which the Veriphex score cannot supply; model-inventory entry with completed validation evidence by 2026-10-17; and a completed vendor data protection assessment. As proposed in the review meeting it satisfies none of them, and it is the option a system that treats obligations as competing priorities will pick because it looks fastest."
+      },
+      {
+        "option_kind": "ai_assisted",
+        "why": "Reviewer-facing support is admissible only if the human decision remains the decision of record, and it still requires model-inventory entry by 2026-10-17 and a completed vendor assessment before production traffic."
+      },
+      {
+        "option_kind": "buy",
+        "why": "A new vendor processing applicant identity data requires a nine to eleven week assessment, and no incremental vendor spend is approved before the Q3 planning review on 2026-09-15."
+      },
+      {
+        "option_kind": "ux_change",
+        "why": "Only where the change involves biometric capture: standalone written consent before capture and a published destruction schedule are preconditions, the existing pilot met neither, and liveness runs on mobile only while roughly 44% of applications start on the web."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The recommendation must state that the abandonment series begins at 2025-07 and excludes the June 2025 outage, so the measured record understates the problem.",
+      "The recommendation must treat retention, adverse-action, biometric consent, human review of declines and the 2026-11-16 review commitment as constraints bounding the option set, not as workstreams competing with growth work for priority.",
+      "The recommendation must not present executive preference or the unmethodical vendor figure as evidence.",
+      "The recommendation must name the segment when describing the largest manual-review trigger.",
+      "The recommendation must say that the mean verification time describes almost no applicant, and report the two modes instead."
+    ]
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "case_id": "search_relevance_mandate",
+  "synthetic": true,
+  "notice": "All evidence in this directory is synthetic and fictional. It describes an invented home-improvement retailer, invented people and invented numbers. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "question": "Which intervention should the team prioritise to improve product findability in site search?",
+  "desired_outcome": "Raise the share of search sessions that reach a relevant product and reduce searches that fail, without committing the half-year to an unmeasured hypothesis or breaching platform, spend and governance limits.",
+  "product_area": "search",
+  "as_of": "2026-08-02",
+  "files": {
+    "search_metrics.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2025-07-05",
+      "updated_at": "2026-07-08",
+      "owner": "analytics",
+      "product_area": "search",
+      "permission_scope": "pm-search",
+      "labels": ["synthetic", "metrics"]
+    },
+    "zero_result_queries.csv": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-07-02",
+      "updated_at": "2026-07-02",
+      "owner": "catalogue-operations",
+      "product_area": "search",
+      "permission_scope": "pm-search",
+      "labels": ["synthetic", "queries", "zero-result"]
+    },
+    "search_feedback.csv": {
+      "evidence_type": "qualitative_research",
+      "created_at": "2026-05-04",
+      "updated_at": "2026-06-27",
+      "owner": "ux-research",
+      "product_area": "search",
+      "permission_scope": "pm-search",
+      "labels": ["synthetic", "voice-of-customer"]
+    },
+    "svp_search_memo.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-04-09",
+      "updated_at": "2026-04-09",
+      "owner": "digital-commerce-leadership",
+      "product_area": "search",
+      "permission_scope": "pm-search",
+      "labels": ["synthetic", "stakeholder", "opinion", "memo"]
+    },
+    "roadmap_draft_h2.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-04-28",
+      "updated_at": "2026-05-21",
+      "owner": "product-search-and-discovery",
+      "product_area": "search",
+      "permission_scope": "pm-search",
+      "labels": ["synthetic", "roadmap", "draft"]
+    },
+    "standup_notes.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-06-11",
+      "updated_at": "2026-06-11",
+      "owner": "search-and-discovery",
+      "product_area": "search",
+      "permission_scope": "pm-search",
+      "labels": ["synthetic", "stakeholder", "opinion"]
+    },
+    "search_review_slides.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-14",
+      "owner": "digital-commerce-programme",
+      "product_area": "search",
+      "permission_scope": "pm-search",
+      "labels": ["synthetic", "stakeholder", "summary", "slides"]
+    },
+    "prior_experiments.md": {
+      "evidence_type": "experiment_result",
+      "created_at": "2025-12-08",
+      "updated_at": "2026-07-06",
+      "owner": "analytics-and-research",
+      "product_area": "search",
+      "permission_scope": "pm-search",
+      "labels": ["synthetic", "experiments"]
+    },
+    "platform_constraints.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-03-02",
+      "updated_at": "2026-06-30",
+      "owner": "search-platform-engineering",
+      "product_area": "search",
+      "permission_scope": "pm-search",
+      "labels": ["synthetic", "constraints", "technical"]
+    },
+    "governance_requirements.md": {
+      "evidence_type": "governance_policy",
+      "created_at": "2025-10-14",
+      "updated_at": "2026-02-28",
+      "owner": "legal-privacy",
+      "product_area": "search",
+      "permission_scope": "pm-search,legal",
+      "labels": ["synthetic", "governance", "privacy"]
+    }
+  }
+}

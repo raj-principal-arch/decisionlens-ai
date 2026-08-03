@@ -1,0 +1,39 @@
+{
+  "why": "The bundled case sample_delivery_exceptions was designed before these prompts were written, so results on it cannot separate 'the workflow finds hazards' from 'the prompts knew which hazards to expect'. Every case added after this file was written is at least out-of-sample with respect to the prompt text recorded here. That is a weaker claim than a genuine held-out set \u2014 the same author wrote both \u2014 but it is checkable, which the previous situation was not.",
+  "frozen_at_commit": "1d6ddaf387e53f06f53b6baac9fae19cbcc2c845",
+  "in_sample_case": "sample_delivery_exceptions",
+  "prompts": {
+    "alternatives": {
+      "version": "v1",
+      "fingerprint": "e821af0077f3e7d10130d07f061549b4eb576e7a7cf01fc17fd6b88b1d7c3d21"
+    },
+    "baseline": {
+      "version": "v2",
+      "fingerprint": "6ee8b8fc49a5b7fcbec7d6b066e23b9b6d051289fccb52feb70270bc00e00227"
+    },
+    "challenger": {
+      "version": "v1",
+      "fingerprint": "465e0d16b3f69aa69cd721b130b5d3ab6aed4df498ad63f5e546eed46560dae5"
+    },
+    "classification": {
+      "version": "v2",
+      "fingerprint": "8681730893c361058a8ae8170534436c4ff1bbfb1762fee2ee6ead88526d4b2f"
+    },
+    "contradictions": {
+      "version": "v2",
+      "fingerprint": "df68f309931c35a99585ce7de0d1425ab8cc07185e917379d39ea96884ad3954"
+    },
+    "missing_evidence": {
+      "version": "v1",
+      "fingerprint": "b0888b6ef7efcfbf518c348ae3655dbb706de1875e35aac2310586d78595924c"
+    },
+    "recommendation": {
+      "version": "v1",
+      "fingerprint": "c9ba8d0a9c1b15c331dcdc4f19d00911b34f542da17e3cd37a17258c75cc4afa"
+    },
+    "relevance": {
+      "version": "v1",
+      "fingerprint": "7c242d23936d464cf43b61814f2d2cb816d0f7eccb289a94a6115545ab2f4c00"
+    }
+  }
+}

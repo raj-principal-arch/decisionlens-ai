@@ -1,0 +1,101 @@
+{
+  "case_id": "identity_verification",
+  "synthetic": true,
+  "notice": "All evidence in this directory is synthetic and fictional. It describes an invented retailer and an invented regulated banking arm, with invented vendors, people, regulations and numbers. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "question": "Which intervention should the team prioritise to reduce abandonment during new-account onboarding?",
+  "desired_outcome": "Reduce the share of applications abandoned before identity verification completes, and shorten the time to a verified decision, without breaching the identity-record retention, adverse-action, biometric-consent, human-review or model-inventory obligations, and without putting the 2026-11-16 external model-risk review at risk.",
+  "product_area": "onboarding",
+  "as_of": "2026-08-02",
+  "files": {
+    "business_objectives.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2025-08-20",
+      "updated_at": "2025-09-12",
+      "owner": "product-leadership",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding",
+      "labels": ["synthetic", "objectives", "okr"]
+    },
+    "onboarding_funnel_metrics.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2025-08-01",
+      "updated_at": "2026-07-18",
+      "owner": "analytics",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding",
+      "labels": ["synthetic", "metrics", "funnel"]
+    },
+    "manual_review_triggers.csv": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-07-05",
+      "updated_at": "2026-07-12",
+      "owner": "onboarding-operations",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding",
+      "labels": ["synthetic", "operations", "routing"]
+    },
+    "applicant_feedback.csv": {
+      "evidence_type": "qualitative_research",
+      "created_at": "2026-06-01",
+      "updated_at": "2026-07-02",
+      "owner": "research",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding",
+      "labels": ["synthetic", "voice-of-customer"]
+    },
+    "regulatory_obligations.md": {
+      "evidence_type": "governance_policy",
+      "created_at": "2025-10-01",
+      "updated_at": "2026-06-30",
+      "owner": "compliance-and-legal",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding,legal",
+      "labels": ["synthetic", "governance", "regulatory", "binding"]
+    },
+    "technical_constraints.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-05-04",
+      "updated_at": "2026-07-14",
+      "owner": "engineering",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding",
+      "labels": ["synthetic", "constraints", "technical"]
+    },
+    "incident_postmortem.md": {
+      "evidence_type": "operational_record",
+      "created_at": "2025-06-16",
+      "updated_at": "2025-07-02",
+      "owner": "platform-reliability",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding",
+      "labels": ["synthetic", "incident", "postmortem"]
+    },
+    "prior_experiments.md": {
+      "evidence_type": "experiment_result",
+      "created_at": "2026-02-10",
+      "updated_at": "2026-05-28",
+      "owner": "research",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding",
+      "labels": ["synthetic", "experiments"]
+    },
+    "stakeholder_notes.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-07-22",
+      "updated_at": "2026-07-24",
+      "owner": "product-onboarding",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding",
+      "labels": ["synthetic", "stakeholder", "opinion"]
+    },
+    "prior_decisions.md": {
+      "evidence_type": "prior_decision",
+      "created_at": "2025-11-18",
+      "updated_at": "2026-04-30",
+      "owner": "product-leadership",
+      "product_area": "onboarding",
+      "permission_scope": "pm-onboarding",
+      "labels": ["synthetic", "decisions"]
+    }
+  }
+}

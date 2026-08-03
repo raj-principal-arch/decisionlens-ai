@@ -1,9 +1,12 @@
 # 04 — Evaluation
 
-> **STATUS: OUTLINE ONLY — Phase 1.**
-> This document is a section plan, not finished content. It is completed in **Phase 10**, after the harness has actually been run.
+> **STATUS: results measured.** Eleven cases, both arms, one live run each against
+> `claude-opus-5`. Recordings are in `evals/recordings/`; the generated tables are in
+> `evals/results/summary.md`.
 >
-> **No results exist yet. No results are reported here.** Any number appearing in this file in a later phase will have been produced by a command recorded alongside it.
+> **Every number in this document is produced by `make eval`, not typed.** Re-running that
+> command regenerates them from the recordings. Sections 9 and 11 remain what they always
+> were: a limitations list, and a real-PM study that is **designed and not conducted**.
 
 **Purpose.** Establish whether the controlled DecisionLens workflow produces more verifiable, more useful decision support than a strong single-call baseline — and report honestly if it does not.
 
@@ -63,16 +66,127 @@ How ground truth was authored for the synthetic corpus, what it asserts, and —
 **Model-based (labelled as such):** citation-support accuracy; evidence-classification quality.
 
 ### 5. Results
-Actual measured output. Empty until Phase 10.
+
+**Eleven cases, both arms, one live run each against `claude-opus-5`.** Every figure below
+is produced by `make eval` from the recordings in `evals/recordings/`; the generated tables
+live in `evals/results/summary.md` and nothing here is typed by hand. Re-scoring is free and
+offline, so a correction to an answer key never requires re-recording.
+
+#### 5.1 Deterministic metrics — all eleven cases
+
+| Metric | DecisionLens | Baseline |
+|---|---|---|
+| Contradiction recall | **36/50 (72%)** | 32/50 (64%) |
+| Citation validity | **1451/1451 (100%)** | 967/969 (99.8%) |
+| Uncited claims | 0/534 | 0/236 |
+| Options generated | 134 | 79 |
+| **Overstates support** | **0/11** | 1/11 |
+| At the ceiling | 5/11 | 9/11 |
+| Understates support | 6/11 | 1/11 |
+| Actionable brief | 11/11 | 11/11 |
+| Non-AI and no-build option present | 11/11 | 11/11 |
+
+#### 5.2 Held out from prompt design
+
+Ten of the eleven cases were written after the prompts were frozen at commit `1d6ddaf`
+(`evals/frozen/prompts_at_case_design.json`). Excluding the one in-sample case:
+
+| Metric | DecisionLens | Baseline |
+|---|---|---|
+| Contradiction recall | **32/46 (69.6%)** | 28/46 (60.9%) |
+| Citation validity | 1317/1317 (100%) | 892/894 (99.8%) |
+| Overstates support | 0/10 | 1/10 |
+
+The margin does not depend on the in-sample case. It is slightly larger without it.
+
+#### 5.3 Case by case
+
+Contradiction recall, the only metric where the arms separate materially:
+
+| Outcome | Cases |
+|---|---|
+| DecisionLens ahead (5) | `identity_verification` 5/6 v 4/6 · `payment_retry_reliability` 4/5 v 3/5 · `pricing_tool_selection` 5/5 v 3/5 · `returns_fraud_signals` 3/4 v 2/4 · `subscription_churn` 2/4 v **0/4** |
+| Baseline ahead (2) | `checkout_error_rate` 2/4 v **4/4** · `warehouse_picking_errors` 4/5 v 5/5 |
+| Tied (4) | `loyalty_programme_refresh` · `sample_delivery_exceptions` · `search_relevance_mandate` · `support_ticket_routing` |
+
+#### 5.4 What the results actually support
+
+**Three findings hold.**
+
+*It does not overclaim.* Zero cases out of eleven, against one for the baseline — and the
+baseline's single failure is the most diagnostic result in the set. It occurred on
+`returns_fraud_signals`, a case built specifically so that a thick corpus contains almost
+no load-bearing evidence: a finance estimate with no method, two self-selected store
+anecdotes, one vendor deck, and a `confirmed_abuse_cases` field that was added and never
+populated. The defensible ceiling is `low`. The baseline read the volume and said
+`moderate`. DecisionLens said `low`. That is the failure mode this product was built to
+prevent, reproduced under measurement.
+
+*It grounds more, without grounding worse.* 1,451 citations against 969 — half again as
+many claims anchored — at 100% validity against 99.8%.
+
+*It surfaces more options.* 134 against 79, in every case, and both arms always included
+the mandatory non-AI and no-build alternatives.
+
+**Two findings cut the other way, and one of them is serious.**
+
+*Caution is not calibration.* DecisionLens understates support on 6 of 11 cases; the
+baseline on 1. Read beside the zero overclaims, this is not a system that judges
+confidence well — it is a system biased low, which happens to be the safer direction. The
+clearest evidence is `checkout_error_rate`, built so that `strong` support is genuinely
+earned: a pre-registered randomised experiment, n=412,905, corroborated by an independent
+metrics series. **Both arms said `moderate`.** Neither commits when the evidence deserves
+it, and a decision-support tool that always hedges transfers the judgment straight back to
+the reader.
+
+*Citation validity is not a differentiator.* 100% against 99.8% is not a distinction.
+A well-prompted single call grounds its claims essentially as reliably as a seven-stage
+workflow with deterministic provenance checking. This was expected to be a central
+advantage and the measurement says it is not one. What DecisionLens does differently is
+cite *more*, not cite *better*.
+
+**And the baseline won twice**, including 2/4 against 4/4 on `checkout_error_rate`.
+
+#### 5.5 Whether the margin means anything
+
+Probably less than it looks.
+
+Eight percentage points on contradiction recall is four graded items out of fifty. There
+is one run per case and therefore no variance measurement, so no error bar exists and a
+difference this size cannot be distinguished from run-to-run noise. The honest statement
+is that DecisionLens **did not lose**, and led on a small sample by a margin that has not
+been shown to be reproducible.
+
+The restraint result is stronger, because 0/11 against 1/11 is not a rate — it is a
+specific failure on the specific case designed to induce it. That is a mechanism, not an
+average, and mechanisms survive small samples better than percentages do.
+
+---
 
 ### 6. Variance
 Repeated runs where credentials, cost, and time allow. Non-determinism is a finding, not noise to be averaged away silently.
+
+**Not yet measured.** Every result reported here comes from a single live run per case,
+replayed deterministically thereafter. That is a real limitation and it bounds what any
+margin can mean: a difference smaller than the run-to-run variation of either arm is not
+a difference. Until a second live run exists, no claim is made that any observed gap
+would survive one.
 
 ### 7. Side-by-side example
 One vivid case shown in full: baseline output next to DecisionLens output on identical evidence, with the specific differences a PM would care about called out.
 
 ### 8. Failures
 Where DecisionLens performed worse, produced a wrong classification, missed a planted contradiction, or over-claimed. Reported in detail.
+
+This section is expected to be long, and a short one should be read as a warning that
+the evaluation was not looking hard enough. Three classes are recorded separately:
+
+- **Cases where the baseline beat DecisionLens**, named individually with the margin.
+- **Stages that failed outright** during recording, with the reason. A brief assembled
+  from a run where a stage failed is a degraded brief, and it is scored as one.
+- **Defects found in the evaluation apparatus itself** — answer-key entries that would
+  have manufactured a false failure, and the harness bugs found while building it.
+  `evals/audit/adjudication.md` holds the audit record.
 
 ### 9. Limitations
 Synthetic evidence; small case count; single author writing both the corpus and the ground truth; no real PM users.

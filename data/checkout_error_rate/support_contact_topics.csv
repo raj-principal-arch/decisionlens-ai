@@ -1,0 +1,8 @@
+period,surface,topic,contacts,share_of_contacts_percent,note
+2026-Q2,all,payment_declined_or_error,9140,34.8,synthetic - customer reports a payment problem during checkout
+2026-Q2,all,missing_or_damaged_item,5310,20.2,synthetic - raised after delivery
+2026-Q2,all,order_not_placed_unclear_why,4020,15.3,synthetic - customer believes an order was attempted but cannot confirm it
+2026-Q2,all,account_or_login,2910,11.1,synthetic
+2026-Q2,all,substitution_dispute,2204,8.4,synthetic - raised after delivery about substituted items
+2026-Q2,all,other,1510,5.7,synthetic
+2026-Q2,all,slot_not_available,1180,4.5,synthetic

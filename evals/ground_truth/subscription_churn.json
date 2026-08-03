@@ -1,0 +1,637 @@
+{
+  "case_id": "subscription_churn",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional meal-kit subscription business. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to reduce subscriber churn?",
+  "desired_outcome": "Reduce subscriber churn, and in particular retain more new subscribers past their first month, without raising cost per retained subscriber or creating unacceptable subscriber, operational, or governance risk.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M6 is must_detect false: it is a real gap, but finding it is credit rather than a requirement. Hazards GT-H2 and GT-H3 are likewise recorded rather than required; GT-H1 is required, because the corpus states both halves of it explicitly and only the consequence has to be joined up.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "evidence_conflict",
+      "topic": "what actually causes subscribers to cancel",
+      "side_a": {
+        "source": "exit_survey_analysis.md",
+        "span": "Recipe variety is the dominant reason subscribers give for leaving."
+      },
+      "side_b": {
+        "source": "subscriber_metrics.csv",
+        "span": "metric: share_of_cancellations_within_21_days\nvalue: 62.4"
+      },
+      "why_it_matters": "62.4% of cancellations happen within 21 days, when a subscriber has received at most three boxes and the first two came from a fixed six-recipe starter menu that sits outside the rotation. Recipe variety is the leading stated reason and cannot be what the majority of leavers experienced. Neither side is wrong: the survey records what a real group of people said, and the tenure distribution records what a larger group did. A brief that picks one side targets the wrong cohort, and a brief that averages them targets nobody.",
+      "how_to_resolve": "Cross-tabulate the exit-survey reason against tenure at cancellation. Both fields are already in the survey export and have never been joined. If variety complaints come almost entirely from respondents past day 60, the two findings are true of different cohorts and imply different interventions. If variety complaints are spread evenly across tenure, respondents are naming a reason they could not have experienced and the survey is measuring narrative rather than cause.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "measurement_conflict",
+      "topic": "whether churn improved in 2026-Q1",
+      "side_a": {
+        "source": "retention_objectives.md",
+        "span": "Monthly churn improved to 6.9% in Q1 after two quarters of increase"
+      },
+      "side_b": {
+        "source": "subscriber_metrics.csv",
+        "span": "note: definition changed on 2026-01-01 - paused subscribers are no longer counted as cancellations - synthetic"
+      },
+      "why_it_matters": "The Q1 improvement coincides exactly with a definition change that moved paused subscribers out of the numerator. Pausing rose from 1.1% to 2.9% per month in the same quarter, and 61.0% of subscribers who paused cancelled within 90 days. The improvement may be entirely definitional, and the FY26 target is being tracked against a series that changed mid-flight.",
+      "how_to_resolve": "Restate 2026-Q1 and 2026-Q2 monthly churn under the pre-2026 definition by adding paused subscribers back into the numerator. Every input exists in the corpus: pause_rate from 2025-Q4 onward, pause_to_cancellation_within_90_days, and the active-subscriber base. One recomputed series settles whether churn improved or only the definition did.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "scope_conflict",
+      "topic": "whether delivery reliability is a problem",
+      "side_a": {
+        "source": "fulfilment_report.md",
+        "span": "Network on-time delivery was 96.2% in 2026-Q2, comfortably above the 95% service standard."
+      },
+      "side_b": {
+        "source": "fulfilment_report.md",
+        "span": "By site: Rowan 97.4%, Pell 97.9%, Ashby 88.7%."
+      },
+      "why_it_matters": "The network figure averages three sites that do not serve the same subscribers. New subscribers are routed to Ashby by default, and Ashby handled 71% of first boxes in the quarter while running 7.5 points below the network figure and 6.3 points below the service standard. The cohort where churn concentrates is being described by a number computed mostly over everybody else.",
+      "how_to_resolve": "Report on-time delivery and box completeness for first boxes specifically, split by site. The routing rule and the per-site rates are both already recorded; the first-box rate has simply never been computed as its own number. If first-box on-time is near 88.7%, the two statements are consistent and the network average is the misleading one.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "temporal_conflict",
+      "topic": "whether food waste still argues against a wider menu",
+      "side_a": {
+        "source": "prior_decisions.md",
+        "span": "food waste ran at 9.4% of ingredient cost under forecast-to-order sourcing"
+      },
+      "side_b": {
+        "source": "fulfilment_report.md",
+        "span": "Waste has run at 4.1% of ingredient cost since the committed-volume sourcing agreement began in February 2026."
+      },
+      "why_it_matters": "The menu was cut from 20 recipes to 14 because waste was running at 9.4%. Sourcing changed in February 2026 and waste has more than halved. A brief that treats the October 2025 decision as a standing objection to menu breadth is citing a rationale the corpus has already overtaken.",
+      "how_to_resolve": "The waste rationale is superseded and should not be quoted as a live objection. The remaining objection is capacity, not cost: Ashby cannot support more than 18 weekly recipes before a second pick line is commissioned in Q1 2027. That bounds any menu expansion at 18, independently of waste.",
+      "must_detect": true
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "Do exit-survey reasons differ by tenure at cancellation?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "This is the single join that would reconcile the qualitative and behavioural evidence. Without it the corpus supports two incompatible readings of the same problem and cannot choose between them.",
+      "how_to_obtain": "Cross-tabulate the existing survey export: reason category by tenure-at-cancellation band. No new collection is required.",
+      "was_searched": true,
+      "anchor": {
+        "source": "exit_survey_analysis.md",
+        "span": "the two fields have never been cross-tabulated"
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "Why do payment-lapse cancellations happen, and how many recover without intervention?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Payment lapse is the largest cancellation channel at 47.2% and the corpus contains no evidence of any kind about it: no reasons, no recovery rate, no test, no instrumentation. The largest single group of leavers is entirely unexplained.",
+      "how_to_obtain": "Instrument the payment-failure path, then measure the 30-day self-recovery rate and the decline-reason mix from the billing processor before designing any intervention.",
+      "was_searched": true,
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Nobody present had the figure."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "What is monthly churn on a single consistent definition across 2025 and 2026?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The series changed definition on 2026-01-01. Every trend statement in the corpus, including the objectives document and the growth lead's claim that churn turned the corner, rests on comparing figures computed two different ways.",
+      "how_to_obtain": "Restate 2026-Q1 and 2026-Q2 with paused subscribers added back into the numerator, and publish both series side by side.",
+      "was_searched": true,
+      "anchor": {
+        "source": "prior_decisions.md",
+        "span": "from 2026-01-01, subscribers who pause are reported as active rather than as cancellations"
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "What is on-time delivery and box completeness for first boxes specifically?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "First boxes are routed disproportionately to the worst-performing site and show item substitution at 9.6% against 3.9% for later boxes, but no first-box service figure exists. The strongest behavioural lead in the corpus is measured only indirectly.",
+      "how_to_obtain": "Split the existing on-time and completeness measures by box sequence number and by site.",
+      "was_searched": true,
+      "anchor": {
+        "source": "fulfilment_report.md",
+        "span": "First-box performance has never been reported separately from the network figure."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "Does menu breadth affect subscribers in their first 30 days?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "The only expanded-menu test excluded first-30-day subscribers by design, which is precisely the cohort where cancellations concentrate. The null result does not apply to them, and no other evidence does either.",
+      "how_to_obtain": "Re-run the expanded-menu test with early-tenure subscribers included, or vary the starter menu rather than the rotation.",
+      "was_searched": true,
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "The pilot excluded subscribers in their first 30 days by design"
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M6",
+      "question": "How many cancelled subscribers come back on their own?",
+      "impact": "context_only",
+      "why_it_matters": "The reactivation metric exists in the table but was never populated. A blank is not a zero, and a material self-reactivation rate would change how much any win-back or recovery intervention is worth.",
+      "how_to_obtain": "Populate reactivation_rate_within_180_days, noting that the 180-day record-minimisation policy bounds how far back it can be computed.",
+      "was_searched": true,
+      "anchor": {
+        "source": "subscriber_metrics.csv",
+        "span": "metric: reactivation_rate_within_180_days\nunit: percent"
+      },
+      "must_detect": false
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "62.4% of 2026-Q2 cancellations occurred within 21 days of signup, up from 48.1% in 2025-Q2.",
+      "source": "subscriber_metrics.csv",
+      "span": "metric: share_of_cancellations_within_21_days\nvalue: 62.4"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "Payment lapse is the largest cancellation channel at 47.2% of 2026-Q2 cancellations, and the exit survey is not offered on it.",
+      "source": "cancellation_breakdown.csv",
+      "span": "bucket: payment_lapse\ncancellations: 4720\nshare_of_cancellations_percent: 47.2\nexit_survey_offered: no"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "Recipe variety is the largest coded exit-survey reason, at 89 of 214 responses (41.6%).",
+      "source": "exit_survey_reasons.csv",
+      "span": "reason_category: recipe_variety\nresponse_count: 89\nshare_of_responses_percent: 41.6"
+    },
+    {
+      "id": "GT-F4",
+      "statement": "The first two weeks of a new subscription come from a fixed six-recipe starter menu that sits outside the eight-week rotation.",
+      "source": "fulfilment_report.md",
+      "span": "Weeks one and two of a new subscription are served from a fixed starter menu of six best-selling recipes."
+    },
+    {
+      "id": "GT-F5",
+      "statement": "A randomised expanded-menu pilot found no statistically meaningful difference in day-90 retention.",
+      "source": "prior_experiments.md",
+      "span": "Day-90 retention was 71.2% in the test arm against 70.4% in the control arm, with 1,900 subscribers per arm. The difference is not statistically meaningful."
+    },
+    {
+      "id": "GT-F6",
+      "statement": "Ashby handled 71% of first boxes in 2026-Q2 while running at 88.7% on-time, against a 96.2% network figure.",
+      "source": "fulfilment_report.md",
+      "span": "New subscribers are routed to Ashby by default while the site builds volume, and Ashby handled 71% of first boxes in 2026-Q2."
+    },
+    {
+      "id": "GT-F7",
+      "statement": "Subscribers who cancelled within 7 days reported a first-delivery problem at 11.4%, against 4.3% for subscribers retained to day 90.",
+      "source": "subscriber_metrics.csv",
+      "span": "metric: first_delivery_issue_reported\nvalue: 11.4\nunit: percent\nsegment: cancelled_within_7_days"
+    },
+    {
+      "id": "GT-F8",
+      "statement": "No cancellation event is emitted for subscriptions closed on payment failure, so no downstream system can act on that path.",
+      "source": "fulfilment_report.md",
+      "span": "The subscription platform does not emit a cancellation event when a subscription is closed for payment failure."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That recipe variety is what causes subscribers to leave, rather than what leavers say when asked.",
+      "why_it_is_an_assumption": "The survey records a stated reason. Nothing in the corpus links a stated reason to any behaviour, and the analysis says so outright. 62.4% of cancellations occur before a third box arrives.",
+      "anchor": {
+        "source": "exit_survey_reasons.csv",
+        "span": "representative_verbatim: The menu started to feel like the same six dinners on a loop."
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That the exit survey describes cancelling subscribers in general.",
+      "why_it_is_an_assumption": "The survey exists on one of three cancellation paths. Nothing establishes that the people who reach it resemble the people who do not.",
+      "anchor": {
+        "source": "exit_survey_analysis.md",
+        "span": "The exit survey is presented as the final step of the account-page cancellation flow."
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That a paused subscriber is a retained subscriber.",
+      "why_it_is_an_assumption": "The reporting change asserts it; the data contradicts it. 61.0% of subscribers who paused in 2026-Q1 cancelled within 90 days.",
+      "anchor": {
+        "source": "subscriber_metrics.csv",
+        "span": "metric: pause_to_cancellation_within_90_days\nvalue: 61.0"
+      }
+    },
+    {
+      "id": "GT-A4",
+      "statement": "That the expanded-menu pilot's null result tells us anything about early-tenure subscribers.",
+      "why_it_is_an_assumption": "The pilot excluded the first 30 days by design. Its own write-up says the result does not extend to them.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "Nothing in the result speaks to early-tenure subscribers."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The CMO wants an AI menu recommender shipped before the autumn campaign.",
+      "source": "stakeholder_notes.md",
+      "span": "I want the AI menu recommender live before the autumn campaign.",
+      "must_not_be_treated_as": "evidence that personalisation addresses the cohort that is cancelling"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "The head of culinary reads the exit survey as decisive and wants the 20-recipe menu restored.",
+      "source": "stakeholder_notes.md",
+      "span": "Give me back the twenty-recipe menu and this problem goes away.",
+      "must_not_be_treated_as": "evidence that menu size drives churn"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "The growth lead believes churn improved in Q1.",
+      "source": "stakeholder_notes.md",
+      "span": "Churn turned the corner in Q1.",
+      "must_not_be_treated_as": "a measured improvement on a stable definition"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "The CX lead believes a large share of cancellations are silent payment failures.",
+      "source": "stakeholder_notes.md",
+      "span": "Half the cancellations I see never speak to us at all.",
+      "must_not_be_treated_as": "a measured channel share, even though the breakdown happens to show 47.2%"
+    },
+    {
+      "id": "GT-O5",
+      "statement": "A vendor claims its recommendation engine lifts subscription retention by 18%.",
+      "source": "stakeholder_notes.md",
+      "span": "The deck does not state the baseline, the measurement window, the industry, or whether the comparison was randomised.",
+      "must_not_be_treated_as": "an expected outcome for this business"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "survivorship in the collection channel",
+      "source": "cancellation_breakdown.csv",
+      "span": "bucket: payment_lapse\ncancellations: 4720\nshare_of_cancellations_percent: 47.2\nexit_survey_offered: no",
+      "description": "The exit survey is a page in the account-page cancellation flow and has no email, SMS or telephone equivalent. It is therefore offered only to the 34.1% of cancellations that go through that flow, and never to the 47.2% closed on payment failure or the 18.7% closed by an agent. The corpus never states this consequence; it is recoverable only by reading the survey-tooling note against the channel breakdown.",
+      "why_it_matters": "Every qualitative finding in the case is drawn from a minority of leavers, selected by their willingness and ability to log in and complete a cancellation flow. That is not a random third. It skews toward engaged, longer-tenure subscribers and away from anyone whose relationship ended because a card stopped working or whose box never arrived, which is exactly why the survey shows delivery complaints at 8.4% while the behavioural data shows first-delivery problems at 11.4% among the fastest churners. This hazard is what tempts GT-U1, GT-U4 and GT-U7.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "averaged rate hiding a split across populations",
+      "source": "fulfilment_report.md",
+      "span": "Network on-time delivery was 96.2% in 2026-Q2, comfortably above the 95% service standard.",
+      "description": "The network on-time figure averages a mature site at 97.9% with a ramping site at 88.7%. The two sites do not serve the same subscribers: new subscribers are routed to the weaker one by default.",
+      "why_it_matters": "The average is used in the report to declare delivery above standard. For the cohort that actually churns, it is roughly seven and a half points optimistic.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "metric redefined mid-series",
+      "source": "subscriber_metrics.csv",
+      "span": "note: definition changed on 2026-01-01 - paused subscribers are no longer counted as cancellations - synthetic",
+      "description": "monthly_churn_rate is reported as one continuous series from 2025-Q2 to 2026-Q2, but the numerator changed on 2026-01-01. The 2025 figures include paused subscribers as cancellations and the 2026 figures do not, in a period when pausing nearly tripled.",
+      "why_it_matters": "The apparent Q4-to-Q1 improvement is the first point after the change. Any trend read across the boundary is comparing two different measures.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "Ashby cannot support more than 18 weekly recipes before a second pick line is commissioned in Q1 2027.",
+      "source": "fulfilment_report.md",
+      "span": "Ashby cannot support more than 18 weekly recipes before a second pick line is commissioned.",
+      "blocks": [
+        "restoring the 20-recipe menu",
+        "any menu expansion beyond 18 recipes before Q1 2027"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "No cancellation event is emitted on the payment-failure path, so the marketing platform cannot message that group at all.",
+      "source": "fulfilment_report.md",
+      "span": "Downstream systems, including the marketing platform, receive nothing on that path.",
+      "blocks": [
+        "win-back or recovery messaging to payment-lapse cancellations",
+        "any campaign-side fix for the largest cancellation channel"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "Menu selections and cancellation events arrive in a weekly batch, so same-week measurement is not possible.",
+      "source": "fulfilment_report.md",
+      "span": "Menu selections and cancellation events reach the warehouse in a weekly batch. Same-week measurement of any change is not possible."
+    },
+    {
+      "id": "GT-T4",
+      "kind": "governance_constraint",
+      "statement": "Automated card retries are capped at four per billing cycle with no retry after a hard decline.",
+      "source": "governance_requirements.md",
+      "span": "a maximum of four automated retry attempts per billing cycle, and no retry after a hard decline",
+      "blocks": [
+        "any dunning design that relies on more aggressive automated retries"
+      ]
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "Cost per retained subscriber is the binding constraint, and any cost-increasing proposal needs finance approval before a pilot.",
+      "source": "retention_objectives.md",
+      "span": "Cost per retained subscriber is the binding constraint this year."
+    },
+    {
+      "id": "GT-B2",
+      "kind": "business_constraint",
+      "statement": "The headline weekly price cannot be changed by the retention programme.",
+      "source": "retention_objectives.md",
+      "span": "The headline weekly price is set by finance on an annual cycle and may not be changed by the retention programme.",
+      "blocks": [
+        "price reduction as a retention intervention"
+      ]
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "Model-generated recipe descriptions and menu recommendations shown to subscribers require human review before publication, with no volume exemption.",
+      "source": "governance_requirements.md",
+      "span": "Recipe descriptions and menu recommendations generated by a model and shown to a subscriber require human review before publication.",
+      "affects": [
+        "ai_assisted",
+        "ai_automated",
+        "menu personalisation"
+      ],
+      "why_it_matters": "Removes most of the throughput argument for a per-subscriber recommender, since every generated line needs a reviewer."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "Dietary and allergen data is special-category and may not be used for marketing segmentation or shared outside the fulfilment scope.",
+      "source": "governance_requirements.md",
+      "span": "It may not be used for marketing segmentation and may not be shared with a processor outside the fulfilment scope.",
+      "affects": [
+        "ai_assisted",
+        "menu personalisation",
+        "buy",
+        "partner"
+      ],
+      "why_it_matters": "The richest personalisation signal the business holds is the one a recommender is least allowed to use, and it cannot leave the fulfilment boundary to reach an external vendor."
+    },
+    {
+      "id": "GT-G3",
+      "statement": "Post-cancellation contact requires a separate retention-contact consent; service consent does not carry over.",
+      "source": "governance_requirements.md",
+      "span": "Post-cancellation marketing requires a separate retention-contact consent.",
+      "affects": [
+        "win-back campaigns",
+        "reactivation messaging"
+      ],
+      "why_it_matters": "Coverage of any win-back intervention is limited to subscribers who separately consented, which nothing in the corpus quantifies."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "Subscriber records are minimised 180 days after cancellation.",
+      "source": "governance_requirements.md",
+      "span": "Subscriber records are minimised 180 days after cancellation.",
+      "affects": [
+        "reactivation measurement",
+        "long-horizon cohort analysis"
+      ],
+      "why_it_matters": "Bounds how far back any reactivation or win-back analysis can reach."
+    },
+    {
+      "id": "GT-G5",
+      "statement": "A new processor handling subscriber data needs a data protection assessment taking five to seven weeks.",
+      "source": "governance_requirements.md",
+      "span": "Assessments currently take five to seven weeks.",
+      "affects": [
+        "buy",
+        "partner",
+        "ai_assisted"
+      ],
+      "why_it_matters": "Makes 'live before the autumn campaign' infeasible for any vendor-based option."
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "Recipe variety is the main reason subscribers cancel.",
+      "why_forbidden": "It is the main reason given by 89 people drawn from one of three cancellation paths, covering at most 34.1% of leavers. 62.4% of cancellations happen before a third box, and the first two boxes are a fixed starter menu outside the rotation. The claim is defensible only with both a channel and a tenure qualifier.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "exit_survey_reasons.csv",
+        "span": "reason_category: recipe_variety\nresponse_count: 89\nshare_of_responses_percent: 41.6"
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "Restoring or expanding the weekly menu would reduce churn.",
+      "why_forbidden": "The only randomised test of an expanded menu found no statistically meaningful difference, and it excluded the first 30 days, which is where cancellations concentrate. The stakeholder recollection of a lift describes a result the pilot did not produce.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "And the menu pilot did move retention. I saw the numbers."
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "Churn improved in 2026-Q1, or monthly churn is 6.9% and falling.",
+      "why_forbidden": "The improvement is the first data point after a definition change that removed paused subscribers from the numerator, in a quarter when pausing nearly tripled and 61.0% of pausers went on to cancel within 90 days. No restated series exists.",
+      "tempted_by": "GT-H3",
+      "anchor": {
+        "source": "retention_objectives.md",
+        "span": "Monthly churn improved to 6.9% in Q1 after two quarters of increase"
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "Delivery problems are a minor cause of cancellation, accounting for 8.4%.",
+      "why_forbidden": "That share is of respondents to a survey served only inside the account-page cancellation flow. Subscribers whose box never arrived are the ones least likely to be in it, and the behavioural data shows first-delivery problems reported by 11.4% of subscribers who left within seven days against 4.3% of those retained to day 90.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "exit_survey_reasons.csv",
+        "span": "reason_category: delivery_or_packaging\nresponse_count: 18\nshare_of_responses_percent: 8.4"
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "Delivery reliability is not a problem, because the network runs at 96.2% on-time.",
+      "why_forbidden": "An average across three sites. The site that handles 71% of first boxes runs at 88.7%, below the service standard, and no first-box figure has ever been computed.",
+      "tempted_by": "GT-H2",
+      "anchor": {
+        "source": "fulfilment_report.md",
+        "span": "Network on-time delivery was 96.2% in 2026-Q2, comfortably above the 95% service standard."
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "A recommendation engine would lift retention by 18%.",
+      "why_forbidden": "A vendor figure with no stated baseline, window, industry, or randomisation, and no independent evaluation."
+    },
+    {
+      "id": "GT-U7",
+      "claim": "Payment-lapse cancellations are involuntary and therefore not addressable, or are subscribers who had already decided to leave.",
+      "why_forbidden": "Nothing in the corpus establishes intent or recoverability for this group. It is the largest cancellation channel, it has never been surveyed, tested, or instrumented, and the one person who characterises it says explicitly that nobody knows whether those subscribers meant to leave.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "cancellation_breakdown.csv",
+        "span": "note: involuntary - the subscription auto-closes after four failed charge attempts - synthetic"
+      }
+    },
+    {
+      "id": "GT-U8",
+      "claim": "Any statement about what subscribers who lapsed on payment, or who cancelled through support, experienced, preferred, or wanted.",
+      "why_forbidden": "65.9% of cancellations come from paths that collect no reason data of any kind. The corpus contains no evidence from those subscribers.",
+      "tempted_by": "GT-H1"
+    },
+    {
+      "id": "GT-U9",
+      "claim": "Reactivation is negligible, or no cancelled subscribers return.",
+      "why_forbidden": "The reactivation field was never populated. A blank is not a zero.",
+      "anchor": {
+        "source": "subscriber_metrics.csv",
+        "span": "note: synthetic - field exists but was never populated"
+      }
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "fulfilment_report.md",
+      "span": "The recipe card print vendor changed in May 2026.",
+      "why_irrelevant": "A per-box print cost change with unchanged card layout and recipe content. It matches a keyword search for 'recipe' and will be retrieved by any query about menu or recipes, but it has no bearing on why subscribers cancel."
+    },
+    {
+      "id": "GT-I2",
+      "source": "prior_decisions.md",
+      "span": "approve a corporate gifting pilot for the 2026 winter season",
+      "why_irrelevant": "A separate one-off gifting business line using spare seasonal capacity. Retrievable and commercially adjacent, but not part of the subscription retention question."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Fix first-box fulfilment quality at the site new subscribers are routed to",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Best-aligned with where churn actually concentrates, but rests on indirect measures: no first-box service figure has ever been computed."
+      },
+      {
+        "name": "Instrument and recover payment-lapse cancellations (dunning and card update)",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Largest channel by volume and entirely unmeasured. Blocked today by the missing cancellation event and bounded by the four-retry rule."
+      },
+      {
+        "name": "Prompt new subscribers to choose their first menu before the cutoff",
+        "option_kind": "ux_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "38.2% of seven-day churners chose a menu against 81.7% of retained subscribers. Correlational only; direction of causation is unestablished."
+      },
+      {
+        "name": "Widen the starter menu rather than the rotation",
+        "option_kind": "product_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Targets the cohort the expanded-menu pilot excluded. Untested, and capped at 18 recipes by Ashby capacity."
+      },
+      {
+        "name": "Restore the 20-recipe weekly menu",
+        "option_kind": "product_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Supported by stated survey reasons and by culinary preference; contradicted by the one randomised test, and blocked outright by capacity until Q1 2027."
+      },
+      {
+        "name": "Reduce first-box discount depth to improve subscriber quality",
+        "option_kind": "pricing_change",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "The 30% arm retained better at day 21 but acquired less. Cost per retained subscriber was never calculated for either arm."
+      },
+      {
+        "name": "AI menu personalisation or recommendation engine",
+        "option_kind": "ai_assisted",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Supported only by executive preference and an unmethodical vendor claim. Its strongest signal is special-category data it may not use for segmentation, and every generated line needs human review."
+      },
+      {
+        "name": "Win-back campaign after cancellation",
+        "option_kind": "lifecycle_marketing",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "3.1% reactivation in one unrepeated test, reachable only for the account-page third of leavers, and gated on separate retention-contact consent."
+      },
+      {
+        "name": "Cross-tabulate the exit survey against tenure and channel before choosing",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "No new collection required; it is the join that reconciles the two halves of the corpus."
+      },
+      {
+        "name": "Defer the choice until the payment-lapse path is instrumented and churn is restated on one definition",
+        "option_kind": "defer",
+        "horizon": "core",
+        "support": "moderate"
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "moderate",
+    "reason": "The two strongest signals in the corpus describe different populations and neither is wrong. The qualitative evidence is collected on one of three cancellation paths and cannot speak for the 65.9% of leavers on the other two. The behavioural evidence locates churn in the first 21 days but has never been joined to any reason data. The largest cancellation channel has no evidence of any kind attached to it, and the churn series changed definition mid-flight. No option can be supported more than moderately on this evidence, and a brief that resolves the qualitative-quantitative conflict by choosing a side, or by averaging the two, has overstated what the corpus establishes.",
+    "defensible_next_steps": [
+      "Cross-tabulate exit-survey reason against tenure at cancellation and against channel. It requires no new collection and is the single analysis that would separate the two competing readings.",
+      "Compute first-box on-time and completeness by site, and act on the routing of new subscribers to the ramping site if the gap holds.",
+      "Instrument the payment-failure path so the largest cancellation channel stops being invisible, before designing any recovery intervention for it.",
+      "Restate monthly churn on one definition before any target or trend claim is made."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "ai_assisted",
+        "why": "Supported only by executive preference and a vendor claim with no method. Its best signal is special-category data barred from marketing use, every generated line requires human review, and a new processor needs a five-to-seven-week assessment."
+      },
+      {
+        "option_kind": "product_change",
+        "why": "Menu expansion is supported by stated reasons from a channel-restricted survey and contradicted by the only randomised test. It is also capped at 18 weekly recipes until a second pick line is commissioned in Q1 2027."
+      },
+      {
+        "option_kind": "lifecycle_marketing",
+        "why": "Win-back cannot reach the payment-lapse channel at all, because no cancellation event is emitted there, and requires a separate retention-contact consent of unquantified coverage."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The brief must state that the survey evidence and the tenure evidence describe different populations, and must not resolve the conflict by choosing one side or by averaging them.",
+      "The brief must say what would settle the conflict: joining exit-survey reason to tenure at cancellation.",
+      "The brief must qualify any exit-survey finding by the cancellation channel it was collected on, and must not present it as representative of cancellations overall.",
+      "The brief must not present the Q1 churn improvement as real without flagging the 2026-01-01 definition change.",
+      "The brief must not present executive or culinary preference as evidence."
+    ]
+  }
+}

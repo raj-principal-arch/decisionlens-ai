@@ -1,0 +1,607 @@
+{
+  "generated_from": "evals/recordings/",
+  "cases": 11,
+  "in_sample_case": "sample_delivery_exceptions",
+  "note": "Single live run per case. No variance measurement exists, so a margin smaller than run-to-run variation cannot be distinguished from noise.",
+  "results": [
+    {
+      "case_id": "checkout_error_rate",
+      "records": 57,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 2,
+          "contradictions_graded": 4,
+          "contradictions_missed": [
+            "GT-C2",
+            "GT-C3"
+          ],
+          "contradictions_unadjudicated": 8,
+          "gaps_reported": 17,
+          "citations_total": 107,
+          "citations_resolved": 107,
+          "claims_total": 42,
+          "claims_uncited": 0,
+          "alternatives": 11,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "strong",
+          "calibration": "under",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 21,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 4,
+          "contradictions_graded": 4,
+          "contradictions_missed": [],
+          "contradictions_unadjudicated": 2,
+          "gaps_reported": 10,
+          "citations_total": 79,
+          "citations_resolved": 79,
+          "claims_total": 21,
+          "claims_uncited": 0,
+          "alternatives": 7,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "strong",
+          "calibration": "under",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "identity_verification",
+      "records": 78,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 5,
+          "contradictions_graded": 6,
+          "contradictions_missed": [
+            "GT-C3"
+          ],
+          "contradictions_unadjudicated": 11,
+          "gaps_reported": 16,
+          "citations_total": 149,
+          "citations_resolved": 149,
+          "claims_total": 58,
+          "claims_uncited": 0,
+          "alternatives": 15,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 25,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 4,
+          "contradictions_graded": 6,
+          "contradictions_missed": [
+            "GT-C3",
+            "GT-C4"
+          ],
+          "contradictions_unadjudicated": 4,
+          "gaps_reported": 10,
+          "citations_total": 73,
+          "citations_resolved": 73,
+          "claims_total": 20,
+          "claims_uncited": 0,
+          "alternatives": 8,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "loyalty_programme_refresh",
+      "records": 61,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 2,
+          "contradictions_graded": 4,
+          "contradictions_missed": [
+            "GT-C1",
+            "GT-C2"
+          ],
+          "contradictions_unadjudicated": 15,
+          "gaps_reported": 18,
+          "citations_total": 120,
+          "citations_resolved": 120,
+          "claims_total": 48,
+          "claims_uncited": 0,
+          "alternatives": 12,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "low",
+          "support_ceiling": "moderate",
+          "calibration": "under",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 31,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 2,
+          "contradictions_graded": 4,
+          "contradictions_missed": [
+            "GT-C1",
+            "GT-C2"
+          ],
+          "contradictions_unadjudicated": 3,
+          "gaps_reported": 10,
+          "citations_total": 90,
+          "citations_resolved": 90,
+          "claims_total": 20,
+          "claims_uncited": 0,
+          "alternatives": 7,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "payment_retry_reliability",
+      "records": 43,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 4,
+          "contradictions_graded": 5,
+          "contradictions_missed": [
+            "GT-C5"
+          ],
+          "contradictions_unadjudicated": 10,
+          "gaps_reported": 18,
+          "citations_total": 151,
+          "citations_resolved": 151,
+          "claims_total": 52,
+          "claims_uncited": 0,
+          "alternatives": 13,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 20,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 3,
+          "contradictions_graded": 5,
+          "contradictions_missed": [
+            "GT-C3",
+            "GT-C5"
+          ],
+          "contradictions_unadjudicated": 2,
+          "gaps_reported": 11,
+          "citations_total": 85,
+          "citations_resolved": 85,
+          "claims_total": 24,
+          "claims_uncited": 0,
+          "alternatives": 7,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "pricing_tool_selection",
+      "records": 56,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 5,
+          "contradictions_graded": 5,
+          "contradictions_missed": [],
+          "contradictions_unadjudicated": 9,
+          "gaps_reported": 17,
+          "citations_total": 117,
+          "citations_resolved": 117,
+          "claims_total": 45,
+          "claims_uncited": 0,
+          "alternatives": 13,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "low",
+          "support_ceiling": "moderate",
+          "calibration": "under",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 27,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 3,
+          "contradictions_graded": 5,
+          "contradictions_missed": [
+            "GT-C3",
+            "GT-C4"
+          ],
+          "contradictions_unadjudicated": 3,
+          "gaps_reported": 11,
+          "citations_total": 96,
+          "citations_resolved": 96,
+          "claims_total": 21,
+          "claims_uncited": 0,
+          "alternatives": 9,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "returns_fraud_signals",
+      "records": 54,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 3,
+          "contradictions_graded": 4,
+          "contradictions_missed": [
+            "GT-C2"
+          ],
+          "contradictions_unadjudicated": 10,
+          "gaps_reported": 16,
+          "citations_total": 113,
+          "citations_resolved": 113,
+          "claims_total": 40,
+          "claims_uncited": 0,
+          "alternatives": 10,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "low",
+          "support_ceiling": "low",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 31,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 2,
+          "contradictions_graded": 4,
+          "contradictions_missed": [
+            "GT-C2",
+            "GT-C4"
+          ],
+          "contradictions_unadjudicated": 4,
+          "gaps_reported": 9,
+          "citations_total": 79,
+          "citations_resolved": 77,
+          "claims_total": 18,
+          "claims_uncited": 0,
+          "alternatives": 6,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "low",
+          "calibration": "over",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "sample_delivery_exceptions",
+      "records": 56,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 4,
+          "contradictions_graded": 4,
+          "contradictions_missed": [],
+          "contradictions_unadjudicated": 9,
+          "gaps_reported": 16,
+          "citations_total": 134,
+          "citations_resolved": 134,
+          "claims_total": 47,
+          "claims_uncited": 0,
+          "alternatives": 12,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "low",
+          "support_ceiling": "moderate",
+          "calibration": "under",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 30,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 4,
+          "contradictions_graded": 4,
+          "contradictions_missed": [],
+          "contradictions_unadjudicated": 1,
+          "gaps_reported": 10,
+          "citations_total": 75,
+          "citations_resolved": 75,
+          "claims_total": 21,
+          "claims_uncited": 0,
+          "alternatives": 7,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "search_relevance_mandate",
+      "records": 68,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 2,
+          "contradictions_graded": 5,
+          "contradictions_missed": [
+            "GT-C1",
+            "GT-C3",
+            "GT-C5"
+          ],
+          "contradictions_unadjudicated": 18,
+          "gaps_reported": 18,
+          "citations_total": 133,
+          "citations_resolved": 133,
+          "claims_total": 42,
+          "claims_uncited": 0,
+          "alternatives": 12,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "low",
+          "support_ceiling": "moderate",
+          "calibration": "under",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 35,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 2,
+          "contradictions_graded": 5,
+          "contradictions_missed": [
+            "GT-C1",
+            "GT-C2",
+            "GT-C5"
+          ],
+          "contradictions_unadjudicated": 4,
+          "gaps_reported": 10,
+          "citations_total": 91,
+          "citations_resolved": 91,
+          "claims_total": 20,
+          "claims_uncited": 0,
+          "alternatives": 7,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "subscription_churn",
+      "records": 63,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 2,
+          "contradictions_graded": 4,
+          "contradictions_missed": [
+            "GT-C1",
+            "GT-C2"
+          ],
+          "contradictions_unadjudicated": 10,
+          "gaps_reported": 15,
+          "citations_total": 134,
+          "citations_resolved": 134,
+          "claims_total": 52,
+          "claims_uncited": 0,
+          "alternatives": 11,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "low",
+          "support_ceiling": "moderate",
+          "calibration": "under",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 22,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 0,
+          "contradictions_graded": 4,
+          "contradictions_missed": [
+            "GT-C1",
+            "GT-C2",
+            "GT-C3",
+            "GT-C4"
+          ],
+          "contradictions_unadjudicated": 6,
+          "gaps_reported": 10,
+          "citations_total": 82,
+          "citations_resolved": 82,
+          "claims_total": 17,
+          "claims_uncited": 0,
+          "alternatives": 6,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "support_ticket_routing",
+      "records": 39,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 3,
+          "contradictions_graded": 4,
+          "contradictions_missed": [
+            "GT-C1"
+          ],
+          "contradictions_unadjudicated": 11,
+          "gaps_reported": 17,
+          "citations_total": 125,
+          "citations_resolved": 125,
+          "claims_total": 56,
+          "claims_uncited": 0,
+          "alternatives": 11,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 22,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 3,
+          "contradictions_graded": 4,
+          "contradictions_missed": [
+            "GT-C3"
+          ],
+          "contradictions_unadjudicated": 3,
+          "gaps_reported": 12,
+          "citations_total": 102,
+          "citations_resolved": 102,
+          "claims_total": 23,
+          "claims_uncited": 0,
+          "alternatives": 7,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    },
+    {
+      "case_id": "warehouse_picking_errors",
+      "records": 99,
+      "arms": {
+        "decisionlens": {
+          "contradictions_found": 4,
+          "contradictions_graded": 5,
+          "contradictions_missed": [
+            "GT-C4"
+          ],
+          "contradictions_unadjudicated": 10,
+          "gaps_reported": 17,
+          "citations_total": 168,
+          "citations_resolved": 168,
+          "claims_total": 52,
+          "claims_uncited": 0,
+          "alternatives": 14,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 22,
+          "failed_stages": [],
+          "notes": []
+        },
+        "baseline": {
+          "contradictions_found": 5,
+          "contradictions_graded": 5,
+          "contradictions_missed": [],
+          "contradictions_unadjudicated": 2,
+          "gaps_reported": 12,
+          "citations_total": 117,
+          "citations_resolved": 117,
+          "claims_total": 31,
+          "claims_uncited": 0,
+          "alternatives": 8,
+          "has_non_ai_option": true,
+          "has_no_build_option": true,
+          "support_claimed": "moderate",
+          "support_ceiling": "moderate",
+          "calibration": "at_ceiling",
+          "actionable": true,
+          "blocking_errors": 0,
+          "warnings": 0,
+          "failed_stages": [],
+          "notes": []
+        }
+      }
+    }
+  ]
+}

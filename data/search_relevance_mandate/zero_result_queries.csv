@@ -1,0 +1,19 @@
+period,rank,query_term,search_count,cause_category,catalogue_status,note
+2026-Q2,1,plasterboard,38412,synonym_gap,stocked as drywall panel,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,2,mud,31877,synonym_gap,stocked as joint compound,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,3,recip saw blades,27140,synonym_gap,stocked as reciprocating saw blade,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,4,gfci outlet,24905,synonym_gap,stocked as GFCI receptacle,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,5,house wire 12 2,21663,attribute_query,stocked; gauge and conductor count are not searchable attributes,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,6,shoe moulding,19488,synonym_gap,stocked as quarter round trim,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,7,concrete form tube,17250,not_stocked,discontinued 2025-Q3 with no substitute mapped,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,8,bubble level,15904,synonym_gap,stocked as spirit level,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,9,cement backer board,14771,not_stocked,special order only and absent from the web catalogue,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,10,drywal,13620,misspelling,stocked as drywall panel; no fuzzy matching configured,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,11,poultry netting,12058,synonym_gap,stocked as chicken wire,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,12,half inch pex elbow,11342,attribute_query,stocked; fitting size is not a searchable attribute,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,13,furring strip,10877,synonym_gap,stocked as strapping lumber,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,14,solvent weld cement,9930,synonym_gap,stocked as PVC pipe cement,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,15,rebar chairs,8615,not_stocked,trade counter channel only and not listed online,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,16,j channel,8104,synonym_gap,stocked as siding trim channel,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,17,insullation,7562,misspelling,stocked as loft insulation roll; no fuzzy matching configured,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02
+2026-Q2,18,flex duct 6 inch,6998,attribute_query,stocked; duct diameter is not a searchable attribute,synthetic - cause assigned by hand review; catalogue operations; 2026-07-02

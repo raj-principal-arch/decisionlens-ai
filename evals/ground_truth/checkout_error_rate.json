@@ -1,0 +1,650 @@
+{
+  "case_id": "checkout_error_rate",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional online grocery retailer called Larkfield Fresh. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to reduce checkout failures?",
+  "desired_outcome": "Reduce the share of checkout sessions that fail to become orders, without raising fraud losses or payment processing cost per order and without breaching payment governance.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M6 is must_detect false: it is a real gap, but finding it is credit rather than a requirement.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "claim_conflict",
+      "topic": "whether the measured payment-step lift is a promotional artefact",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "The 3.4 point lift is a May promotion artefact."
+      },
+      "side_b": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "Because both arms ran concurrently under session-level randomisation, promotional traffic was allocated to the arms in the same proportion, and no calendar effect can produce a difference between them."
+      },
+      "why_it_matters": "The objection is the main reason given in the corpus for not acting. It does not survive the design: a calendar effect present in both arms cannot produce a between-arm difference. A brief that leaves this open treats a refuted objection as an unresolved risk.",
+      "how_to_resolve": "Already resolved by the design. Both arms ran concurrently with session-level assignment and a passed sample-ratio check, so the promotion is balanced across arms. The growth director confirmed she had not looked at how sessions were assigned.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "definitional_conflict",
+      "topic": "whether checkout failures actually rose between 2025-Q4 and 2026-Q1",
+      "side_a": {
+        "source": "business_objectives.md",
+        "span": "Checkout failure rate has risen from 4.1% in 2025-Q4 to 6.4% in 2026-Q2"
+      },
+      "side_b": {
+        "source": "analytics_instrumentation_changelog.json",
+        "span": "The numerator now also counts checkout sessions terminated by a client-side timeout, meaning the payment frame did not reach an interactive state within 20 seconds."
+      },
+      "why_it_matters": "The 2025 figures were produced under a definition that excluded client-side timeouts and were never restated. Part of the step change between 2025-Q4 and 2026-Q1 is the definition, not customer or system behaviour. The whole framing of the problem, and the FY26 target of 4.0%, rest on comparing two different measurements.",
+      "how_to_resolve": "Recompute 2025-Q3 and 2025-Q4 under the v3 definition and compare like with like. The corpus does not permit the definitional and behavioural components to be separated as it stands.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "measurement_basis_conflict",
+      "topic": "which checkout step loses the most sessions",
+      "side_a": {
+        "source": "support_contact_topics.csv",
+        "span": "topic: payment_declined_or_error\ncontacts: 9140\nshare_of_contacts_percent: 34.8"
+      },
+      "side_b": {
+        "source": "checkout_funnel_steps.csv",
+        "span": "step: slot_selection\nsessions_entering: 1171000\nsessions_completing_step: 1038000\nstep_completion_percent: 88.6\nsessions_lost: 133000"
+      },
+      "why_it_matters": "Support contacts rank what customers choose to complain about; the funnel ranks where sessions are lost. Slot selection lost 133,000 sessions against 81,500 at payment authorisation, yet generated 1,180 contacts against 9,140. Ranking interventions on contact volume points at the wrong step.",
+      "how_to_resolve": "State which denominator is being used. Contacts and sessions are both correct measurements of different things, and only the funnel can rank steps by loss.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "scope_conflict",
+      "topic": "the surfaces the experimental result covers",
+      "side_a": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "App sessions and stored-wallet payments were excluded"
+      },
+      "side_b": {
+        "source": "stakeholder_notes.md",
+        "span": "Ship it to every surface - web, app and wallet - before the September peak."
+      },
+      "why_it_matters": "The strong result covers web card payments only. Extending it to the app and to wallet redirects would ship an unmeasured change on two surfaces, one of which cannot technically host the pattern.",
+      "how_to_resolve": "Split the decision. Roll out on the measured surface; treat app and wallet as separate proposals needing their own evidence, an engineering estimate, and in the wallet case a specification change.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C5",
+      "kind": "claim_conflict",
+      "topic": "whether the change raises chargebacks",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "Every retry mechanism we have shipped has increased chargebacks."
+      },
+      "side_b": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "Chargeback rate on orders originating in enrolled sessions: control 0.11%, treatment 0.11%."
+      },
+      "why_it_matters": "A measured guardrail with a confidence interval of plus or minus 0.02 points is being contradicted by an unrecorded recollection. Treating the recollection as equal weight would hold back a change the evidence supports.",
+      "how_to_resolve": "Ask for the prior comparisons. The head of payments risk confirmed the comparison had never been written down. The measured guardrail stands, subject to the 30-day observation window being extended to 120 days.",
+      "must_detect": false
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "What happens to authorisation completion on the mobile app and on stored-wallet payments?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "The experiment covered web card payments only, and the app emits no step-level events at all. The corpus contains no measurement of either surface, so any recommendation that spans them is unevidenced.",
+      "how_to_obtain": "Instrument the app checkout with step-level events, then run the same randomised design on that surface. Wallet needs a specification change before it can be tested.",
+      "was_searched": true,
+      "anchor": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "The treatment was never shown to an app session or to a stored-wallet payment."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "How much of the loss at the slot selection step is slot unavailability rather than interface difficulty?",
+      "impact": "would_change_sequencing",
+      "why_it_matters": "Slot selection is the largest single loss in the funnel at 133,000 sessions, and nothing in the corpus says how much of it checkout could recover. Without that split the biggest hole in the funnel cannot be sized, and the case for working on it after the payment fix cannot be made or dismissed.",
+      "how_to_obtain": "Segment slot-step exits by whether any slot was available in the customer's requested window, using the slot inventory the fulfilment planning service already holds.",
+      "was_searched": true,
+      "anchor": {
+        "source": "checkout_funnel_steps.csv",
+        "span": "note: synthetic - largest single loss in the funnel; the split between slot unavailability and interface difficulty is not measured"
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "Did the extra payment-step completions become completed orders?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The registered metric was payment-step completion. Order completion was recorded but never analysed, so the effect on orders, basket value and the end-to-end failure rate is unmeasured. It is also the analysis that would license the wider claim everyone wants to make.",
+      "how_to_obtain": "Analyse the retained experiment dataset for orders per enrolled session. This must happen before the 180-day deletion window closes in December 2026.",
+      "was_searched": true,
+      "anchor": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "Order completion per enrolled session was recorded but was not a registered metric and has not been analysed."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "Does the chargeback guardrail still hold at the full 120-day dispute window?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "Chargebacks were counted to 30 days while scheme rules allow disputes to 120 days. The guardrail reading is partial. This is a condition on rollout and a series to keep watching, not a reason to withhold a change with a measured primary effect.",
+      "how_to_obtain": "Continue the chargeback series on enrolled orders to 120 days after transaction and re-read in October 2026.",
+      "was_searched": true,
+      "anchor": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "Chargebacks were counted to 30 days after order."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "What would it cost to build inline authorisation recovery in the app checkout?",
+      "impact": "would_change_sequencing",
+      "why_it_matters": "The app is a separate implementation sharing no code with the web payment step, and no estimate exists. The app extension cannot be sequenced against the September freeze without one.",
+      "how_to_obtain": "Engineering estimate against the mobile payments SDK, including the instrumentation work the app needs before any effect could be measured.",
+      "was_searched": true,
+      "anchor": {
+        "source": "technical_constraints.md",
+        "span": "No estimate has been produced for the app implementation."
+      },
+      "must_detect": true
+    },
+    {
+      "id": "GT-M6",
+      "question": "How much of the 2026-Q1 increase in checkout failure rate is definitional?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "Client-side timeouts entered the numerator on 2026-01-01 and prior periods were never restated, so the size of the real deterioration is unknown. The FY26 target of 4.0% was set against a v2 figure and is being tracked against a v3 series.",
+      "how_to_obtain": "Recompute 2025-Q3 and 2025-Q4 under v3 from the retained session records, or report the timeout component of the 2026 periods separately.",
+      "was_searched": true,
+      "anchor": {
+        "source": "analytics_instrumentation_changelog.json",
+        "span": "None. Periods before 2026-Q1 remain published under v2."
+      },
+      "must_detect": false
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "In a randomised experiment, inline authorisation recovery raised payment authorisation step completion by 3.4 percentage points, from 91.2% to 94.6%, with a 95% confidence interval of [+3.2, +3.6].",
+      "source": "experiment_inline_auth_recovery.md",
+      "span": "Absolute difference +3.4 percentage points, 95% confidence interval [+3.2, +3.6], p < 0.001."
+    },
+    {
+      "id": "GT-F2",
+      "statement": "The experiment enrolled 412,905 sessions, randomised at session level 50/50 with both arms concurrent, and passed a sample-ratio mismatch check at p = 0.72.",
+      "source": "experiment_inline_auth_recovery.md",
+      "span": "Enrolled sessions: 412,905. Control 206,338, treatment 206,567."
+    },
+    {
+      "id": "GT-F3",
+      "statement": "The effect did not decay across the six-week window: +3.3 points in weeks 1 and 2, +3.5 points in weeks 5 and 6.",
+      "source": "experiment_inline_auth_recovery.md",
+      "span": "Weeks 1 and 2 showed +3.3 points and weeks 5 and 6 showed +3.5 points, so this is not a novelty effect."
+    },
+    {
+      "id": "GT-F4",
+      "statement": "The chargeback guardrail was flat at 0.11% in both arms, with a confidence interval of [-0.02, +0.02] points, measured to 30 days after order.",
+      "source": "experiment_inline_auth_recovery.md",
+      "span": "Difference +0.00 points, 95% confidence interval [-0.02, +0.02]."
+    },
+    {
+      "id": "GT-F5",
+      "statement": "An independent gateway-log series reproduces the effect: the North region reached 95.0% payment authorisation completion after ramping to 100%, while the unchanged rest of the network stayed at 91.2%.",
+      "source": "payment_step_weekly.csv",
+      "span": "week_starting: 2026-07-27\nregion_group: north\nrollout_state: ramped_100_percent\npayment_auth_completion_percent: 95.0"
+    },
+    {
+      "id": "GT-F6",
+      "statement": "Slot selection is the largest single loss in the web funnel at 133,000 sessions in 2026-Q2, ahead of payment authorisation at 81,500.",
+      "source": "checkout_funnel_steps.csv",
+      "span": "step: payment_authorisation\nsessions_entering: 1006000\nsessions_completing_step: 924500\nstep_completion_percent: 91.9\nsessions_lost: 81500"
+    },
+    {
+      "id": "GT-F7",
+      "statement": "The checkout_failure_rate definition changed on 2026-01-01 and periods before 2026-Q1 were not restated.",
+      "source": "analytics_instrumentation_changelog.json",
+      "span": "None. Periods before 2026-Q1 remain published under v2."
+    },
+    {
+      "id": "GT-F8",
+      "statement": "The app checkout emits no step-level events, so no app funnel exists and no experiment can run on that surface.",
+      "source": "analytics_instrumentation_changelog.json",
+      "span": "The replacement schema emits order-level events only. Step-level checkout events are no longer emitted by the app."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That a result measured on web card payments transfers to the mobile app and to stored-wallet payments.",
+      "why_it_is_an_assumption": "Both surfaces were excluded from the experiment. The wallet flow is an external redirect that the pattern cannot be applied to without a specification change, and the app is a different implementation.",
+      "anchor": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "Eligibility: web storefront, card payments, all three regions."
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That an extra payment-step completion becomes an extra completed order.",
+      "why_it_is_an_assumption": "Plausible given a 99.6% confirmation step, but order completion was never analysed for the experiment. The sessions the treatment recovers may not behave like the sessions that already completed.",
+      "anchor": {
+        "source": "checkout_funnel_steps.csv",
+        "span": "step: order_confirmation\nsessions_entering: 924500\nsessions_completing_step: 920800\nstep_completion_percent: 99.6"
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That the 2026-Q1 rise in checkout failure rate reflects a change in customer or system behaviour.",
+      "why_it_is_an_assumption": "The measurement changed on the same date. Nothing in the corpus separates the definitional component from a real deterioration.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Something broke in January and we still do not know what."
+      }
+    },
+    {
+      "id": "GT-A4",
+      "statement": "That the loss at the slot selection step is something the checkout team can fix.",
+      "why_it_is_an_assumption": "Checkout displays and holds slots but cannot create them, and slot capacity is explicitly out of scope for FY26. How much of the 133,000 lost sessions is capacity rather than interface is unmeasured.",
+      "anchor": {
+        "source": "technical_constraints.md",
+        "span": "Checkout can display slots and hold them; it cannot create them."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The director of growth believes the measured lift is a promotional artefact.",
+      "source": "stakeholder_notes.md",
+      "span": "I would not bank on it.",
+      "must_not_be_treated_as": "a limitation of the experiment; the design rules the objection out and she confirmed she had not looked at how sessions were assigned"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "The VP Digital wants the change shipped to every surface before the September peak.",
+      "source": "stakeholder_notes.md",
+      "span": "Ship it to every surface - web, app and wallet - before the September peak.",
+      "must_not_be_treated_as": "evidence that the change works on the app or on wallet payments"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "The head of payments risk believes every retry mechanism has increased chargebacks and wants six more months of data.",
+      "source": "stakeholder_notes.md",
+      "span": "I would want a further six months of data before we call this safe.",
+      "must_not_be_treated_as": "a measured fraud result; the comparison she refers to was never written down"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "The support manager believes payment problems are where the failures are, because they are a third of contacts.",
+      "source": "stakeholder_notes.md",
+      "span": "Payment problems are what customers contact us about. Over a third of our contacts. That is where the failures are.",
+      "must_not_be_treated_as": "a ranking of funnel steps by sessions lost"
+    },
+    {
+      "id": "GT-O5",
+      "statement": "A vendor claims their hosted checkout reduces payment failures by 40%.",
+      "source": "stakeholder_notes.md",
+      "span": "The deck does not state a baseline, a sample size, a comparison method, or the market the figure came from.",
+      "must_not_be_treated_as": "a comparable or expected outcome for this organisation"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "metric redefinition mid-series",
+      "source": "analytics_instrumentation_changelog.json",
+      "span": "These sessions raise no server-side error and were previously excluded from the numerator.",
+      "description": "checkout_failure_rate changed definition on 2026-01-01 to include client-side timeouts, and no historical period was restated. The 2025 rows in checkout_metrics.csv carry the note 'defn v2' and the 2026 rows carry 'defn v3'. Nothing in the corpus connects the changelog entry to the apparent jump from 4.1% to 6.8%, and the strategy document and the finance business partner both read the jump as a real deterioration.",
+      "why_it_matters": "The problem statement everyone is working from is partly an artefact of measurement. It also matters in the other direction: the redefinition affects the quarterly trend series and says nothing at all about the experiment, whose primary metric is payment-step completion measured identically in both arms. A brief that lets this hazard reduce its confidence in the experiment has misapplied it.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "proxy metric standing in for the thing that matters",
+      "source": "support_contact_topics.csv",
+      "span": "topic: slot_not_available\ncontacts: 1180\nshare_of_contacts_percent: 4.5",
+      "description": "Contact volume is the most legible dataset in the corpus and ranks payment problems first at 34.8%. It measures which failures customers pick up the phone about. A customer who cannot find a delivery slot leaves without contacting anyone: 1,180 contacts against 133,000 lost sessions.",
+      "why_it_matters": "This is what tempts GT-U4. A brief that ranks interventions by contact volume will under-weight the largest loss in the funnel and over-weight the most audible one.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "partial period compared with complete ones",
+      "source": "checkout_metrics.csv",
+      "span": "period: 2026-Q3-to-date\nmetric: checkout_failure_rate\nvalue: 5.9\nunit: percent\nsurface: web\nnote: synthetic - defn v3; covers 2026-07-01 to 2026-07-31 only",
+      "description": "The 2026-Q3 row covers one month of a three-month quarter and coincides with the North region ramp, which is also the thing being evaluated.",
+      "why_it_matters": "The improvement is real but is neither a full quarter nor a clean read on the network. It should not be quoted alongside complete quarters as though it were one.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "Stored-wallet payments are an external redirect and the inline recovery pattern cannot be applied to them without a change to the wallet integration specification.",
+      "source": "technical_constraints.md",
+      "span": "The inline recovery pattern cannot be applied to a redirect flow without a change to the wallet integration specification, which is not ours to change.",
+      "blocks": [
+        "extend inline authorisation recovery to wallet payments"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "The app checkout is a separate implementation on the mobile payments SDK, sharing no code with the web payment step, and no engineering estimate exists.",
+      "source": "technical_constraints.md",
+      "span": "The app checkout is a separate implementation on the mobile payments SDK and shares no code with the web payment step.",
+      "blocks": [
+        "extend inline authorisation recovery to the app this quarter"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "Slot capacity is generated upstream by fulfilment planning; checkout can display and hold slots but cannot create them.",
+      "source": "technical_constraints.md",
+      "span": "Whether a customer is offered a slot they find acceptable is decided upstream of checkout.",
+      "blocks": [
+        "any checkout-side intervention that assumes more slots"
+      ]
+    },
+    {
+      "id": "GT-T4",
+      "kind": "technical_constraint",
+      "statement": "A change freeze applies to all checkout services from 2026-09-07 to 2026-10-05.",
+      "source": "technical_constraints.md",
+      "span": "A change freeze applies to all checkout services from 2026-09-07 to 2026-10-05 for peak trading.",
+      "blocks": [
+        "any checkout release between 2026-09-07 and 2026-10-05"
+      ]
+    },
+    {
+      "id": "GT-T5",
+      "kind": "technical_constraint",
+      "statement": "Checkout events reach the warehouse with up to 6 hours of lag, so readouts are end-of-day rather than real time.",
+      "source": "technical_constraints.md",
+      "span": "Checkout events land in the warehouse with a lag of up to 6 hours."
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "Payment processing cost per order is the binding financial constraint and any proposal that raises it needs finance approval before rollout.",
+      "source": "business_objectives.md",
+      "span": "Payment processing cost per order is the binding financial constraint."
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "Any change to the card authorisation flow needs payment-scheme compliance sign-off, currently ten working days.",
+      "source": "governance_requirements.md",
+      "span": "Sign-off currently takes ten working days from submission of the change record.",
+      "affects": [
+        "roll out inline authorisation recovery"
+      ],
+      "why_it_matters": "A condition on the recommended rollout and a date to plan against, given the 2026-09-07 freeze. It is a lead time, not a blocker."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "Card numbers must never be persisted in the browser; a form may be re-presented only from a tokenised reference.",
+      "source": "governance_requirements.md",
+      "span": "A payment form may be re-presented only from a tokenised reference held by the payment service.",
+      "affects": [
+        "roll out inline authorisation recovery"
+      ],
+      "why_it_matters": "The tested treatment already re-presents from the tokenised reference, so the recommended option complies as built. Any reimplementation on another surface has to meet the same rule."
+    },
+    {
+      "id": "GT-G3",
+      "statement": "A new vendor in the payment path requires a security assessment taking eight to twelve weeks.",
+      "source": "governance_requirements.md",
+      "span": "Assessments currently take eight to twelve weeks.",
+      "affects": [
+        "buy",
+        "partner"
+      ],
+      "why_it_matters": "Rules out any hosted-checkout vendor before the September peak even if the vendor claim were credible."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "Card storage requires explicit consent recorded at the time of saving; marketing consent does not transfer.",
+      "source": "governance_requirements.md",
+      "span": "Consent given for marketing does not authorise card storage.",
+      "affects": [
+        "any saved-card or one-click checkout option"
+      ]
+    },
+    {
+      "id": "GT-G5",
+      "statement": "Experiment datasets containing payment identifiers are deleted 180 days after the experiment closes.",
+      "source": "governance_requirements.md",
+      "span": "Experiment datasets containing payment identifiers are deleted 180 days after the experiment closes.",
+      "affects": [
+        "further analysis of EXP-2026-04"
+      ],
+      "why_it_matters": "The unanalysed order-completion question has a deadline. EXP-2026-04 closed on 2026-06-14, so the records go in December 2026."
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "Inline authorisation recovery reduces checkout failures by 3.4 percentage points.",
+      "why_forbidden": "The 3.4 points are on payment authorisation step completion, one of six funnel steps, reached by 1,006,000 of 1,240,000 sessions. The experiment did not measure the checkout failure rate, end-to-end completion, or completed orders. A strong result on one step is not a result about the funnel.",
+      "anchor": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "Absolute difference +3.4 percentage points, 95% confidence interval [+3.2, +3.6], p < 0.001."
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "The change will work on the mobile app and for wallet payments.",
+      "why_forbidden": "Both were excluded from the experiment, the app emits no step-level events so nothing could have been measured there, and the wallet flow is an external redirect the pattern cannot be applied to without a specification change.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Ship it to every surface - web, app and wallet - before the September peak."
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "Checkout failures rose from 4.1% to 6.8% between 2025-Q4 and 2026-Q1, so something broke in January.",
+      "why_forbidden": "The numerator was amended on 2026-01-01 to include client-side timeouts and no earlier period was restated. Part of the jump is definitional, and the corpus does not say how much.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "checkout_metrics.csv",
+        "span": "period: 2026-Q1\nmetric: checkout_failure_rate\nvalue: 6.8\nunit: percent\nsurface: web\nnote: synthetic - defn v3"
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "Payment problems are the largest source of checkout loss.",
+      "why_forbidden": "True of support contacts, not of sessions. Slot selection lost 133,000 sessions in 2026-Q2 against 81,500 at payment authorisation, while generating 1,180 contacts against 9,140.",
+      "tempted_by": "GT-H2",
+      "anchor": {
+        "source": "support_contact_topics.csv",
+        "span": "topic: payment_declined_or_error\ncontacts: 9140\nshare_of_contacts_percent: 34.8"
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "The measured lift cannot be separated from the effect of the May promotion.",
+      "why_forbidden": "Session-level randomisation with concurrent arms and a passed sample-ratio check allocates promotional traffic identically to both arms. A calendar effect present in both arms cannot produce a between-arm difference. Repeating this objection is a restraint failure in the direction of unwarranted hedging, not caution.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "That window had the bank-holiday campaign in it and the traffic mix was nothing like a normal week."
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "The change has been shown not to increase chargebacks.",
+      "why_forbidden": "Chargebacks were counted to 30 days while scheme rules allow disputes to 120 days. The guardrail reading is favourable and partial. The correct statement is that no effect was detected in the first 30 days and the series is still open.",
+      "anchor": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "so the chargeback reading is partial and the series is still being collected"
+      }
+    },
+    {
+      "id": "GT-U7",
+      "claim": "A hosted checkout product would reduce payment failures by 40%.",
+      "why_forbidden": "A vendor deck with no baseline, sample size, comparison method, or market, and no independent evaluation.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "A vendor deck circulated before the meeting claims their hosted checkout reduces payment failures by 40%."
+      }
+    },
+    {
+      "id": "GT-U8",
+      "claim": "Slot-step abandonment is an interface problem that a redesign would fix.",
+      "why_forbidden": "The split between slot unavailability and interface difficulty is not measured, the one slot picker release had no holdout and coincided with two depots opening, and checkout cannot create slots.",
+      "anchor": {
+        "source": "experiment_inline_auth_recovery.md",
+        "span": "The interface change and the capacity increase cannot be separated, and the release had no design capable of measuring its own effect."
+      }
+    },
+    {
+      "id": "GT-U9",
+      "claim": "No option in this corpus has strong support, so the team should gather more evidence before committing.",
+      "why_forbidden": "A pre-registered, session-randomised experiment with 412,905 enrolled sessions, a passed sample-ratio check, a confidence interval of plus or minus 0.2 points, no novelty decay, a flat fraud guardrail, and an independent gateway-log series that reproduces the effect in a staged rollout is strong support for the payment-step claim. Describing that evidence as weak, preliminary, or insufficient to act on misreads it. The scoping caveats limit what may be claimed, not whether to act.",
+      "anchor": {
+        "source": "payment_step_weekly.csv",
+        "span": "note: synthetic - inline authorisation recovery enabled for half of north-region web card sessions from this week; series compiled from payment gateway logs and not from experiment instrumentation"
+      }
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "support_contact_topics.csv",
+      "span": "topic: substitution_dispute\ncontacts: 2204\nshare_of_contacts_percent: 8.4",
+      "why_irrelevant": "Raised after delivery about substituted items. It is in the same contact export as the checkout topics and is retrievable alongside them, but it says nothing about checkout failure and the substitutions programme is explicitly run elsewhere."
+    },
+    {
+      "id": "GT-I2",
+      "source": "analytics_instrumentation_changelog.json",
+      "span": "Basket value distribution tile added to the trading dashboard",
+      "why_irrelevant": "A presentation-only dashboard change that altered no definition and no series. It sits in the same changelog as the entry that matters and should not be confused with it."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Roll out inline authorisation recovery across the web card flow in all regions",
+        "option_kind": "ux_change",
+        "horizon": "core",
+        "support": "strong",
+        "note": "Randomised, pre-registered, large sample, tight interval, no novelty decay, flat fraud guardrail, and independently reproduced by the North-region staged rollout. Needs compliance sign-off and must land before the 2026-09-07 freeze."
+      },
+      {
+        "name": "Analyse order completion in the retained experiment dataset",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Cheap, already-collected, and the only thing that would license a claim about orders rather than about one step. Deadline is the 180-day deletion in December 2026."
+      },
+      {
+        "name": "Continue the chargeback series to 120 days as a rollout condition",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Closes the one open guardrail question without holding up the rollout."
+      },
+      {
+        "name": "Instrument the app checkout with step-level events",
+        "option_kind": "instrumentation",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Prerequisite for measuring anything at all on the app surface. Nothing about the app can be decided until this exists."
+      },
+      {
+        "name": "Segment slot-step exits by slot availability",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Sizes the largest loss in the funnel and settles whether checkout can address any of it."
+      },
+      {
+        "name": "Restate 2025 checkout failure rate under the current definition",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Repairs the problem statement and the FY26 target, both of which currently compare v2 with v3 figures."
+      },
+      {
+        "name": "Reduce client-side payment frame timeouts",
+        "option_kind": "performance_work",
+        "horizon": "core",
+        "support": "low",
+        "note": "Timeouts are now counted as failures, but nothing in the corpus sizes them or says which devices they occur on."
+      },
+      {
+        "name": "Extend inline authorisation recovery to the app checkout",
+        "option_kind": "cross_surface_rollout",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Unmeasured surface, no instrumentation, no engineering estimate."
+      },
+      {
+        "name": "Redesign the slot picker again",
+        "option_kind": "ux_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "The one prior release could not measure its own effect and coincided with a capacity increase."
+      },
+      {
+        "name": "Evaluate a hosted checkout vendor",
+        "option_kind": "buy",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Vendor claim without method, and an eight to twelve week security assessment puts it beyond the peak."
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "strong",
+    "reason": "Unusually for this suite, one option is genuinely well evidenced and the brief should say so. EXP-2026-04 was pre-registered before launch, randomised at session level with concurrent arms, enrolled 412,905 sessions, passed its sample-ratio check, produced a +3.4 point effect with a 95% interval of [+3.2, +3.6], showed no novelty decay, and moved no guardrail. An independently compiled gateway-log series then reproduced roughly the same lift in a staged regional rollout against a flat comparison group. That is strong support. The correct restraint here is about scope, not about confidence: the claim holds for payment authorisation step completion on the web card flow, and must not be restated as an effect on the checkout failure rate, on completed orders, on the app, or on wallet payments. The failure mode this case is built to catch is a brief that discovers the definitional break in the trend series, the unanalysed order metric, or the 30-day chargeback window and downgrades a strong result to 'moderate' or 'needs more research'. None of those touches the internal validity of the experiment.",
+    "defensible_next_steps": [
+      "Roll out inline authorisation recovery across the web card flow in all regions, submitting the compliance change record early enough to clear ten working days of sign-off before the 2026-09-07 freeze.",
+      "Analyse order completion per enrolled session in the retained experiment dataset, before the 180-day deletion window closes.",
+      "Keep the chargeback series running to 120 days and treat it as a rollback trigger rather than a rollout gate.",
+      "Instrument the app checkout with step-level events so the app surface can be measured at all.",
+      "Segment slot-step exits by slot availability to size the largest loss in the funnel before proposing anything for it.",
+      "Restate the 2025 checkout failure rate under the current definition so the FY26 target is tracked against a single series."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "cross_surface_rollout",
+        "why": "Extending the change to the app or to wallet payments has no measurement on either surface, no engineering estimate for the app, no step-level instrumentation to measure it with, and in the wallet case requires a specification change that is not the team's to make."
+      },
+      {
+        "option_kind": "buy",
+        "why": "The hosted-checkout option rests on a vendor deck with no baseline, sample, or method, and a new payment vendor needs an eight to twelve week security assessment."
+      },
+      {
+        "option_kind": "defer",
+        "why": "Deferring the web card rollout, or making it conditional on further study of the primary effect, is not defensible on this evidence. The open questions concern scope, downstream conversion, and the fraud observation window, none of which bears on whether the measured payment-step effect is real."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The brief must commit to rolling out inline authorisation recovery on the web card flow. Declining to recommend an action on this evidence is scored as a restraint failure, not as caution.",
+      "The support level stated for the payment-step effect must be strong. Calling it moderate, preliminary, or promising understates evidence that is as good as this corpus contains.",
+      "The claim must be scoped to payment authorisation step completion on the web card flow, and must not be restated as an effect on the checkout failure rate, on completed orders, on the app, or on wallet payments.",
+      "The brief must treat the seasonality objection as answered by the design rather than as an open risk.",
+      "The brief must state that the chargeback guardrail is read only to 30 days of a 120-day dispute window, and must not use that as a reason to withhold rollout.",
+      "The brief must not present the 2026-Q1 rise in checkout failure rate as a measured deterioration, and must not let that definitional break reduce its confidence in the experiment, whose metric was measured identically in both arms."
+    ]
+  }
+}
