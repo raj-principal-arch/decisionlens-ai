@@ -26,33 +26,108 @@ weakness reported here rather than buried.
 
 ---
 
+## The five questions, answered
+
+**1. What does it mean to be an AI-native PM?** A PM who designs the work for AI first and
+keeps only the part that needs a human. Most do the reverse — they work the way they always
+have, then look for a step to speed up, which produces the same decision in less time. The
+AI-native version gives each part to whatever does it best: AI reads more than a person can
+hold and recalls all of it, data records what happened rather than what people remember, and
+the human supplies context, judgment and accountability. That makes AI a partner you brief
+and hold to account, not a tool you invoke. Three things change. The limit on a decision
+stops being how much evidence you can read and becomes how well you can question it. The
+reasoning outlives the deck, so teams stop re-litigating decisions from memory. And you make
+fewer confidently wrong bets, and catch the wrong ones sooner. What blocks all of it is that
+checking AI's work currently costs more than doing the work yourself.
+
+**2. What ecosystem moves PMs from little AI use to responsible adoption?** Five decisions,
+and only the first is built here. Give PMs one good tool for one high-consequence job rather
+than a general assistant that does everything adequately. Centralise the plumbing — the
+company connects to each data source once, and PMs never hold credentials or configure APIs.
+Treat analysis skills as shared, versioned assets with content fingerprints, so an
+improvement reaches everyone instead of living in one person's notes. Teach evidence
+interrogation rather than prompt technique, because prompt skill belongs to a tool
+generation and evidence skill does not. And measure whether decisions improved, not how many
+people used the tool: usage rises when a tool is used badly, and cannot distinguish a PM who
+checked the output from one who pasted it into a deck.
+
+**3. What is the hardest and highest-value problem?** Verification cost. A PM reading an
+AI-written recommendation has to establish where each number came from, which conclusions
+rest on assumption, and what was left out — and answering that takes longer than the AI
+saved. The work moves from thinking to auditing, so PMs use AI for drafts and avoid it for
+decisions, which is the pattern actually observed. Alternatives were considered and
+rejected: a broad AI workflow coach has no falsifiable hypothesis and no boundary against a
+general assistant; prompt libraries treat the barrier as skill, and if the barrier is
+verification cost then better prompts simply produce more unverifiable output; faster
+document generation is what the brief explicitly excludes. The original framing — that PMs
+have weak evidence — was itself rejected, because weak evidence is a perennial PM-craft
+problem rather than an AI-adoption one.
+
+**4. What was built?** DecisionLens, a runnable agent — `make demo`, no API key, no network.
+It takes a folder of evidence and a problem-first question, and returns a recommendation in
+which every claim carries a quote you can find in the source, contradictions are surfaced
+with what would settle them rather than silently resolved, and missing evidence is named
+because absence is decision-relevant. Every brief must contain a non-AI option and a
+no-build option, enforced in code rather than requested in a prompt. A challenger puts fixed
+questions to the draft before a human sees it and can only lower confidence, never raise it.
+It is deliberately one orchestrator running seven inspectable stages rather than a
+multi-agent system, because a PM who cannot follow what the tool did cannot verify it, and
+verification is the entire thesis.
+
+**5. Does it work?** Measured across eleven synthetic cases against a strong single-call
+baseline given the same model, the same evidence and the same briefing. It never overstated
+its confidence — zero cases of eleven against one for the baseline, and that one failure
+came on the case built so a thick corpus contains almost no real evidence, which is exactly
+the trap the product exists to catch. It grounded half again as many claims at equal
+accuracy and surfaced 134 options against 79. Against that: it under-claims confidence on
+six of eleven cases, so it is systematically cautious rather than well-calibrated; it costs
+3.2 times more to run; and citation accuracy, expected to be the central advantage, was 100%
+against 99.8% and is therefore not a differentiator. The recall margin is four graded items
+out of fifty from a single run per case, so the honest claim is that DecisionLens did not
+lose rather than that it reliably wins. No research with real product managers was
+conducted; that study is designed, not run.
+
+---
+
 ## 1. What it means to be an AI-native PM
 
-**Not someone who uses AI to produce documents faster.** Someone who can *verify*
-consequential AI output cheaply enough to rely on it.
+An AI-native PM designs the work for AI first, then keeps what only a human can do.
 
-The distinction that carries the work is between two words:
+Most PMs do the reverse. They finish a task the way they always have, then look for a step
+AI can speed up. That produces a faster document and the same decision.
 
-| | |
-|---|---|
-| *Evidence-based* | A posture. Anyone can claim it. Unfalsifiable. |
-| **Evidence-grounded** | A mechanical property. Every claim anchored to a retrievable source span that can be checked — programmatically. |
+Start from the strengths instead. AI reads more than a person can hold and recalls all of
+it. Data records what happened, not what people remember. The PM supplies context, judgment
+and accountability. Assign each the part it is best at. **[Product judgment]**
 
-An AI-native PM works in the second mode. Concretely, they:
+This makes AI a partner rather than a tool. A tool is invoked. A partner is briefed,
+delegated to, argued with, and held to account. A PM who pastes a question into a chat
+window has used a tool. A PM who states the decision, the constraints, and what would make
+the answer wrong has briefed a partner.
 
-- Ask what the evidence **does not** say, and treat absence as decision-relevant rather than as a reason to proceed
-- Distinguish a measurement from a stakeholder's recollection of a measurement
-- Expect contradictions to be surfaced, not resolved on their behalf
-- Read a confidence level as a claim that must itself be supported
-- Own the decision. The tool recommends; the PM decides, and the two are recorded separately
+Three things change.
 
-**How this improves outcomes, beyond speed.** Faster document creation compounds nothing —
-a wrong decision written quickly is still wrong. Verifiable output changes three things:
-*decision quality*, because unsupported claims and missing evidence become visible before
-the decision rather than after it; *team effectiveness*, because a brief whose provenance
-anyone can check removes the review bottleneck of "how do you know that?"; and *business
-outcomes*, because the failure this addresses — confidently defunding an option on evidence
-that does not support the confidence — is expensive and invisible.
+**Product decisions.** The binding constraint moves from how much evidence a PM can read to
+how well they can interrogate it. An eighteen-month-old research deck now costs nothing to
+include. "What would make this wrong?" becomes routine rather than unusual discipline. The
+no-build option gets argued every time, because a system can be required to produce it and
+a person under deadline will not.
+
+**Team effectiveness.** Reasoning outlives the deck. A new joiner reconstructs a decision
+from its evidence instead of asking who was in the room. Disagreement moves from "I think
+X" to "the brief cites Y, and Y is wrong because Z." A reversal becomes legible: a decision
+that was right on the evidence then available is a different event from one that was always
+poorly reasoned.
+
+**Business outcomes.** Fewer confidently wrong investments, and the wrong ones found
+earlier. These are measurable. They are **not measured here** — execution, market timing
+and luck sit between a decision and a result, and the lag exceeds this exercise.
+**[Observation]**
+
+One condition decides whether any of it happens. Checking AI output must cost less than
+doing the work unaided. Today it does not, which is why PMs use AI for drafts and not for
+decisions. That is the problem this submission takes on, and question 3 explains why it was
+chosen over the alternatives.
 
 → [01 — Product Strategy](01-product-strategy.md)
 
