@@ -34,17 +34,35 @@ assertion that it could be. Where that is the case, this document says which fil
 
 ## The argument in brief
 
-1. Adoption stalls at the boundary of consequence because verifying consequential AI output is
-   expensive (01). An ecosystem that only distributes tools and teaches prompting does not touch
-   that cost.
-2. So the ecosystem's job is to make verification cheap and to make the artefacts of verification
-   **shared and durable** — skills, connectors, evidence, and decision records that outlive the
-   PM who created them.
-3. That forces centralisation in three specific places — model access, connectors, and analysis
-   skills — and forces decentralisation in one: the product knowledge that makes a query
-   meaningful.
-4. It forces a training programme aimed at **evidence interrogation, not prompt technique**.
-5. And it forces a measurement programme that refuses raw usage volume as its headline number.
+Adoption stalls at the boundary of consequence because verifying consequential AI output is
+expensive (01). An ecosystem that only distributes tools and teaches prompting does not touch that
+cost. So the ecosystem's job is to make verification cheap, and to make the artefacts of
+verification **shared and durable** — skills, connectors, evidence, and decision records that
+outlive the PM who created them.
+
+That forces a single organising decision: **where the platform ends and the team begins.**
+
+| Get it wrong this way | And you get |
+|---|---|
+| Centralise too much | A golden path nobody walks. Teams route around it within a quarter, and the shared artefacts stop being shared. |
+| Decentralise | Every team stands up its own connectors, negotiates its own data access, and produces analysis no reviewer can audit. |
+
+**Build a paved road, not a walled garden.** Three tiers, each with a rule for what belongs in it.
+
+| Tier | What sits here | Why there |
+|---|---|---|
+| **Platform** — non-negotiable | Delegated identity and least-privilege access (§5) · one connector per system of record, retrieval-only (§5) · model gateway: vendor neutrality, version pinning, rate limits, cost attribution (§3) · classification enforced at retrieval (§6) · enterprise configuration and audit (§7) | The blast radius is organisational, not team-level. An agent inherits exactly the entitlements the PM already holds — no shadow permissions, no service account with broad rights. A PM never holds a credential. |
+| **Registry** — shared defaults, forkable | Analysis skills as versioned, fingerprinted, independently evaluated artefacts (§4) · the evaluation harness they are scored on | Teams inherit the organisation's accumulated judgment rather than re-deriving it. A team the defaults underserve **forks a skill and upstreams it** if it beats the incumbent on the harness. |
+| **Team** — never delegated | Decision framing, evidence scope, weighting criteria, product terminology (§8, §9) · the decision itself | The PM is accountable for the call. The platform is not, and cannot be. |
+
+**The fork-and-upstream path is what makes this adoptable rather than mandated.** Without it, a
+shared skill library is a demand that every team accept a worse answer for the sake of consistency
+— and teams that can improvise will. With it, local improvement is a contribution route instead of
+a defection. **[Product judgment]**
+
+Two consequences run through the rest of this document. Training aims at **evidence interrogation,
+not prompt technique** (§10). And measurement refuses raw usage volume as its headline number
+(§14).
 
 ---
 
@@ -189,6 +207,27 @@ enforces**: named, versioned, fingerprinted, typed, tested, owned, and retired d
 | **Revise** | Owner | **A change is a new version, never an in-place edit.** New text ⇒ new fingerprint ⇒ recorded outputs re-recorded. |
 | **Deprecate** | Review board | Announced with a window. Existing briefs remain reproducible because the old version stays resolvable. |
 | **Retire** | Platform | Removed from the catalogue; kept resolvable for audit. A brief whose skill version cannot be resolved is no longer verifiable, which defeats the purpose of having produced it. |
+
+### Local variants, and the route back
+
+The lifecycle above describes a skill entering the shared library. It also has to answer the case
+that actually breaks shared libraries: a team whose domain the defaults handle badly.
+
+The wrong answers are both familiar. Refuse the variation, and the team either accepts a worse
+analysis or quietly reverts to improvising in a chat window, where none of §4's guarantees apply.
+Allow it unmanaged, and you are back to the pasted prompt — no version, no fingerprint, no owner,
+no test.
+
+**So a variant is a registry fork, not a copy.** It inherits a name and a parent version, is
+evaluated on the same harness as its parent, and is visible in the catalogue as a fork rather than
+as an unrelated skill. Two things follow. A fork that beats its parent on the shared cases is
+**upstreamed** and becomes the default for everyone. A fork that only wins on its own domain's
+cases stays a scoped variant, and the catalogue records why — which is itself a finding about
+where the defaults are weak.
+
+The distinction that matters is not *forked versus not forked*. It is *forked with a path home
+versus forked into a Slack message*. The first compounds; the second is how an organisation ends
+up running eleven analyses nobody can compare. **[Product judgment]**
 
 **Anti-pattern to name explicitly:** a skill catalogue that grows monotonically. If nothing is ever
 retired, the catalogue becomes a search problem and PMs revert to improvising. Retirement is a
