@@ -43,6 +43,7 @@ from decision_lens.recorder import (
     estimate_run,
     merge_into,
     record_case,
+    stages_worth_reusing,
 )
 from decision_lens.skills import SKILL_TIMEOUT_SECONDS
 
@@ -230,7 +231,14 @@ def cmd_record(args: argparse.Namespace, stream: TextIO, err: TextIO) -> int:
     already: list[str] = []
     if args.resume and Path(args.cache).is_file():
         resume_from = DemoCache.load(Path(args.cache))
-        already = sorted(k for k in resume_from.responses if k.startswith(f"{loaded.case_id}::"))
+        # Only what the recorder will actually reuse. Listing every cached
+        # entry would promise savings the run then does not deliver, because
+        # anything downstream of a gap is re-recorded.
+        prefix = f"{loaded.case_id}::"
+        cached = {
+            k[len(prefix) :].split("::")[0] for k in resume_from.responses if k.startswith(prefix)
+        }
+        already = sorted(f"{prefix}{stage}::v1" for stage in stages_worth_reusing(cached))
     estimate = estimate_run(_evidence_of(loaded), calls=max(0, total_calls - len(already)))
 
     stream.write(f"\ncase:  {loaded.case_id}\nmodel: {model}\nkey:   {settings.masked_key}\n")

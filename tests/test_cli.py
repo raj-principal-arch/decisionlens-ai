@@ -610,3 +610,35 @@ def test_the_real_api_key_reaches_the_provider_without_resuming(
 
     _run("record", "--case", str(directory), "--cache", str(tmp_path / "c.json"), "--yes")
     assert got["api_key"] == KEY
+
+
+def test_the_preview_counts_only_what_will_really_be_reused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A preview that over-promises is worse than none — it is consented to.
+
+    Listing every cached entry claimed savings the run would not deliver:
+    anything downstream of a gap is re-recorded, so it is not reused.
+    """
+    from decision_lens.llm import DemoCache
+
+    directory, cache = case_with_cache(tmp_path)
+    # Remove a stage in the middle of the chain. `challenger` stays in the file
+    # but depends on it, so it must not be counted as reusable.
+    loaded_cache = DemoCache.load(cache)
+    del loaded_cache.responses[f"{CASE_ID}::recommendation::v1"]
+    loaded_cache.save(cache)
+
+    monkeypatch.setattr(
+        Settings, "load", classmethod(lambda cls, **_: Settings(anthropic_api_key=KEY))
+    )
+    monkeypatch.setattr(cli, "_confirm", lambda _stream: False)
+
+    _, out = _run("record", "--case", str(directory), "--cache", str(cache), "--resume")
+
+    # The fixture caches the seven DecisionLens stages and no baseline, so
+    # removing `recommendation` leaves five reusable: the chain up to the gap.
+    assert "5 stage(s) already recorded will be reused" in out
+    assert f"~ {CASE_ID}::alternatives::v1" in out, "before the gap"
+    assert f"~ {CASE_ID}::challenger::v1" not in out, "downstream of the gap"
+    assert "3 model calls" in out, "recommendation, challenger, and the baseline"
