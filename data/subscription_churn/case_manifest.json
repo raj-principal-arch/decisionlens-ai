@@ -1,0 +1,101 @@
+{
+  "case_id": "subscription_churn",
+  "synthetic": true,
+  "notice": "All evidence in this directory is synthetic and fictional. It describes an invented meal-kit subscription business, invented fulfilment sites and invented people. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "question": "Which intervention should the team prioritise to reduce subscriber churn?",
+  "desired_outcome": "Reduce subscriber churn, and in particular retain more new subscribers past their first month, without raising cost per retained subscriber or creating unacceptable subscriber, operational, or governance risk.",
+  "product_area": "subscription",
+  "as_of": "2026-08-02",
+  "files": {
+    "retention_objectives.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-01-12",
+      "updated_at": "2026-02-10",
+      "owner": "product-leadership",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription",
+      "labels": ["synthetic", "objectives", "okr"]
+    },
+    "subscriber_metrics.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2026-04-01",
+      "updated_at": "2026-07-15",
+      "owner": "analytics",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription",
+      "labels": ["synthetic", "metrics", "retention"]
+    },
+    "cancellation_breakdown.csv": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-04-01",
+      "updated_at": "2026-07-14",
+      "owner": "analytics",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription",
+      "labels": ["synthetic", "cancellations", "breakdown"]
+    },
+    "exit_survey_analysis.md": {
+      "evidence_type": "qualitative_research",
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-18",
+      "owner": "research",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription",
+      "labels": ["synthetic", "voice-of-customer", "survey"]
+    },
+    "exit_survey_reasons.csv": {
+      "evidence_type": "qualitative_research",
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-18",
+      "owner": "research",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription",
+      "labels": ["synthetic", "voice-of-customer", "survey"]
+    },
+    "fulfilment_report.md": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-07-08",
+      "updated_at": "2026-07-22",
+      "owner": "operations",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription",
+      "labels": ["synthetic", "fulfilment", "menu"]
+    },
+    "prior_experiments.md": {
+      "evidence_type": "experiment_result",
+      "created_at": "2025-09-02",
+      "updated_at": "2026-05-30",
+      "owner": "research",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription",
+      "labels": ["synthetic", "experiments"]
+    },
+    "stakeholder_notes.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-28",
+      "owner": "product",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription",
+      "labels": ["synthetic", "stakeholder", "opinion"]
+    },
+    "governance_requirements.md": {
+      "evidence_type": "governance_policy",
+      "created_at": "2025-10-20",
+      "updated_at": "2026-04-08",
+      "owner": "legal-privacy",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription,legal",
+      "labels": ["synthetic", "governance", "privacy"]
+    },
+    "prior_decisions.md": {
+      "evidence_type": "prior_decision",
+      "created_at": "2025-09-18",
+      "updated_at": "2026-03-02",
+      "owner": "product-leadership",
+      "product_area": "subscription",
+      "permission_scope": "pm-subscription",
+      "labels": ["synthetic", "decisions"]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+period,queue,exported_rows,reopen_rows_included,note
+2025-Q2,all,35900,0,reopen cloning did not exist before 2025-10-14 so no clone records are present - synthetic
+2025-Q3,all,36120,0,reopen cloning did not exist before 2025-10-14 so no clone records are present - synthetic
+2025-Q4,all,41420,4020,reopen cloning introduced by the Relay 5.2 release on 2025-10-14 - synthetic
+2026-Q1,all,41070,4760,synthetic
+2026-Q2,all,41880,5140,exported_rows counts records and not distinct customer issues - see data_tooling_notes.md - synthetic
+2026-Q2,orders_and_delivery,13610,1520,synthetic
+2026-Q2,returns_and_refunds,10455,1410,synthetic
+2026-Q2,technical_faults,8940,1505,synthetic
+2026-Q2,billing_and_payments,5405,405,synthetic
+2026-Q2,account_and_access,3470,300,synthetic

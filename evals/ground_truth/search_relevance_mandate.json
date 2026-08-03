@@ -1,0 +1,664 @@
+{
+  "case_id": "search_relevance_mandate",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional home-improvement retailer, fictional people and fictional numbers. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to improve product findability in site search?",
+  "desired_outcome": "Raise the share of search sessions that reach a relevant product and reduce searches that fail, without committing the half-year to an unmeasured hypothesis or breaching platform, spend and governance limits.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M6 and the two must_detect-false hazards are real findings, but detecting them is credit rather than a requirement.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "temporal_conflict",
+      "topic": "the current search-to-cart conversion rate",
+      "side_a": {
+        "source": "svp_search_memo.md",
+        "span": "Search-to-cart conversion sits at 12.4%."
+      },
+      "side_b": {
+        "source": "search_metrics.csv",
+        "span": "metric: search_to_cart_rate\nvalue: 10.7"
+      },
+      "why_it_matters": "The memo plans against a figure four quarters out of date, and the roadmap draft and the slide deck copy it forward rather than checking it. Every document in the chain understates the size of the gap to the 13.5% target.",
+      "how_to_resolve": "12.4% is the 2025-Q2 value. The series is definition-stable across all five quarters and reads 10.7% for 2026-Q2. The figure is not wrong, it is stale, and it has been propagated by copying rather than by measurement.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "claim_conflict",
+      "topic": "whether ranking has been established as the primary driver of poor findability",
+      "side_a": {
+        "source": "roadmap_draft_h2.md",
+        "span": "The primary driver of poor findability is result ranking. Source: SVP memo, 9 April 2026."
+      },
+      "side_b": {
+        "source": "standup_notes.md",
+        "span": "We have never measured relevance."
+      },
+      "why_it_matters": "The roadmap presents as a finding something the engineer closest to the system says has never been measured. If it is accepted as a finding, the whole half-year is sequenced against an untested hypothesis.",
+      "how_to_resolve": "Nothing in the corpus scores relevance. Building a human-judged query set is the only thing that would settle it, and it was raised in the same standup and assigned to nobody.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "measurement_conflict",
+      "topic": "whether zero-result searches have improved",
+      "side_a": {
+        "source": "search_review_slides.md",
+        "span": "Zero-result rate has halved since Q4, from 8.6% to 3.0%."
+      },
+      "side_b": {
+        "source": "search_metrics.csv",
+        "span": "metric: zero_result_rate_submitted_only\nvalue: 9.2"
+      },
+      "why_it_matters": "The deck uses an apparent halving to retire coverage as a problem and to argue that what remains must be relevance. On the comparable definition the rate has worsened, from 8.6% to 9.2%.",
+      "how_to_resolve": "The denominator changed on 2026-01-19 when category browse queries began to be logged as search events. Compare the restated submitted-only series with the 2025 headline figures, which were computed on the same basis.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "sourcing_conflict",
+      "topic": "whether the support for the ranking direction comes from independent sources",
+      "side_a": {
+        "source": "search_review_slides.md",
+        "span": "Three independent workstreams have converged on ranking as the primary driver of poor findability."
+      },
+      "side_b": {
+        "source": "standup_notes.md",
+        "span": "The H2 roadmap has ranking as the primary driver of poor findability, so that is what we are scoping."
+      },
+      "why_it_matters": "The third workstream is quoting the second. The second names the first as its evidence base. The first records that no relevance analysis was consulted. Counted as three, the assertion looks corroborated; traced, it is one opinion cited four times.",
+      "how_to_resolve": "Follow the citations. The deck's own appendix states that the roadmap cites the memo and the standup cites the roadmap. Independence is disproved inside the deck that asserts it.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C5",
+      "kind": "claim_conflict",
+      "topic": "whether anyone objected to the ranking direction",
+      "side_a": {
+        "source": "search_review_slides.md",
+        "span": "No dissent was recorded."
+      },
+      "side_b": {
+        "source": "standup_notes.md",
+        "span": "I want to record an objection."
+      },
+      "why_it_matters": "The one documented objection comes from the engineer who owns the search platform and goes to whether the premise has ever been measured. Omitting it is what allows the deck to describe the position as consensus.",
+      "how_to_resolve": "The objection is in the 11 June standup note, which is the same document the deck cites as its third workstream. The deck cites the note and drops its content.",
+      "must_detect": true
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "Is the current ranking actually poor, and by what measure?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "The direction everyone is planning against is a claim about relevance, and no relevance measurement exists anywhere in the corpus. The hypothesis cannot be confirmed or dismissed on this evidence.",
+      "how_to_obtain": "Build a human-judged relevance set over a stratified sample of live queries and score the current ranker against it.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "No human-judged relevance set has ever been built."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "What share of failed searches return results the customer then ignores?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Every findability measure in the corpus observes searches that returned nothing. The failure mode the memo describes is invisible to the entire measurement apparatus, so its size is unknown rather than small.",
+      "how_to_obtain": "Instrument search sessions that return results but produce no product-detail-page view, and report that rate alongside the zero-result rate.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "Nothing in our reporting measures a search that returns results the customer then ignores."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "What would the ranking re-platform cost, and how long would it take?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "The option being asked for approval in H2 has no estimate, no vector index to build on and no GPU serving tier, and H2 delivery runs into the 2026-10-15 code freeze. An unestimated option cannot be compared with a costed one.",
+      "how_to_obtain": "Complete the two-week discovery spike already assigned and return an effort and infrastructure estimate before the planning review.",
+      "anchor": {
+        "source": "platform_constraints.md",
+        "span": "Engineering has not estimated the work."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "What causes the zero-result searches outside the eighteen categorised head terms?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "The hand categorisation covers 7.3% of zero-result volume. Whether the remaining 92.7% is dominated by synonym gaps, unstocked lines or misspellings determines which fix is worth funding, and nothing is known about it.",
+      "how_to_obtain": "Categorise a random sample of the zero-result tail rather than only the highest-volume head.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "The remaining tail has never been categorised"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "Did the synonym pilot cause the conversion movement, or did the holiday period?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The strongest evidence for the best-evidenced option is a 0.5-point conversion movement with no holdout, on one storefront, over the weeks when conversion rises anyway.",
+      "how_to_obtain": "Re-run the synonym deployment outside the peak with a holdout group, or reconstruct a comparison against the storefront that did not receive it.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "There was no holdout group."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M6",
+      "question": "How much of the ranking upside survives 22% personalisation consent and the merchandising override requirement?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "A learned ranker that may not vary by identified customer for 78% of logged-in customers, and that must preserve manual pin and demote, delivers less than the unconstrained version the deck is asking to approve.",
+      "how_to_obtain": "Ask legal and merchandising to bound the permitted design before the effort estimate is produced.",
+      "anchor": {
+        "source": "governance_requirements.md",
+        "span": "Consent coverage is currently 22% of logged-in customers."
+      },
+      "was_searched": true,
+      "must_detect": false
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "Search-to-cart conversion was 10.7% in 2026-Q2 and has fallen in each of the last four quarters from 12.4% in 2025-Q2, on a series computed the same way in every period.",
+      "source": "search_metrics.csv",
+      "span": "metric: search_to_cart_rate\nvalue: 10.7"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "On the pre-2026-01-19 definition the zero-result rate was 9.2% in 2026-Q2, above the 8.6% recorded in 2025-Q4.",
+      "source": "search_metrics.csv",
+      "span": "metric: zero_result_rate_submitted_only\nvalue: 9.2"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "Since 19 January 2026 category browse queries are routed through the search service and logged as search events, so any rate expressed per search event is not comparable across that date.",
+      "source": "platform_constraints.md",
+      "span": "Any rate expressed per search event is therefore not comparable across that date."
+    },
+    {
+      "id": "GT-F4",
+      "statement": "Trade accounts are 11.0% of search sessions and 34.0% of search-originated revenue.",
+      "source": "search_metrics.csv",
+      "span": "metric: search_revenue_share\nvalue: 34.0"
+    },
+    {
+      "id": "GT-F5",
+      "statement": "On the restated definition the trade-account zero-result rate is 16.4% in 2026-Q2, roughly double the 8.3% consumer rate.",
+      "source": "search_metrics.csv",
+      "span": "metric: zero_result_rate_submitted_only\nvalue: 16.4"
+    },
+    {
+      "id": "GT-F6",
+      "statement": "Only 41% of SKUs have structured size or dimension attributes populated, so attribute-filtered search cannot be built on the current data.",
+      "source": "platform_constraints.md",
+      "span": "Only 41% of SKUs have structured size or dimension attributes populated."
+    },
+    {
+      "id": "GT-F7",
+      "statement": "Synonym dictionary updates are data rather than code and are exempt from the 2026-10-15 to 2027-01-05 storefront code freeze.",
+      "source": "platform_constraints.md",
+      "span": "They deploy weekly through the catalogue pipeline and are exempt from the freeze."
+    },
+    {
+      "id": "GT-F8",
+      "statement": "The synonym dictionary is a flat file maintained by two people with a backlog of 1,900 unmapped terms that is growing.",
+      "source": "standup_notes.md",
+      "span": "The backlog is 1,900 unmapped terms and it grows faster than we clear it."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That result ranking is the primary driver of poor findability.",
+      "why_it_is_an_assumption": "It is asserted in a memo whose author records that no relevance analysis was consulted, and every later statement of it cites the memo or a document that cites the memo. Four documents restate it and none of them adds evidence.",
+      "anchor": {
+        "source": "svp_search_memo.md",
+        "span": "I have not seen a relevance analysis and I do not think we need one to know this."
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That the synonym pilot caused the half-point search-to-cart movement on the secondary storefront.",
+      "why_it_is_an_assumption": "No holdout, one storefront, and the pilot window is the holiday peak, when the same movement happens without any intervention.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "Search-to-cart conversion on that storefront moved from 11.8% in the four weeks before the pilot to 12.3% during it."
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That the causes found in the eighteen highest-volume zero-result terms hold for the rest of zero-result volume.",
+      "why_it_is_an_assumption": "The categorisation covers the head of a long-tailed distribution, which is 7.3% of the volume. The head is where the common trade words live; the tail is not observed at all.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "Those eighteen terms account for 7.3% of zero-result search volume in the quarter."
+      }
+    },
+    {
+      "id": "GT-A4",
+      "statement": "That the offline NDCG improvement would appear online as a conversion gain.",
+      "why_it_is_an_assumption": "The prototype was trained and scored on click logs produced by the current ranker, with no correction for position bias, so the metric rewards reproducing the existing ordering. It has never been served to a customer.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "Reported NDCG@10 improved by 0.06 over the current ranker."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The SVP of Digital Commerce believes result ranking is the root cause of poor findability, based on a month of personally using the site and three conversations with store managers.",
+      "source": "svp_search_memo.md",
+      "span": "The root cause is ranking. Our engine orders results by keyword match and nothing else, and no amount of catalogue tidying will fix that.",
+      "must_not_be_treated_as": "a finding about the cause of poor findability; the memo states in its own text that no relevance analysis was consulted"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "The H2 roadmap draft restates the SVP's belief and names the memo as its evidence base.",
+      "source": "roadmap_draft_h2.md",
+      "span": "The primary driver of poor findability is result ranking. Source: SVP memo, 9 April 2026.",
+      "must_not_be_treated_as": "independent corroboration; the roadmap adds no measurement and cites only the memo"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "A product director treats the roadmap draft as having settled the question in a standup note.",
+      "source": "standup_notes.md",
+      "span": "Direction is settled. The H2 roadmap has ranking as the primary driver of poor findability, so that is what we are scoping.",
+      "must_not_be_treated_as": "a second confirmation; it cites the roadmap draft, which cites the memo"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "A programme slide summary asserts that three independent workstreams converged on ranking, and describes the position as broad agreement.",
+      "source": "search_review_slides.md",
+      "span": "There is broad agreement across leadership, product and engineering that ranking is the priority for H2.",
+      "must_not_be_treated_as": "agreement among independent sources; the deck's own appendix records that the roadmap cites the memo and the standup cites the roadmap"
+    },
+    {
+      "id": "GT-O5",
+      "statement": "A vendor reports a 22% lift in search conversion for retail clients after deploying its ranking service.",
+      "source": "search_review_slides.md",
+      "span": "Thurlow Discovery Labs reports a 22% lift in search conversion for retail clients after deploying its ranking service.",
+      "must_not_be_treated_as": "an expected outcome here; no sample, baseline, comparison method or client mix is stated and no independent evaluation is offered"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "circular sourcing",
+      "source": "search_review_slides.md",
+      "span": "The roadmap draft cites the SVP memo as its evidence base. The standup note cites the roadmap draft.",
+      "description": "The 9 April memo asserts that ranking is the root cause and offers no analysis. The 21 May roadmap draft states the same thing and names the memo as its evidence base. The 11 June standup note states it again and names the roadmap. The 14 July deck lists all three as independent workstreams and calls the result broad agreement. Every apparent citation resolves, one hop later, to the same unevidenced assertion.",
+      "why_it_matters": "Counting citations rather than tracing them turns one opinion into four sources and converts a preference into a finding. This is what tempts GT-U1 and GT-U2, and it is the reason the corpus looks like it settles a question it never measured.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "denominator redefined mid-series",
+      "source": "search_metrics.csv",
+      "span": "note: synthetic - headline series; denominator changed on 2026-01-19 when category browse queries began to be logged as search events",
+      "description": "From 2026-01-19 category browse queries are logged as search events. Browse queries almost always return results, so the zero-result denominator roughly tripled and the headline rate fell from 8.6% to 3.1% without any change in customer experience. The restated submitted-only series shows the rate rising to 9.2%.",
+      "why_it_matters": "The apparent halving is used in the deck to retire coverage as a problem and to argue that the remaining failure must be relevance. Reading the headline series across the change reverses the direction of the trend.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "the measurement programme observes only one failure mode",
+      "source": "search_feedback.csv",
+      "span": "trigger_page: zero-result search page",
+      "description": "Every findability measure in the corpus watches searches that returned nothing: the zero-result rate, the query export and the feedback survey, whose link appears only on a page with no results. Nothing observes a search that returns results the customer ignores, which is precisely the failure the memo asserts is dominant.",
+      "why_it_matters": "The corpus can neither support the ranking hypothesis nor refute it, and it is easy to mistake the absence of ranking evidence for evidence that ranking is fine. This is what tempts GT-U4 and GT-U9.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "No vector index exists; a learned ranking re-platform requires embedding 1.2 million SKUs and a GPU serving tier the company does not operate, and the work is unestimated.",
+      "source": "platform_constraints.md",
+      "span": "Building a vector index requires embedding all 1.2 million SKUs and operating a GPU serving tier, which we do not run today.",
+      "blocks": [
+        "learned ranking re-platform with a committed H2 date",
+        "any option costed against the current infrastructure"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "The storefront code freeze runs from 2026-10-15 to 2027-01-05, so no storefront code ships in most of H2.",
+      "source": "platform_constraints.md",
+      "span": "The storefront code freeze runs from 2026-10-15 to 2027-01-05.",
+      "blocks": [
+        "ranking re-platform delivery in H2 2026",
+        "spell correction and fuzzy matching after 2026-10-15"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "Attribute-filtered search cannot be built on the current catalogue data.",
+      "source": "platform_constraints.md",
+      "span": "Attribute-filtered search cannot be built on the current data.",
+      "blocks": [
+        "size and dimension filtering",
+        "any fix aimed at the attribute_query cause category"
+      ]
+    },
+    {
+      "id": "GT-T4",
+      "kind": "technical_constraint",
+      "statement": "Search must return within 400 ms at p95, and the cost of a re-ranking stage against that budget has never been measured.",
+      "source": "platform_constraints.md",
+      "span": "Search must return within 400 ms at p95."
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "Platform spend is capped at the FY26 approved figure and there is no net new headcount in H2.",
+      "source": "roadmap_draft_h2.md",
+      "span": "Platform spend is capped at the FY26 approved figure and there is no net new headcount in H2.",
+      "blocks": [
+        "buying a hosted relevance service",
+        "clearing the synonym backlog faster by adding people"
+      ]
+    },
+    {
+      "id": "GT-B2",
+      "kind": "business_constraint",
+      "statement": "Synonym maintenance capacity is two people against a backlog that grows faster than they clear it.",
+      "source": "standup_notes.md",
+      "span": "The synonym file is a flat file maintained by two people.",
+      "blocks": [
+        "synonym expansion at a pace above current staffing"
+      ]
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "A learned ranking model must carry a documented description of its ranking factors, reviewable by merchandising, with no exemption for model complexity.",
+      "source": "governance_requirements.md",
+      "span": "This applies to learned ranking models and there is no exemption for model complexity.",
+      "affects": [
+        "ai_assisted",
+        "learned ranking re-platform"
+      ],
+      "why_it_matters": "Constrains the design of the option the deck asks to approve, and nothing in the roadmap or the deck accounts for it."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "Merchandising must retain the ability to pin and demote individual products, so any ranking system has to preserve manual override.",
+      "source": "governance_requirements.md",
+      "span": "Any ranking system must preserve manual override.",
+      "affects": [
+        "learned ranking re-platform",
+        "buy"
+      ]
+    },
+    {
+      "id": "GT-G3",
+      "statement": "Ranking that varies by identified customer requires recorded consent, and coverage is 22% of logged-in customers.",
+      "source": "governance_requirements.md",
+      "span": "Ranking that varies by identified customer is personalisation and requires recorded consent.",
+      "affects": [
+        "personalised ranking",
+        "learned ranking re-platform"
+      ],
+      "why_it_matters": "Bounds the reachable population for the personalisation part of any ranking upside, which nothing in the corpus quantifies."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "A new vendor processing search query text requires a data protection assessment taking eight to ten weeks.",
+      "source": "governance_requirements.md",
+      "span": "Assessments currently take eight to ten weeks.",
+      "affects": [
+        "buy",
+        "partner"
+      ],
+      "why_it_matters": "Makes an H2 launch on a new vendor implausible once the assessment window and the 2026-10-15 freeze are placed end to end."
+    },
+    {
+      "id": "GT-G5",
+      "statement": "Search query logs may not leave their region of origin without an approved transfer assessment.",
+      "source": "governance_requirements.md",
+      "span": "Search query logs may not leave their region of origin.",
+      "affects": [
+        "buy",
+        "partner",
+        "any external processing of query text"
+      ]
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "There is broad agreement across the organisation that result ranking is the priority.",
+      "why_forbidden": "One executive memo restated by three later documents that cite it or each other. The only person who spoke to whether relevance had been measured recorded an objection, which the deck asserting agreement omits. Repetition is not agreement.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "search_review_slides.md",
+        "span": "There is broad agreement across leadership, product and engineering that ranking is the priority for H2."
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "Multiple sources support prioritising the ranking re-platform.",
+      "why_forbidden": "The roadmap cites the memo, the standup cites the roadmap, and the deck cites all three. Every path terminates at the 9 April memo, whose author records that no relevance analysis was consulted. It is one source cited four times.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "search_review_slides.md",
+        "span": "Three independent workstreams have converged on ranking as the primary driver of poor findability."
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "Result ranking is the primary driver of poor findability.",
+      "why_forbidden": "No relevance measurement of any kind exists in the corpus. The claim is untested, and the documents asserting it add restatement rather than evidence.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "roadmap_draft_h2.md",
+        "span": "The primary driver of poor findability is result ranking. Source: SVP memo, 9 April 2026."
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "Ranking is not the problem, or has been ruled out as a cause.",
+      "why_forbidden": "The corpus cannot support the negative either. Nothing measures the quality of results that are returned, so the absence of ranking evidence is a blind spot in the instrumentation, not a finding about the ranker.",
+      "tempted_by": "GT-H3",
+      "anchor": {
+        "source": "standup_notes.md",
+        "span": "I cannot tell you whether our ranking is good or bad, and neither can anyone else in this room."
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "Zero-result searches have halved and coverage is no longer a constraint.",
+      "why_forbidden": "The denominator changed on 2026-01-19 when category browse queries began to be logged as search events. On the comparable definition the rate rose from 8.6% to 9.2%.",
+      "tempted_by": "GT-H2",
+      "anchor": {
+        "source": "search_review_slides.md",
+        "span": "Zero-result rate has halved since Q4, from 8.6% to 3.0%."
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "Synonym gaps are the largest cause of search failure.",
+      "why_forbidden": "Synonym gaps lead among the eighteen hand-categorised head terms, which are 7.3% of zero-result volume, which is itself only the failure mode the company measures. Two levels of generalisation stand between the finding and the claim.",
+      "anchor": {
+        "source": "zero_result_queries.csv",
+        "span": "query_term: plasterboard\nsearch_count: 38412\ncause_category: synonym_gap"
+      }
+    },
+    {
+      "id": "GT-U7",
+      "claim": "The synonym pilot raised search-to-cart conversion by half a point.",
+      "why_forbidden": "No holdout, one storefront, and the pilot window is the holiday peak when conversion rises on both storefronts every year. The movement cannot be attributed to the synonyms.",
+      "anchor": {
+        "source": "prior_experiments.md",
+        "span": "The pilot ran across the holiday trading peak, when search-to-cart conversion rises on both storefronts every year."
+      }
+    },
+    {
+      "id": "GT-U8",
+      "claim": "A ranking re-platform would lift search conversion by 22%.",
+      "why_forbidden": "A vendor figure with no stated sample, baseline, comparison method or client mix, and no independent evaluation. Nothing establishes that it describes a retailer resembling this one.",
+      "anchor": {
+        "source": "search_review_slides.md",
+        "span": "Thurlow Discovery Labs reports a 22% lift in search conversion for retail clients after deploying its ranking service."
+      }
+    },
+    {
+      "id": "GT-U9",
+      "claim": "Customers report that the ordering of search results is wrong.",
+      "why_forbidden": "Every feedback record was collected through a link that appears only on a search page that returned no results. No customer in the corpus was asked about a results page that had results on it.",
+      "tempted_by": "GT-H3",
+      "anchor": {
+        "source": "search_feedback.csv",
+        "span": "Nothing came up and the suggestions under the box were not related to what I typed either."
+      }
+    },
+    {
+      "id": "GT-U10",
+      "claim": "Search-to-cart conversion is 12.4%.",
+      "why_forbidden": "Four quarters stale. The definition-stable series reads 10.7% for 2026-Q2, and the figure has been carried forward by copying between documents rather than by measurement.",
+      "anchor": {
+        "source": "svp_search_memo.md",
+        "span": "Search-to-cart conversion sits at 12.4%."
+      }
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "roadmap_draft_h2.md",
+      "span": "Store aisle wayfinding signage refresh",
+      "why_irrelevant": "In-store physical wayfinding, owned by store operations with no digital dependency. It sits in the same roadmap table and matches on the word findability, which is exactly why it is retrievable and exactly why it should not enter the analysis of site search."
+    },
+    {
+      "id": "GT-I2",
+      "source": "search_feedback.csv",
+      "span": "My delivery was two days late and nobody called me about it.",
+      "why_irrelevant": "A delivery complaint captured by the search survey only because the free-text box was open. It says nothing about findability and should not be counted as search feedback."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Expand the synonym dictionary against the highest-volume zero-result terms",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Best-evidenced option and the only search change exempt from the Q4 code freeze. The supporting pilot had no holdout and ran across the holiday peak, and two people maintain the file."
+      },
+      {
+        "name": "Build a human-judged relevance set and measure the current ranker",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "The only option that would test the ranking hypothesis in either direction. Raised in the 11 June standup and assigned to nobody."
+      },
+      {
+        "name": "Republish the zero-result series on a single definition before setting any target",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Cheap and already owned by analytics. The FY26 sub-5% target is currently stated in a definition that changed mid-year."
+      },
+      {
+        "name": "Map trade-counter terminology onto web catalogue names",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Trade zero-result rate is 16.4% against 8.3% for consumers, on 11% of sessions and 34% of search-originated revenue."
+      },
+      {
+        "name": "Configure fuzzy matching and spell correction",
+        "option_kind": "rules_based_automation",
+        "horizon": "core",
+        "support": "low",
+        "note": "Misspellings are 7% of the categorised head and no fuzzy matching exists today. Storefront code, so it must land before 2026-10-15."
+      },
+      {
+        "name": "Backfill structured size and dimension attributes for high-velocity SKUs",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "low",
+        "note": "41% attribute coverage today; attribute queries are 13% of the categorised head."
+      },
+      {
+        "name": "Return mapped substitutes instead of nothing for discontinued and trade-counter-only lines",
+        "option_kind": "ux_change",
+        "horizon": "core",
+        "support": "low"
+      },
+      {
+        "name": "Learned ranking re-platform over a vector index",
+        "option_kind": "ai_assisted",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Supported by an executive memo and its three restatements, plus an offline NDCG figure computed on position-biased click logs. Unestimated, no vector index or GPU tier, and H2 delivery collides with the freeze."
+      },
+      {
+        "name": "Buy a hosted relevance service",
+        "option_kind": "buy",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Eight-to-ten-week data protection assessment, capped platform spend, and query logs may not leave their region."
+      },
+      {
+        "name": "No change this quarter",
+        "option_kind": "no_change",
+        "horizon": "core",
+        "support": "low"
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "moderate",
+    "reason": "No option has strong support. The best-evidenced intervention rests on one uncontrolled pilot on a single storefront across the holiday peak, plus a hand categorisation of the 7.3% head of zero-result volume. The most advocated intervention rests on nothing measured at all: four documents assert it and all four trace to one memo whose author records that no relevance analysis was consulted. A brief claiming strong support for any option here is overconfident, and a brief that resolves the ranking question in either direction has exceeded the evidence.",
+    "defensible_next_steps": [
+      "Build a human-judged relevance set so the ranking hypothesis can be tested rather than asserted or dismissed.",
+      "Expand the synonym dictionary against the highest-volume zero-result terms, which is the only search change exempt from the 2026-10-15 code freeze.",
+      "Republish the zero-result series on one definition before any target is set or any improvement is claimed.",
+      "Scope trade-terminology mapping against the trade segment, where the restated zero-result rate is 16.4% on 34% of search-originated revenue."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "ai_assisted",
+        "why": "A learned ranking re-platform is supported only by an executive memo restated three times and an offline evaluation on position-biased click logs. The work is unestimated, no vector index or GPU serving tier exists, H2 delivery collides with the 2026-10-15 freeze, and the ranking-factor transparency and manual-override requirements are unaddressed."
+      },
+      {
+        "option_kind": "buy",
+        "why": "A new vendor processing search query text needs an eight-to-ten-week data protection assessment, sits under a capped platform spend, and query logs may not leave their region of origin."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The brief must state that the memo, the roadmap draft, the standup note and the slide deck are one source cited four times rather than four independent sources.",
+      "The brief must treat the ranking hypothesis as untested rather than as either established or refuted.",
+      "The brief must flag that the zero-result series changed definition on 19 January 2026 and that the comparable figure has worsened.",
+      "The brief must not present executive preference as evidence, however many later documents repeat it."
+    ]
+  }
+}

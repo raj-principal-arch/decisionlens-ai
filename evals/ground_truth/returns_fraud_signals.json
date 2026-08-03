@@ -1,0 +1,657 @@
+{
+  "case_id": "returns_fraud_signals",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional specialty outdoor retailer. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to reduce losses from returns abuse?",
+  "desired_outcome": "Reduce financial losses caused by abuse of the returns policy, without degrading the returns experience for legitimate customers and without creating unacceptable customer, associate, privacy, or legal risk.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M6 is must_detect false: it is a real gap, but finding it is credit rather than a requirement. Hazards GT-H2 and GT-H3 are likewise recorded rather than required.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "precision_conflict",
+      "topic": "the annual cost of returns abuse",
+      "side_a": {
+        "source": "business_objectives.md",
+        "span": "Returns abuse costs the business $4.2M a year."
+      },
+      "side_b": {
+        "source": "finance_loss_estimate.md",
+        "span": "the plausible range is $1.1M to $6.3M"
+      },
+      "why_it_matters": "The objectives document states as fact a midpoint whose own source gives a range spanning a factor of nearly six. The FY27 goal to recover $2.5M is set against the midpoint; at the low end of the range the entire loss is smaller than the recovery target.",
+      "how_to_resolve": "The two are the same number with the uncertainty removed. The finance memo is the origin; the objectives document dropped the range and the method. Quote the range, or commission an internal measurement that narrows it.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "interpretation_conflict",
+      "topic": "what the rising return rate is evidence of",
+      "side_a": {
+        "source": "business_objectives.md",
+        "span": "The rise in return rate is the clearest signal we have that returns abuse is increasing"
+      },
+      "side_b": {
+        "source": "returns_experience_research.md",
+        "span": "forty apparel SKUs were measured against the published size chart. Fourteen differed by more than one size increment, and all fourteen are in the Tarnside line introduced in 2025-Q3."
+      },
+      "why_it_matters": "A documented, non-abusive cause of returns enters the assortment in 2025-Q3, the quarter of the largest single-quarter rise in the return rate. The return-rate series therefore cannot be read as a measure of abuse without first removing causes of this kind, and the corpus contains at least two of them.",
+      "how_to_resolve": "Neither statement can be settled from the corpus. Decomposing the rise by category mix and by the affected supplier line, and measuring the abuse rate directly, would separate them. Until then the rise is evidence that returns increased, not that abuse increased.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "claim_conflict",
+      "topic": "whether requiring receipts reduced returns",
+      "side_a": {
+        "source": "store_manager_notes.md",
+        "span": "When we required receipts in the four pilot stores last autumn the returns stopped almost overnight."
+      },
+      "side_b": {
+        "source": "prior_decisions.md",
+        "span": "No returns data was collected during the trial window, and no comparison stores were selected."
+      },
+      "why_it_matters": "A district manager is recalling a result the trial did not produce. The same four stores were in a remodel programme that reduced footfall over the same period, so even a real drop in returns would be unattributable. Treating the recollection as evidence would justify reintroducing a policy that was rolled back after customer escalations.",
+      "how_to_resolve": "Ask which figures were seen. None were recorded. The trial cannot support a claim in either direction and would have to be rerun with a comparison group.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "feasibility_conflict",
+      "topic": "whether the data the vendor platform requires exists",
+      "side_a": {
+        "source": "vendor_evaluation_notes.md",
+        "span": "Orlin requires a nightly feed of 24 months of unified customer purchase and return history, keyed to a single customer identifier across all channels."
+      },
+      "side_b": {
+        "source": "prior_decisions.md",
+        "span": "Until the returns data mart is delivered, customer return history cannot be joined across store and online channels, and no per-customer view of returns exists in any system."
+      },
+      "why_it_matters": "The vendor option's stated precondition does not exist and is not funded until FY28. Online item-level detail only begins at 2026-Q1, six quarters short of the 24 months required, and nothing earlier can be reconstructed. Any evaluation of the platform that ignores this is costing an option that cannot be deployed.",
+      "how_to_resolve": "Ask the vendor what the product does with an unlinked, six-month, single-channel history, in numbers. Until that is answered, the platform cannot be compared with anything.",
+      "must_detect": true
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "What share of returns is actually abusive?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "This is the quantity the question is about, and no document in the corpus measures it. Nine files discuss returns abuse; none establishes that any given return was abusive. Every option's value depends on a number nobody has.",
+      "how_to_obtain": "A physical inspection audit of a random sample of returned units, with a written definition of what counts as abuse applied by trained inspectors. Finance costed one at $60,000 for a single quarter across eight stores and the returns hub.",
+      "anchor": {
+        "source": "returns_metrics.csv",
+        "span": "metric: confirmed_abuse_cases"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "How much of the six-quarter rise in return rate is explained by the shift in category mix?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Apparel returns at 21.3% and hardgoods at 6.2%, and apparel's share of units sold rose from 31.0% to 46.0% over the same six quarters. A composition shift of that size can move the blended rate substantially with no change in customer behaviour, but per-category rates exist for the current quarter only, so the decomposition cannot be done.",
+      "how_to_obtain": "Recover or recompute category-level return rates for 2025-Q1 onwards from the transaction record, then hold mix constant and re-derive the trend.",
+      "anchor": {
+        "source": "returns_metrics.csv",
+        "span": "note: category-level return rates before 2026-Q2 were not retained - synthetic"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "How concentrated are returns across customers?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "The whole shape of the answer depends on it. If a small number of customers drive a large share of returns, a targeted intervention is worth building; if returns are diffuse, only a policy or product change can move anything. No per-customer distribution exists in any system.",
+      "how_to_obtain": "A one-off join of store and online return records on customer identifier, or the returns data mart deferred to FY28.",
+      "anchor": {
+        "source": "prior_decisions.md",
+        "span": "no per-customer view of returns exists in any system"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M4",
+      "question": "What would returns friction cost in lost legitimate sales?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "Every intervention on the table adds friction to a returns process that most customers appear to be using as intended. The corpus contains no estimate of the revenue or lifetime-value cost of that friction, so the downside of every option is unpriced while the upside is quoted to one decimal place.",
+      "how_to_obtain": "A holdout test of the specific friction proposed, measuring subsequent purchase behaviour, not only return volumes.",
+      "anchor": {
+        "source": "prior_decisions.md",
+        "span": "The proposal was rejected on that basis without a cost-benefit review"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "What does the organisation count as returns abuse?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "No written definition exists, and the people in the corpus plainly mean different things: worn-and-returned merchandise, a customer returning fourteen items, and ordering two sizes intending to return one. The third is described by customers as ordinary shopping and by the size-chart audit as a product defect. Nothing can be measured, and no vendor can be evaluated, until the term is defined.",
+      "how_to_obtain": "A written definition agreed between merchandising, returns operations, finance and legal, expressed as conditions an inspector or a query could apply.",
+      "anchor": {
+        "source": "returns_reason_codes.csv",
+        "span": "note: no reason code exists for suspected abuse and an associate has no field in which to record one - synthetic"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M6",
+      "question": "What is happening in the other 116 stores?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The request for examples went to all 118 store managers and two replied. Both respondents are self-selected and both are in District 4. Nothing establishes whether their observations are typical, exceptional, or unrepresentative of anywhere but their own stores.",
+      "how_to_obtain": "A structured sample of stores asked to review a defined set of returns against a defined template, rather than an open call for anecdotes.",
+      "anchor": {
+        "source": "store_manager_notes.md",
+        "span": "Two managers replied."
+      },
+      "was_searched": true,
+      "must_detect": false
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "The blended return rate was 14.8% in 2026-Q2.",
+      "source": "returns_metrics.csv",
+      "span": "metric: return_rate_percent\nvalue: 14.8"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "The blended return rate has risen in each of the last six quarters, from 11.2% in 2025-Q1.",
+      "source": "returns_metrics.csv",
+      "span": "metric: return_rate_percent\nvalue: 11.2"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "Apparel's share of units sold rose from 31.0% in 2025-Q1 to 46.0% in 2026-Q2.",
+      "source": "returns_metrics.csv",
+      "span": "metric: apparel_share_of_units_sold\nvalue: 31.0"
+    },
+    {
+      "id": "GT-F4",
+      "statement": "Return rates differ sharply by category: apparel 21.3% against hardgoods 6.2% in 2026-Q2.",
+      "source": "returns_metrics.csv",
+      "span": "metric: return_rate_percent\nvalue: 6.2\nunit: percent\nsegment: hardgoods"
+    },
+    {
+      "id": "GT-F5",
+      "statement": "Return reason codes are chosen by the customer when the return is started and are never verified.",
+      "source": "returns_reason_codes.csv",
+      "span": "capture_method: customer-selected at initiation, not verified"
+    },
+    {
+      "id": "GT-F6",
+      "statement": "There is no reason code for suspected abuse, and no field in which an associate could record one.",
+      "source": "returns_reason_codes.csv",
+      "span": "note: no reason code exists for suspected abuse and an associate has no field in which to record one - synthetic"
+    },
+    {
+      "id": "GT-F7",
+      "statement": "The $4.2M loss figure is the Specialty Retail Council's published 5.9% abuse share applied to Alderwick's FY26 refund total of $71.2M; it is not an internal measurement.",
+      "source": "finance_loss_estimate.md",
+      "span": "The estimate applies the Specialty Retail Council's 2024 published estimate that 5.9% of returned merchandise value is attributable to abusive returns to Alderwick's FY26 refund total of $71.2M."
+    },
+    {
+      "id": "GT-F8",
+      "statement": "Fourteen of forty audited apparel SKUs differ from the published size chart by more than one size increment, all in the Tarnside line introduced in 2025-Q3.",
+      "source": "returns_experience_research.md",
+      "span": "Fourteen differed by more than one size increment, and all fourteen are in the Tarnside line introduced in 2025-Q3."
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That a rise in the return rate is a rise in returns abuse.",
+      "why_it_is_an_assumption": "The return rate counts returns. It does not distinguish an abusive return from a legitimate one, and nothing in the corpus does. The programme has adopted a measure of the wrong quantity and reports it weekly as though it were the right one.",
+      "anchor": {
+        "source": "business_objectives.md",
+        "span": "Return rate is the programme's headline measure of returns abuse."
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That two store managers' observations describe a chain-wide pattern.",
+      "why_it_is_an_assumption": "Two of 118 stores replied to an open request for examples, both in the same district, with no template and no defined sample. The district manager's assertion that it is the same everywhere rests on nothing recorded.",
+      "anchor": {
+        "source": "store_manager_notes.md",
+        "span": "It is the same in every district. Marcus and Teresa are just the two who bothered to write it up."
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That returns abuse names one behaviour the business agrees on.",
+      "why_it_is_an_assumption": "Worn-and-returned merchandise, a serial returner, and size bracketing appear in the corpus under the same heading. They have different causes, different remedies and different legitimacy, and no document reconciles them.",
+      "anchor": {
+        "source": "store_manager_notes.md",
+        "span": "Wardrobing is what this is, and I would bet it is most of what we are seeing."
+      }
+    },
+    {
+      "id": "GT-A4",
+      "statement": "That the Specialty Retail Council's 5.9% abuse share applies to Alderwick's assortment, price points, channel mix and returns policy.",
+      "why_it_is_an_assumption": "The Council publishes neither its methodology nor its member composition, and the memo says so. Transposing an external rate onto an internal total produces a number, not a measurement.",
+      "anchor": {
+        "source": "finance_loss_estimate.md",
+        "span": "We do not know whether its members resemble Alderwick in assortment, price point, channel mix, or returns policy."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The Chief Merchant believes the six-quarter rise in return rate is abuse.",
+      "source": "store_manager_notes.md",
+      "span": "Return rate is the number I watch. It has gone up six quarters running. That is abuse, and I do not need a study to tell me so.",
+      "must_not_be_treated_as": "a measurement of returns abuse, or a reason to skip measuring it"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "A store manager believes wardrobing accounts for most of what the business is seeing.",
+      "source": "store_manager_notes.md",
+      "span": "Wardrobing is what this is, and I would bet it is most of what we are seeing.",
+      "must_not_be_treated_as": "a measured share of returns, or a ranking of abuse types"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "A district manager believes the four-store receipt requirement reduced returns.",
+      "source": "store_manager_notes.md",
+      "span": "When we required receipts in the four pilot stores last autumn the returns stopped almost overnight.",
+      "must_not_be_treated_as": "a measured effect of requiring receipts"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "A vendor claims its platform reduces returns fraud by 23% within two quarters.",
+      "source": "vendor_evaluation_notes.md",
+      "span": "The deck does not define returns fraud, does not state a baseline, does not name a client, and does not describe how the reduction was measured.",
+      "must_not_be_treated_as": "an expected outcome for Alderwick"
+    },
+    {
+      "id": "GT-O5",
+      "statement": "The regional loss prevention lead believes the online channel is worse than stores.",
+      "source": "store_manager_notes.md",
+      "span": "My instinct is that the online channel is far worse than the stores, but I have never been able to look.",
+      "must_not_be_treated_as": "a measured difference in abuse between channels"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "proxy metric standing in for the thing that matters",
+      "source": "business_objectives.md",
+      "span": "Return rate is the programme's headline measure of returns abuse.",
+      "description": "The only quantitative series in the corpus measures the return rate. The programme has designated it the measure of returns abuse, set a target against it, and reads its six-quarter rise as evidence that abuse is increasing. The return rate counts returns, most of which the rest of the corpus describes in legitimate terms: reason codes are dominated by fit and quality, an audit shows the size chart is wrong for a line introduced in the quarter the rise steepened, and interviewed customers describe ordering two sizes as ordinary behaviour. The field that would carry the actual quantity, confirmed_abuse_cases, was added to the dashboard and never populated.",
+      "why_it_matters": "Every claim in the brief about the size, direction or growth of returns abuse will be drawn from a series that does not measure it. This is the substitution that tempts GT-U2, GT-U3 and GT-U8, and it is not flagged anywhere in the corpus: no document says the return rate is a proxy. A brief that cites the trend as evidence about abuse has been misled by what the metric is called, not by what it counts.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "composition shift inside a blended rate",
+      "source": "returns_metrics.csv",
+      "span": "metric: apparel_share_of_units_sold\nvalue: 46.0",
+      "description": "The 2026-Q2 blended rate of 14.8% is the mix-weighted average of apparel at 21.3%, footwear at 17.9% and hardgoods at 6.2%, and apparel's share of units sold rose fifteen points over the six quarters of the trend. Part of the rise is arithmetic. How much cannot be established, because per-category rates were not retained before 2026-Q2.",
+      "why_it_matters": "The headline series moves when the assortment moves. A brief that reads the trend as behavioural, in either direction, is attributing to customers something that may belong to merchandising.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "single-source amplification",
+      "source": "finance_loss_estimate.md",
+      "span": "This memo is the only quantified statement of returns-abuse losses in circulation.",
+      "description": "The $4.2M figure appears in the objectives document, in the Chief Merchant's remarks and in the vendor's payback calculation. Three independent-looking corroborations of the loss are three restatements of one memo, each with the range and the source removed. The vendor's return-on-investment case is computed against Alderwick's own unmeasured number.",
+      "why_it_matters": "Repetition across documents is the usual signal that a figure is well established. Here it is the opposite: the more places the number appears, the further it has travelled from the caveats it was issued with.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "Customer return history cannot be joined across store and online channels until the returns data mart ships, which is deferred to FY28.",
+      "source": "prior_decisions.md",
+      "span": "Until the returns data mart is delivered, customer return history cannot be joined across store and online channels",
+      "blocks": [
+        "per-customer risk scoring",
+        "vendor platform deployment",
+        "any repeat-returner threshold"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "Online return detail begins at 2026-Q1 and earlier item-level history cannot be reconstructed.",
+      "source": "prior_decisions.md",
+      "span": "item-level detail is available from 2026-Q1 onwards only, and nothing earlier can be reconstructed",
+      "blocks": [
+        "any option requiring more than two quarters of online return history"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "Store loss prevention can see only returns rung up in its own stores' point of sale.",
+      "source": "store_manager_notes.md",
+      "span": "I can only see returns rung up in my own stores' point of sale."
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "Free returns within 90 days is a board-reaffirmed brand commitment for FY27 and is written into the loyalty terms, so the returns policy will not change this year.",
+      "source": "business_objectives.md",
+      "span": "Free returns within 90 days remains a brand commitment for FY27 and will not be changed.",
+      "blocks": [
+        "restocking fees",
+        "shortened return windows",
+        "receipt-required returns as a policy change"
+      ]
+    },
+    {
+      "id": "GT-B2",
+      "kind": "business_constraint",
+      "statement": "New recurring spend above $50,000 needs CFO approval and FY27 adds no loss-prevention headcount.",
+      "source": "business_objectives.md",
+      "span": "Any new recurring spend above $50,000 requires CFO approval before a contract is signed.",
+      "blocks": [
+        "the $180,000 per year vendor platform without CFO approval",
+        "any option needing a dedicated analyst"
+      ]
+    },
+    {
+      "id": "GT-B3",
+      "kind": "business_constraint",
+      "statement": "Size-chart and supplier quality work sits with Merchandising and is outside this programme's remit.",
+      "source": "business_objectives.md",
+      "span": "Supplier quality and size-chart governance sit with Merchandising and are outside the Returns Integrity programme's remit.",
+      "blocks": [
+        "fixing the Tarnside size chart as a programme deliverable"
+      ]
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "A return may not be refused or restricted on an automated score without documented human review and a stated appeal path.",
+      "source": "governance_requirements.md",
+      "span": "A return may not be refused, restricted, or fee-charged on the basis of an automated score without documented human review and a stated appeal path.",
+      "affects": [
+        "rules_based_automation",
+        "buy",
+        "ai_assisted",
+        "ai_automated"
+      ],
+      "why_it_matters": "Removes the throughput argument for any scoring product: every adverse action needs a human reviewer who can see and override the score."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "Customer-level risk indicators must not be shown to store associates at the point of service; inspection must be triggered by the item or the transaction.",
+      "source": "governance_requirements.md",
+      "span": "Customer-level risk indicators must not be displayed to store associates at the point of service.",
+      "affects": [
+        "counter-level customer flagging",
+        "buy",
+        "rules_based_automation"
+      ],
+      "why_it_matters": "Rules out the intervention the store managers are implicitly asking for, and constrains the vendor product's recommended action at the point of return."
+    },
+    {
+      "id": "GT-G3",
+      "statement": "A new processor of customer purchase and return history needs a completed data protection assessment, currently six to eight weeks.",
+      "source": "governance_requirements.md",
+      "span": "Assessments currently take six to eight weeks.",
+      "affects": [
+        "buy",
+        "partner"
+      ],
+      "why_it_matters": "No assessment has been started for the vendor, so nothing vendor-based can be in place this quarter."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "In-store video is retained 30 days, may be used for incident investigation only, and may not be used to profile an identified customer.",
+      "source": "governance_requirements.md",
+      "span": "Building a profile of an identified customer from video is prohibited.",
+      "affects": [
+        "video-based investigation of repeat returners"
+      ]
+    },
+    {
+      "id": "GT-G5",
+      "statement": "Changing the loyalty free-returns guarantee requires 30 days' notice to members and legal sign-off.",
+      "source": "governance_requirements.md",
+      "span": "Any change to those terms requires 30 days' notice to members and sign-off from legal",
+      "affects": [
+        "any returns policy change"
+      ]
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "Returns abuse costs Alderwick $4.2M a year.",
+      "why_forbidden": "The figure is an external association's published rate applied to an internal refund total. Its own source gives a range of $1.1M to $6.3M, and no internal measurement exists. Stating the midpoint as a loss presents a benchmark as a measurement.",
+      "tempted_by": "GT-H3",
+      "anchor": {
+        "source": "business_objectives.md",
+        "span": "Recover $2.5M of the $4.2M in annual losses attributable to returns abuse."
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "Returns abuse is increasing.",
+      "why_forbidden": "The only rising series is the return rate, which counts returns rather than abuse. Its rise coincides with a fifteen-point shift in category mix and with a documented size-chart defect in a line introduced in the quarter the rise steepened. Nothing in the corpus measures abuse at any point in time, so no direction of travel can be asserted.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "business_objectives.md",
+        "span": "The rise in return rate is the clearest signal we have that returns abuse is increasing"
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "Any figure for the share or rate of returns that are abusive.",
+      "why_forbidden": "No such measurement exists anywhere in the corpus. The confirmed_abuse_cases field was added to the dashboard and never populated, there is no reason code for suspected abuse, and no returned unit has been inspected. A number here would have to be invented or imported.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "returns_metrics.csv",
+        "span": "note: synthetic - field added to the returns dashboard in 2026-Q2 and never populated; there is no case management system in which an abuse case could be opened"
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "Wardrobing is the leading form of returns abuse.",
+      "why_forbidden": "One store manager describes four garments in one month and offers a guess about the rest. No count of worn-and-returned merchandise exists at any store, and the manager could not state his own store's return volume for the same month.",
+      "anchor": {
+        "source": "store_manager_notes.md",
+        "span": "We took back four Tarnside shells last month that had clearly been worn."
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "The Orlin platform would reduce returns fraud by 23%.",
+      "why_forbidden": "A vendor claim with no definition of fraud, no baseline, no named client and no stated method. Its precision claim is scored against confirmed cases that Alderwick does not have, and the deployment data it requires does not exist here. There is no label against which the platform could even be evaluated after purchase.",
+      "anchor": {
+        "source": "vendor_evaluation_notes.md",
+        "span": "Clients see a 23% reduction in returns fraud within two quarters of deployment."
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "Requiring receipts reduces returns abuse.",
+      "why_forbidden": "The four-store trial recorded no returns data, selected no comparison stores, and ran while the same four stores were losing footfall to a remodel programme. The trial could not measure its own effect.",
+      "tempted_by": "GT-H3",
+      "anchor": {
+        "source": "store_manager_notes.md",
+        "span": "We should never have rolled it back."
+      }
+    },
+    {
+      "id": "GT-U7",
+      "claim": "Returns abuse is concentrated in the online channel.",
+      "why_forbidden": "The channel split that exists is a split of the return rate, not of abuse. Online sells a different assortment, and no category-by-channel cross-tab exists, so the 21.0% against 9.7% gap may be entirely a mix artifact. The only person who asserts a channel difference says in the same breath that she has never been able to look.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "returns_metrics.csv",
+        "span": "metric: return_rate_percent\nvalue: 21.0\nunit: percent\nsegment: online"
+      }
+    },
+    {
+      "id": "GT-U8",
+      "claim": "A small number of serial returners account for most returns or most losses.",
+      "why_forbidden": "No per-customer distribution of returns exists in any system, and returns cannot be joined across channels or across stores. One manager's recollection of one customer is the entire basis for the idea.",
+      "anchor": {
+        "source": "store_manager_notes.md",
+        "span": "One customer returned fourteen items in March."
+      }
+    },
+    {
+      "id": "GT-U9",
+      "claim": "Most returns are legitimate, or returns abuse is not a real problem here.",
+      "why_forbidden": "Symmetric to the overclaim and equally unsupported. The reason codes are customer-selected and never verified, so they record what customers said rather than what happened, and the interview study explicitly did not ask about deliberate misuse. The corpus cannot rule abuse in and cannot rule it out; the absence of measurement is not evidence that the problem is small.",
+      "anchor": {
+        "source": "returns_reason_codes.csv",
+        "span": "reason_code: did_not_fit\nreturns_count: 63600\nshare_of_returns_percent: 34.1"
+      }
+    },
+    {
+      "id": "GT-U10",
+      "claim": "The size-chart defect explains the rise in returns.",
+      "why_forbidden": "Also symmetric. The audit covered forty SKUs, was not weighted by sales volume, and was never linked to return volumes. It establishes that the size chart is wrong for fourteen SKUs, not how many returns that caused.",
+      "anchor": {
+        "source": "returns_experience_research.md",
+        "span": "The audit did not weight SKUs by sales volume, and no link was made between the affected SKUs and actual return volumes."
+      }
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "prior_decisions.md",
+      "span": "approve revised transit packaging for hardgoods shipped from the e-commerce hub",
+      "why_irrelevant": "Concerns breakage in transit, not abuse of the returns policy. Retrievable and returns-adjacent, because damaged_in_transit is 7.0% of returns, but it belongs to a different problem and should not appear in the analysis of this question."
+    },
+    {
+      "id": "GT-I2",
+      "source": "returns_experience_research.md",
+      "span": "Eight of twelve participants could not locate the returns QR code in the mobile app on first attempt.",
+      "why_irrelevant": "An app usability finding from a study run for the checkout redesign. It is tracked by the app team and has no bearing on returns abuse or on losses."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Write down a measurable definition of returns abuse",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "low",
+        "note": "Costs almost nothing and is a precondition for every other option, including evaluating the vendor. Justified by the absence of a definition rather than by evidence of effect."
+      },
+      {
+        "name": "Sample-based physical inspection audit of returned units",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "low",
+        "note": "The only route in the corpus to a defensible abuse rate. Already costed by finance at $60,000 for one quarter, and below the CFO approval threshold."
+      },
+      {
+        "name": "Decompose the return-rate trend by category mix and by the Tarnside line",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "low",
+        "note": "Determines how much of the six-quarter rise is composition before any of it is attributed to behaviour."
+      },
+      {
+        "name": "Add a verified disposition field at return receipt",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "low",
+        "note": "Makes the abuse rate measurable in normal operations rather than as a one-off study. Effort unestimated; must not display customer-level indicators to associates."
+      },
+      {
+        "name": "One-off cross-channel join of return history for a single district",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "low",
+        "note": "Answers the concentration question without waiting for the FY28 data mart. Bounded by the 2026-Q1 start of online item-level detail."
+      },
+      {
+        "name": "Scoped pilot: condition inspection on the Tarnside line in one district with matched control stores",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Item-triggered rather than customer-triggered, so it survives the governance rule. Must be pre-registered with a comparison group; the 2025 receipt trial failed precisely here."
+      },
+      {
+        "name": "Correct the Tarnside size chart",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "low",
+        "note": "The most direct evidence in the corpus points here, but it addresses legitimate returns rather than abuse and sits with Merchandising, outside the programme's remit."
+      },
+      {
+        "name": "Rules-based repeat-return threshold at the returns portal",
+        "option_kind": "rules_based_automation",
+        "horizon": "core",
+        "support": "low",
+        "note": "Cannot see across channels or stores, and any adverse action needs human review and an appeal path."
+      },
+      {
+        "name": "Buy a returns-abuse scoring platform",
+        "option_kind": "buy",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "The precondition data does not exist, the effect claim is unverifiable, there is no label to evaluate it against, spend exceeds the CFO threshold, and the assessment alone takes six to eight weeks."
+      },
+      {
+        "name": "No intervention this quarter beyond measurement",
+        "option_kind": "no_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Defensible given that nothing measures the problem, provided the measurement work is actually commissioned."
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "low",
+    "reason": "Nothing in the corpus measures the quantity the question is about. The only quantitative series measures the return rate, which counts returns rather than abuse, and its rise coincides with a fifteen-point category mix shift and a documented size-chart defect. The single loss figure is an external benchmark transposed onto an internal refund total, spanning $1.1M to $6.3M. The remainder is two self-selected store anecdotes out of 118 stores, one vendor claim with no method, and reason codes the customer chooses and nobody verifies. The corpus is large and almost none of it is load-bearing. No intervention can be defended above low support, and any option that acts on a named cause is acting on an assumption.",
+    "defensible_next_steps": [
+      "Agree and write down a definition of returns abuse that an inspector or a query could apply, before any option is compared.",
+      "Commission the $60,000 physical inspection audit of a random sample of returned units to produce a first defensible abuse rate with an interval around it.",
+      "Decompose the six-quarter return-rate rise by category mix and by the Tarnside line before attributing any part of it to customer behaviour.",
+      "Add a verified disposition field at return receipt so the abuse rate becomes measurable in the normal course of operations.",
+      "Run a one-off cross-channel join of return history for a single district to establish whether returns are concentrated across customers at all.",
+      "If anything is trialled now, scope it to one district against matched control stores with the measure pre-registered; the 2025 four-store receipt trial produced no usable data."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "buy",
+        "why": "The vendor's effect claim has no definition, baseline, client or method; the 24 months of unified cross-channel history it requires does not exist and is not funded until FY28; there are no confirmed cases to evaluate it against; $180,000 a year exceeds the CFO approval threshold; and no data protection assessment has been started."
+      },
+      {
+        "option_kind": "rules_based_automation",
+        "why": "Any automated score that refuses or restricts a return requires documented human review and a stated appeal path, and customer-level risk indicators may not be shown to store associates. Neither the cross-channel data nor the review capacity exists."
+      },
+      {
+        "option_kind": "process_change",
+        "why": "Returns-policy tightening is barred by the FY27 brand commitment and the loyalty terms, and the cost of added friction in lost legitimate sales is unmeasured everywhere in the corpus."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The brief must state that the rate of returns abuse is unmeasured, and that return rate is a count of returns rather than a measure of abuse.",
+      "The brief must not present the $4.2M figure as a measured loss, and should surface that its source gives a range of $1.1M to $6.3M.",
+      "The brief must state that two self-selected store observations out of 118 stores cannot establish a chain-wide pattern.",
+      "The brief must acknowledge that the corpus cannot rule returns abuse out either: the absence of measurement is not evidence that the problem is small.",
+      "The brief must recommend measurement, research or a scoped and controlled pilot rather than a full intervention, and must say what would have to be true for an intervention to become defensible."
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+period,pair_id,sku_a,sku_b,description_a,description_b,rf_display_text,slot_a,slot_b,separation_metres_before_reslot,separation_metres_after_reslot,face_adjacent_after_reslot,allergen_segregated,mispick_count,note
+2026-Q2,CP-01,240213,240231,HAVENMILL OAT DRINK 1L SWEETENED,HAVENMILL OAT DRINK 1L UNSWEETENED,HAVENMILL OAT DRIN,34-A-12,34-A-13,41,0.9,yes,yes,612,synthetic
+2026-Q2,CP-02,351884,351848,BRACKMOOR SPARKLING WATER LIME 6X330,BRACKMOOR SPARKLING WATER LEMON 6X330,BRACKMOOR SPARKLIN,37-C-04,37-C-05,28,0.9,yes,no,548,synthetic
+2026-Q2,CP-03,133702,133720,RIDGEWAY KITCHEN TOWEL 2 ROLL,RIDGEWAY KITCHEN TOWEL 4 ROLL,RIDGEWAY KITCHEN T,39-B-21,39-B-22,52,0.9,yes,no,501,synthetic
+2026-Q2,CP-04,427109,427190,PALEFIELD COLA MULTIPACK 24X330,PALEFIELD COLA MULTIPACK 12X500,PALEFIELD COLA MUL,36-D-08,36-D-09,19,0.9,yes,no,437,synthetic
+2026-Q2,CP-05,618055,618505,TARNVALE OLIVE OIL 500ML,TARNVALE OLIVE OIL 750ML,TARNVALE OLIVE OIL,41-A-02,41-A-03,33,0.9,yes,no,389,synthetic
+2026-Q2,CP-06,184460,184406,OSNEY LAUNDRY LIQUID ORIGINAL 30 WASH,OSNEY LAUNDRY LIQUID SENSITIVE 30 WASH,OSNEY LAUNDRY LIQU,43-C-15,43-C-16,37,0.9,yes,no,356,synthetic
+2026-Q2,CP-07,552310,552301,KELMORE TINNED TOMATOES CHOPPED 6X400G,KELMORE TINNED TOMATOES PLUM 6X400G,KELMORE TINNED TOM,32-A-05,43-D-18,33,46.0,no,no,21,synthetic - the reslot left this pair at opposite ends of the bay
+2026-Q2,CP-REST-ADJACENT,various,various,32 further pairs sharing the first 18 characters,32 further pairs sharing the first 18 characters,various,various,various,34 (median),0.9 (median),yes,3 of 32,1445,synthetic - aggregate of the remaining face-adjacent pairs
+2026-Q2,CP-REST-SEPARATE,various,various,2 further pairs sharing the first 18 characters,2 further pairs sharing the first 18 characters,various,various,various,31 (median),38.0 (median),no,0 of 2,26,synthetic - aggregate of the remaining non-adjacent pairs

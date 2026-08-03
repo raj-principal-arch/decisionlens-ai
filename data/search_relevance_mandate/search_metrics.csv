@@ -1,0 +1,28 @@
+period,metric,value,unit,segment,note
+2026-Q2,search_to_cart_rate,10.7,percent,all,synthetic - computed on typed-and-submitted queries in every period; unaffected by the 2026-01-19 routing change
+2026-Q1,search_to_cart_rate,11.0,percent,all,synthetic - computed on typed-and-submitted queries in every period
+2025-Q4,search_to_cart_rate,11.6,percent,all,synthetic - computed on typed-and-submitted queries in every period
+2025-Q3,search_to_cart_rate,12.1,percent,all,synthetic - computed on typed-and-submitted queries in every period
+2025-Q2,search_to_cart_rate,12.4,percent,all,synthetic - computed on typed-and-submitted queries in every period
+2026-Q2,search_to_cart_rate,7.9,percent,trade_account,synthetic - trade accounts only
+2026-Q2,search_to_cart_rate,11.0,percent,consumer,synthetic - consumer accounts and guests
+2026-Q2,zero_result_rate,3.0,percent,all,synthetic - headline series; denominator includes category browse queries and is not comparable with periods before 2026-01-19
+2026-Q1,zero_result_rate,3.1,percent,all,synthetic - headline series; denominator changed on 2026-01-19 when category browse queries began to be logged as search events
+2025-Q4,zero_result_rate,8.6,percent,all,synthetic - headline series; before 2026-01-19 the denominator was typed-and-submitted queries only
+2025-Q3,zero_result_rate,8.1,percent,all,synthetic - headline series; before 2026-01-19 the denominator was typed-and-submitted queries only
+2025-Q2,zero_result_rate,7.8,percent,all,synthetic - headline series; before 2026-01-19 the denominator was typed-and-submitted queries only
+2026-Q2,zero_result_rate_submitted_only,9.2,percent,all,synthetic - restated on the pre-2026-01-19 definition; comparable with the 2025 headline figures
+2026-Q1,zero_result_rate_submitted_only,8.9,percent,all,synthetic - restated on the pre-2026-01-19 definition; comparable with the 2025 headline figures
+2026-Q2,zero_result_rate_submitted_only,16.4,percent,trade_account,synthetic - restated definition; trade accounts only
+2026-Q2,zero_result_rate_submitted_only,8.3,percent,consumer,synthetic - restated definition; consumer accounts and guests
+2026-Q2,search_events_millions,121.9,millions,all,synthetic - includes category browse queries routed through search from 2026-01-19
+2026-Q1,search_events_millions,118.4,millions,all,synthetic - includes category browse queries routed through search from 2026-01-19
+2025-Q4,search_events_millions,52.8,millions,all,synthetic - typed-and-submitted queries only; category browse was not routed through search in this period
+2025-Q3,search_events_millions,43.1,millions,all,synthetic - typed-and-submitted queries only; category browse was not routed through search in this period
+2025-Q2,search_events_millions,41.6,millions,all,synthetic - typed-and-submitted queries only; category browse was not routed through search in this period
+2026-Q2,submitted_queries_millions,44.7,millions,all,synthetic - typed-and-submitted queries only
+2026-Q2,zero_result_searches_millions,4.11,millions,all,synthetic - typed-and-submitted queries only; 9.2% of 44.7 million
+2026-Q2,search_originated_revenue_share,38.0,percent,all,synthetic - share of digital revenue originating in a search session
+2026-Q2,search_session_share,11.0,percent,trade_account,synthetic - trade accounts as a share of all search sessions
+2026-Q2,search_revenue_share,34.0,percent,trade_account,synthetic - trade accounts as a share of search-originated revenue
+2026-Q2,relevance_judged_queries,,count,all,synthetic - never populated; no human relevance judgement set exists and no query has ever been scored for relevance

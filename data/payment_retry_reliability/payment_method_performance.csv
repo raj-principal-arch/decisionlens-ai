@@ -1,0 +1,13 @@
+period,payment_method,attempts,successful_authorisations,success_rate_percent,share_of_attempts_percent,average_order_value_usd,share_of_attempted_gmv_percent,failed_attempted_value_usd,share_of_failed_value_percent,note
+2026-Q2,card_credit,486300,473656,97.4,57.7,71.40,46.3,902782,12.1,synthetic
+2026-Q2,card_debit,231900,225175,97.1,27.5,52.80,16.3,355080,4.7,synthetic
+2026-Q2,digital_wallet,98400,96826,98.4,11.7,63.10,8.3,99319,1.3,synthetic
+2026-Q2,bank_debit_mandate,17300,12387,71.6,2.1,1246.00,28.7,6121598,81.8,used almost entirely by trade and wholesale buyers - synthetic
+2026-Q2,stored_balance,8700,8648,99.4,1.0,34.20,0.4,1778,0.0,synthetic
+2026-Q1,card_credit,471200,458006,97.2,,,,,,share and value columns are computed for the reporting quarter only - synthetic
+2026-Q1,card_debit,224100,217153,96.9,,,,,,synthetic
+2026-Q1,digital_wallet,92700,91031,98.2,,,,,,synthetic
+2026-Q1,bank_debit_mandate,16100,13266,82.4,,,,,,synthetic
+2026-Q1,stored_balance,8200,8143,99.3,,,,,,synthetic
+2025-Q4,bank_debit_mandate,15400,13567,88.1,,,,,,synthetic
+2025-Q3,bank_debit_mandate,14900,13499,90.6,,,,,,synthetic

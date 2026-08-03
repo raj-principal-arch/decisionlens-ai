@@ -225,3 +225,10 @@ __marimo__/
 
 # CLI output
 out/
+
+# Live-run logs from the evaluation recorder. The recordings themselves
+# (evals/recordings/) are committed — they are the evidence behind the results.
+logs/
+
+# Rebuilt by `make eval` from the per-case recordings beside it.
+evals/recordings/_merged.json

@@ -1,0 +1,101 @@
+{
+  "case_id": "payment_retry_reliability",
+  "synthetic": true,
+  "notice": "All evidence in this directory is synthetic and fictional. It describes an invented online marketplace, invented payment systems, an invented payments partner, and invented security findings. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "question": "Which intervention should the team prioritise to improve payment reliability?",
+  "desired_outcome": "Recover more legitimate payment authorisations and reduce checkout abandonment caused by payment failure, without breaching the contractual security remediation deadline, the PCI attestation requirement, the direct debit scheme rules, or the buyer consent policy.",
+  "product_area": "payments",
+  "as_of": "2026-08-02",
+  "files": {
+    "business_objectives.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2025-11-04",
+      "updated_at": "2026-02-10",
+      "owner": "product-leadership",
+      "product_area": "payments",
+      "permission_scope": "pm-payments",
+      "labels": ["synthetic", "objectives", "okr"]
+    },
+    "payment_metrics.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2026-04-06",
+      "updated_at": "2026-07-15",
+      "owner": "analytics",
+      "product_area": "payments",
+      "permission_scope": "pm-payments",
+      "labels": ["synthetic", "metrics"]
+    },
+    "payment_method_performance.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2026-07-14",
+      "updated_at": "2026-07-15",
+      "owner": "analytics",
+      "product_area": "payments",
+      "permission_scope": "pm-payments",
+      "labels": ["synthetic", "metrics", "segmentation"]
+    },
+    "incident_review_retry_orchestrator.md": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-20",
+      "owner": "payments-platform",
+      "product_area": "payments",
+      "permission_scope": "pm-payments",
+      "labels": ["synthetic", "incident", "engineering"]
+    },
+    "security_findings_register.json": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-05-20",
+      "updated_at": "2026-07-24",
+      "owner": "security",
+      "product_area": "payments",
+      "permission_scope": "pm-payments,security",
+      "labels": ["synthetic", "security", "obligation"]
+    },
+    "governance_and_compliance.md": {
+      "evidence_type": "governance_policy",
+      "created_at": "2025-09-12",
+      "updated_at": "2026-06-05",
+      "owner": "risk-and-compliance",
+      "product_area": "payments",
+      "permission_scope": "pm-payments,legal",
+      "labels": ["synthetic", "governance", "pci", "contractual"]
+    },
+    "technical_constraints.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-03-02",
+      "updated_at": "2026-06-30",
+      "owner": "engineering",
+      "product_area": "payments",
+      "permission_scope": "pm-payments",
+      "labels": ["synthetic", "constraints", "technical"]
+    },
+    "stakeholder_notes.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-07-27",
+      "updated_at": "2026-07-29",
+      "owner": "payments-product",
+      "product_area": "payments",
+      "permission_scope": "pm-payments",
+      "labels": ["synthetic", "stakeholder", "opinion"]
+    },
+    "prior_experiments.md": {
+      "evidence_type": "experiment_result",
+      "created_at": "2025-10-14",
+      "updated_at": "2026-02-20",
+      "owner": "payments-product",
+      "product_area": "payments",
+      "permission_scope": "pm-payments",
+      "labels": ["synthetic", "experiments"]
+    },
+    "prior_decisions.md": {
+      "evidence_type": "prior_decision",
+      "created_at": "2025-06-20",
+      "updated_at": "2026-04-18",
+      "owner": "product-leadership",
+      "product_area": "payments",
+      "permission_scope": "pm-payments",
+      "labels": ["synthetic", "decisions"]
+    }
+  }
+}

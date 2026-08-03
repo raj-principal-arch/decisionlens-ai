@@ -1,0 +1,10 @@
+period,surface,step_order,step,sessions_entering,sessions_completing_step,step_completion_percent,sessions_lost,note
+2026-Q2,web,1,cart_review,1240000,1209000,97.5,31000,synthetic
+2026-Q2,web,2,address_confirm,1209000,1171000,96.9,38000,synthetic
+2026-Q2,web,3,slot_selection,1171000,1038000,88.6,133000,synthetic - largest single loss in the funnel; the split between slot unavailability and interface difficulty is not measured
+2026-Q2,web,4,payment_entry,1038000,1006000,96.9,32000,synthetic
+2026-Q2,web,5,payment_authorisation,1006000,924500,91.9,81500,synthetic - includes six weeks of EXP-2026-04 treatment exposure
+2026-Q2,web,6,order_confirmation,924500,920800,99.6,3700,synthetic
+2026-Q1,web,3,slot_selection,1198000,1070000,89.3,128000,synthetic
+2026-Q1,web,5,payment_authorisation,1030000,937300,91.0,92700,synthetic
+2026-Q2,app,,not_instrumented,,,,,synthetic - the app checkout emits no step-level events so no funnel exists for the app surface

@@ -1,0 +1,101 @@
+{
+  "case_id": "support_ticket_routing",
+  "synthetic": true,
+  "notice": "All evidence in this directory is synthetic and fictional. It describes an invented consumer electronics retailer and an invented customer support organisation. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "question": "Which intervention should the team prioritise to reduce time-to-resolution for support tickets?",
+  "desired_outcome": "Reduce median and p90 time-to-resolution for customer support tickets and reduce reassignment churn, without increasing cost per ticket, degrading resolution quality, removing agent control, or breaching the support governance policy.",
+  "product_area": "support",
+  "as_of": "2026-08-02",
+  "files": {
+    "support_objectives.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-01-08",
+      "updated_at": "2026-01-20",
+      "owner": "product-leadership",
+      "product_area": "support",
+      "permission_scope": "pm-support",
+      "labels": ["synthetic", "objectives", "okr"]
+    },
+    "routing_metrics.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2025-04-01",
+      "updated_at": "2026-07-14",
+      "owner": "support-analytics",
+      "product_area": "support",
+      "permission_scope": "pm-support",
+      "labels": ["synthetic", "metrics"]
+    },
+    "ticket_volume_export.csv": {
+      "evidence_type": "operational_record",
+      "created_at": "2025-07-05",
+      "updated_at": "2026-07-14",
+      "owner": "support-analytics",
+      "product_area": "support",
+      "permission_scope": "pm-support",
+      "labels": ["synthetic", "volume", "export"]
+    },
+    "data_tooling_notes.md": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-02-10",
+      "updated_at": "2026-07-06",
+      "owner": "support-analytics",
+      "product_area": "support",
+      "permission_scope": "pm-support",
+      "labels": ["synthetic", "tooling", "data-quality"]
+    },
+    "routing_engine_history.md": {
+      "evidence_type": "operational_record",
+      "created_at": "2023-06-02",
+      "updated_at": "2026-06-30",
+      "owner": "support-engineering",
+      "product_area": "support",
+      "permission_scope": "pm-support",
+      "labels": ["synthetic", "routing", "changelog"]
+    },
+    "classifier_trial_report.md": {
+      "evidence_type": "experiment_result",
+      "created_at": "2026-03-02",
+      "updated_at": "2026-06-12",
+      "owner": "data-platform",
+      "product_area": "support",
+      "permission_scope": "pm-support",
+      "labels": ["synthetic", "experiment", "classifier"]
+    },
+    "prior_experiments.md": {
+      "evidence_type": "experiment_result",
+      "created_at": "2025-09-08",
+      "updated_at": "2026-03-04",
+      "owner": "support-analytics",
+      "product_area": "support",
+      "permission_scope": "pm-support",
+      "labels": ["synthetic", "experiments"]
+    },
+    "support_governance_policy.md": {
+      "evidence_type": "governance_policy",
+      "created_at": "2025-09-01",
+      "updated_at": "2026-05-18",
+      "owner": "legal-privacy",
+      "product_area": "support",
+      "permission_scope": "pm-support,legal",
+      "labels": ["synthetic", "governance", "privacy"]
+    },
+    "technical_constraints.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-04-02",
+      "updated_at": "2026-06-25",
+      "owner": "support-engineering",
+      "product_area": "support",
+      "permission_scope": "pm-support",
+      "labels": ["synthetic", "constraints", "technical"]
+    },
+    "stakeholder_notes.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-07-21",
+      "updated_at": "2026-07-24",
+      "owner": "support-operations",
+      "product_area": "support",
+      "permission_scope": "pm-support",
+      "labels": ["synthetic", "stakeholder", "opinion"]
+    }
+  }
+}

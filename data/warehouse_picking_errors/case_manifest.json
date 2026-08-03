@@ -1,0 +1,101 @@
+{
+  "case_id": "warehouse_picking_errors",
+  "synthetic": true,
+  "notice": "All evidence in this directory is synthetic and fictional. It describes an invented grocery retailer and an invented regional distribution centre. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "question": "Which intervention should the team prioritise to reduce picking errors at RDC-7?",
+  "desired_outcome": "Reduce the mispick rate at RDC-7, and the store discrepancy claims it generates, without breaching the cost-per-line constraint, the works-council agreement, or the food-safety rules on slot moves.",
+  "product_area": "fulfilment",
+  "as_of": "2026-08-02",
+  "files": {
+    "site_objectives.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-01-08",
+      "updated_at": "2026-01-20",
+      "owner": "site-leadership",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment",
+      "labels": ["synthetic", "objectives", "okr"]
+    },
+    "picking_metrics.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2026-04-01",
+      "updated_at": "2026-07-14",
+      "owner": "analytics",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment",
+      "labels": ["synthetic", "metrics"]
+    },
+    "mispick_log_summary.csv": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-07-06",
+      "updated_at": "2026-07-10",
+      "owner": "quality-assurance",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment",
+      "labels": ["synthetic", "quality", "mispicks"]
+    },
+    "sku_confusion_pairs.csv": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-07-20",
+      "updated_at": "2026-07-24",
+      "owner": "industrial-engineering",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment",
+      "labels": ["synthetic", "slotting", "mispicks"]
+    },
+    "shift_operations_review.md": {
+      "evidence_type": "operational_record",
+      "created_at": "2026-07-09",
+      "updated_at": "2026-07-09",
+      "owner": "dc-operations",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment",
+      "labels": ["synthetic", "operations-review"]
+    },
+    "floor_observation_study.md": {
+      "evidence_type": "qualitative_research",
+      "created_at": "2026-07-17",
+      "updated_at": "2026-07-24",
+      "owner": "industrial-engineering",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment",
+      "labels": ["synthetic", "observation-study"]
+    },
+    "change_and_decision_log.md": {
+      "evidence_type": "prior_decision",
+      "created_at": "2023-05-02",
+      "updated_at": "2026-06-12",
+      "owner": "dc-operations",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment",
+      "labels": ["synthetic", "decisions", "changes"]
+    },
+    "technical_constraints.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2026-05-11",
+      "updated_at": "2026-06-30",
+      "owner": "warehouse-systems",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment",
+      "labels": ["synthetic", "constraints", "technical"]
+    },
+    "governance_requirements.md": {
+      "evidence_type": "governance_policy",
+      "created_at": "2025-10-01",
+      "updated_at": "2026-04-18",
+      "owner": "compliance-and-employee-relations",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment,legal",
+      "labels": ["synthetic", "governance", "works-council"]
+    },
+    "stakeholder_notes.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-07-27",
+      "updated_at": "2026-07-30",
+      "owner": "dc-operations",
+      "product_area": "fulfilment",
+      "permission_scope": "pm-fulfilment",
+      "labels": ["synthetic", "stakeholder", "opinion"]
+    }
+  }
+}

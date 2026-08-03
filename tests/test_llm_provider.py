@@ -6,6 +6,7 @@ for the duration of a real provider call.
 
 from __future__ import annotations
 
+import json
 import socket
 import time
 from datetime import datetime
@@ -455,3 +456,300 @@ class TestErrorHierarchy:
         # needs these to be separate types, not one error with a message.
         assert not issubclass(ModelTimeout, ModelOutputError)
         assert not issubclass(ModelOutputError, ModelTimeout)
+
+
+def _contradiction_payload(**overrides: object) -> dict[str, object]:
+    entry: dict[str, object] = {
+        "id": "X1",
+        "topic": "t",
+        "kind": "temporal_conflict",
+        "side_a": {"evidence_id": "EV-1", "quote": "a"},
+        "side_b": {"evidence_id": "EV-2", "quote": "b"},
+        "summary": "s",
+        "how_to_resolve": "r",
+    }
+    entry.update(overrides)
+    return {"contradictions": [entry]}
+
+
+def _contradiction_entry(payload: dict[str, object]) -> dict[str, object]:
+    rows = payload["contradictions"]
+    assert isinstance(rows, list)
+    row = rows[0]
+    assert isinstance(row, dict)
+    return row
+
+
+def _parse_contradictions(payload: dict[str, object] | str) -> object:
+    from decision_lens.llm import parse_structured
+    from decision_lens.skills.contradictions import ContradictionsOutput
+
+    text = payload if isinstance(payload, str) else json.dumps(payload)
+    return parse_structured(
+        ModelResponse(
+            text=text,
+            provider="p",
+            model="m",
+            prompt_version="v1",
+            skill="contradictions",
+            latency_ms=1,
+            usage=ModelUsage(),
+            is_cached=False,
+        ),
+        ContradictionsOutput,
+    )
+
+
+def _first_resolve(parsed: object) -> str:
+    from decision_lens.skills.contradictions import ContradictionsOutput
+
+    assert isinstance(parsed, ContradictionsOutput)
+    return parsed.contradictions[0].how_to_resolve
+
+
+class TestKeyRepair:
+    """Punctuation in a field name is not a reason to discard a stage.
+
+    A live run lost every contradiction it had found because the model wrote
+    `how_to resolve` with a space. One character. The name was unambiguous —
+    exactly one declared field folds to those letters — so it is corrected
+    rather than thrown away.
+    """
+
+    @pytest.mark.parametrize(
+        "written_as",
+        ["how_to resolve", "How_To_Resolve", "how-to-resolve", "howToResolve", "HOW TO RESOLVE"],
+    )
+    def test_a_field_name_punctuated_differently_is_recovered(self, written_as: str) -> None:
+        payload = _contradiction_payload()
+        entry = _contradiction_entry(payload)
+        entry[written_as] = entry.pop("how_to_resolve")
+        assert _first_resolve(_parse_contradictions(payload)) == "r"
+
+    def test_the_exact_wording_that_cost_a_live_stage(self) -> None:
+        """Regression: `how_to resolve`, from a real recording run."""
+        payload = _contradiction_payload()
+        entry = _contradiction_entry(payload)
+        entry["how_to resolve"] = entry.pop("how_to_resolve")
+        assert _first_resolve(_parse_contradictions(payload)) == "r"
+
+    def test_repair_reaches_nested_models(self) -> None:
+        from decision_lens.skills.contradictions import ContradictionsOutput
+
+        payload = _contradiction_payload()
+        _contradiction_entry(payload)["side_a"] = {"evidence id": "EV-1", "quote": "a"}
+        parsed = _parse_contradictions(payload)
+        assert isinstance(parsed, ContradictionsOutput)
+        assert parsed.contradictions[0].side_a.evidence_id == "EV-1"
+
+    def test_a_correct_payload_is_untouched(self) -> None:
+        assert _first_resolve(_parse_contradictions(_contradiction_payload())) == "r"
+
+
+class TestKeyRepairIsNotPermissiveness:
+    """The repair fixes spelling. It must never conjure content."""
+
+    @pytest.mark.parametrize(
+        ("label", "key", "value"),
+        [
+            ("an invalid enum value", "kind", "not_a_kind"),
+            ("an unrecognised field", "invented_field", "x"),
+            ("a nested value simply absent", "side_a", {"evidence id": "EV-1"}),
+        ],
+    )
+    def test_a_real_defect_is_still_refused(self, label: str, key: str, value: object) -> None:
+        from decision_lens.llm import ModelOutputError
+
+        payload = _contradiction_payload()
+        _contradiction_entry(payload)[key] = value
+        with pytest.raises(ModelOutputError):
+            _parse_contradictions(payload)
+
+    def test_text_that_is_not_json_is_still_refused(self) -> None:
+        from decision_lens.llm import ModelOutputError
+
+        with pytest.raises(ModelOutputError):
+            _parse_contradictions("this is prose, not json")
+
+    def test_an_unmatched_key_is_passed_through_rather_than_guessed_at(self) -> None:
+        from decision_lens.llm.base import _repair_keys
+        from decision_lens.models import Contradiction
+
+        assert _repair_keys({"zzz unknown": 1}, Contradiction) == {"zzz unknown": 1}
+
+    def test_a_name_folding_onto_two_fields_is_refused(self) -> None:
+        """Ambiguity is not resolved by preference. Built explicitly, because no
+        production model happens to contain such a pair."""
+        from pydantic import BaseModel
+
+        from decision_lens.llm.base import _repair_keys
+
+        class Ambiguous(BaseModel):
+            a_b: str = ""
+            ab: str = ""
+
+        assert _repair_keys({"A B": "x"}, Ambiguous) == {"A B": "x"}
+
+
+class TestEnumRepair:
+    """A near-miss on a closed vocabulary, corrected only when unambiguous.
+
+    Three live stages were lost — retries included — because the model wrote
+    `would_change_scope` where the vocabulary offers `would_change_recommendation`,
+    `would_change_support_level` and `would_refine_scope`. The prompt lists all
+    three. Restating it was not going to work a fourth time.
+    """
+
+    @staticmethod
+    def _gaps() -> tuple[str, ...]:
+        from decision_lens.models import GapImpact
+
+        return tuple(g.value for g in GapImpact)
+
+    @pytest.mark.parametrize(
+        ("written", "expected"),
+        [
+            ("would_change_scope", "would_refine_scope"),
+            ("would_change_support", "would_change_support_level"),
+            ("would change recommendation", "would_change_recommendation"),
+            ("wouldRefineScope", "would_refine_scope"),
+            ("WOULD-REFINE-SCOPE", "would_refine_scope"),
+        ],
+    )
+    def test_an_unambiguous_near_miss_is_corrected(self, written: str, expected: str) -> None:
+        from decision_lens.llm.base import _closest_enum
+
+        assert _closest_enum(written, self._gaps()) == expected
+
+    @pytest.mark.parametrize(
+        "written",
+        [
+            "would_change_everything",  # only filler words match
+            "would_change",  # matches two candidates equally
+            "would",  # carries no information at all
+            "banana",
+            "",
+        ],
+    )
+    def test_an_ambiguous_or_meaningless_value_is_refused(self, written: str) -> None:
+        from decision_lens.llm.base import _closest_enum
+
+        assert _closest_enum(written, self._gaps()) is None
+
+    def test_an_already_valid_value_is_left_alone(self) -> None:
+        from decision_lens.llm.base import _closest_enum
+
+        assert _closest_enum("would_refine_scope", self._gaps()) is None
+
+    def test_a_support_level_is_never_invented(self) -> None:
+        """`high` is not `strong`. Snapping it would fabricate a confidence."""
+        from decision_lens.llm.base import _closest_enum
+        from decision_lens.models import SupportLevel
+
+        levels = tuple(s.value for s in SupportLevel)
+        assert _closest_enum("high", levels) is None
+        assert _closest_enum("very strong", levels) == "strong"
+
+    def test_the_repair_runs_end_to_end_through_parsing(self) -> None:
+        """The whole point: the stage survives instead of being discarded."""
+        from decision_lens.llm import parse_structured
+        from decision_lens.skills.missing_evidence import MissingEvidenceOutput
+
+        payload = {
+            "gaps": [
+                {
+                    "id": "M1",
+                    "question": "q",
+                    "impact": "would_change_scope",
+                    "why_it_matters": "w",
+                    "how_to_obtain": "h",
+                    "was_searched": True,
+                }
+            ]
+        }
+        parsed = parse_structured(
+            ModelResponse(
+                text=json.dumps(payload),
+                provider="p",
+                model="m",
+                prompt_version="v1",
+                skill="missing_evidence",
+                latency_ms=1,
+                usage=ModelUsage(),
+                is_cached=False,
+            ),
+            MissingEvidenceOutput,
+        )
+        assert parsed.gaps[0].impact.value == "would_refine_scope"
+
+
+class TestRepairWalksEveryShape:
+    """The list and scalar branches of both repair walks."""
+
+    def test_key_repair_walks_a_top_level_list(self) -> None:
+        from decision_lens.llm.base import _repair_keys
+        from decision_lens.models import Citation
+
+        out = _repair_keys([{"evidence id": "EV-1", "quote": "q"}], Citation)
+        assert out == [{"evidence_id": "EV-1", "quote": "q"}]
+
+    def test_key_repair_leaves_a_scalar_alone(self) -> None:
+        from decision_lens.llm.base import _repair_keys
+        from decision_lens.models import Citation
+
+        assert _repair_keys("just a string", Citation) == "just a string"
+
+    def test_enum_repair_walks_a_top_level_list(self) -> None:
+        from decision_lens.llm.base import _repair_enums
+        from decision_lens.models import MissingEvidence
+
+        out = _repair_enums(
+            [
+                {
+                    "id": "M1",
+                    "question": "q",
+                    "impact": "would_change_scope",
+                    "why_it_matters": "w",
+                    "how_to_obtain": "h",
+                }
+            ],
+            MissingEvidence,
+        )
+        assert out[0]["impact"] == "would_refine_scope"  # type: ignore[index]
+
+    def test_enum_repair_leaves_a_scalar_alone(self) -> None:
+        from decision_lens.llm.base import _repair_enums
+        from decision_lens.models import MissingEvidence
+
+        assert _repair_enums(7, MissingEvidence) == 7
+
+    def test_enum_repair_ignores_a_field_the_schema_does_not_declare(self) -> None:
+        from decision_lens.llm.base import _repair_enums
+        from decision_lens.models import MissingEvidence
+
+        assert _repair_enums({"not_a_field": "x"}, MissingEvidence) == {"not_a_field": "x"}
+
+    def test_an_annotation_carrying_no_enum_yields_no_vocabulary(self) -> None:
+        from decision_lens.llm.base import _enum_values
+
+        assert _enum_values(str) == ()
+        assert _enum_values(int | None) == ()
+
+    def test_an_enum_nested_in_a_tuple_annotation_is_found(self) -> None:
+        from decision_lens.llm.base import _enum_values
+        from decision_lens.models import OptionKind
+
+        assert "process_change" in _enum_values(tuple[OptionKind, ...])
+
+    def test_a_match_on_filler_words_alone_is_refused(self) -> None:
+        """Nothing distinguishing was shared, so nothing identifies a winner."""
+        from decision_lens.llm.base import _closest_enum
+
+        assert _closest_enum("alpha gamma", ("alpha beta", "alpha delta")) is None
+
+    def test_two_equally_distinctive_candidates_are_refused(self) -> None:
+        """Both share a word unique to them and score identically. Picking either
+        would be a coin toss dressed up as a correction."""
+        from decision_lens.llm.base import _closest_enum
+
+        assert _closest_enum("red blue", ("red apple", "blue apple")) is None

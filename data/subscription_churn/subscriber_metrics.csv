@@ -1,0 +1,30 @@
+period,metric,value,unit,segment,note
+2026-Q2,monthly_churn_rate,7.2,percent,all,current definition - paused subscribers are not counted as cancellations - synthetic
+2026-Q1,monthly_churn_rate,6.9,percent,all,definition changed on 2026-01-01 - paused subscribers are no longer counted as cancellations - synthetic
+2025-Q4,monthly_churn_rate,7.6,percent,all,prior definition - paused subscribers were counted as cancellations - synthetic
+2025-Q3,monthly_churn_rate,7.1,percent,all,prior definition - synthetic
+2025-Q2,monthly_churn_rate,6.4,percent,all,prior definition - synthetic
+2026-Q2,pause_rate,3.4,percent,all,share of active subscribers pausing per month - synthetic
+2026-Q1,pause_rate,2.9,percent,all,synthetic
+2025-Q4,pause_rate,1.1,percent,all,pause launched 2025-11-03 so this is a partial quarter - synthetic
+2026-Q1,pause_to_cancellation_within_90_days,61.0,percent,paused_cohort,share of subscribers who paused in the quarter and cancelled within 90 days - synthetic
+2026-Q2,share_of_cancellations_within_21_days,62.4,percent,all,synthetic
+2026-Q1,share_of_cancellations_within_21_days,60.9,percent,all,synthetic
+2025-Q2,share_of_cancellations_within_21_days,48.1,percent,all,synthetic
+2026-Q2,median_tenure_days_at_cancellation,19,days,all,synthetic
+2025-Q2,median_tenure_days_at_cancellation,34,days,all,synthetic
+2026-Q2,new_subscriber_day_7_retention,85.3,percent,cohort_2026_Q2,synthetic
+2026-Q2,new_subscriber_day_21_retention,62.0,percent,cohort_2026_Q2,synthetic
+2025-Q4,new_subscriber_day_90_retention,48.6,percent,cohort_2025_Q4,most recent cohort old enough to measure - synthetic
+2025-Q1,new_subscriber_day_90_retention,55.2,percent,cohort_2025_Q1,synthetic
+2026-Q2,first_delivery_issue_reported,11.4,percent,cancelled_within_7_days,subscriber reported a late damaged or incomplete first box - synthetic
+2026-Q2,first_delivery_issue_reported,4.3,percent,retained_at_day_90,synthetic
+2026-Q2,menu_choice_made_before_cutoff,38.2,percent,cancelled_within_7_days,subscribers who did not choose received the default box - synthetic
+2026-Q2,menu_choice_made_before_cutoff,81.7,percent,retained_at_day_90,synthetic
+2026-Q2,active_subscribers,46300,count,all,synthetic
+2026-Q1,active_subscribers,45200,count,all,synthetic
+2025-Q2,active_subscribers,40100,count,all,synthetic
+2026-Q2,new_subscribers_acquired,16400,count,all,synthetic
+2026-Q2,cost_per_retained_subscriber_index,100.0,index,all,synthetic
+2026-Q1,cost_per_retained_subscriber_index,97.5,index,all,synthetic
+2026-Q2,reactivation_rate_within_180_days,,percent,all,synthetic - field exists but was never populated

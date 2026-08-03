@@ -1,0 +1,52 @@
+period,metric,value,unit,segment,note
+2025-Q3,site_mispick_rate,2.5,per_1000_lines,all,synthetic
+2025-Q4,site_mispick_rate,2.6,per_1000_lines,all,synthetic
+2026-Q1,site_mispick_rate,3.0,per_1000_lines,all,synthetic
+2026-Q2,site_mispick_rate,3.9,per_1000_lines,all,synthetic
+2025-Q4,shift_mispick_rate,2.4,per_1000_lines,day_shift_a,synthetic
+2025-Q4,shift_mispick_rate,2.7,per_1000_lines,twilight_shift_b,synthetic
+2025-Q4,shift_mispick_rate,2.9,per_1000_lines,night_shift_c,synthetic
+2026-Q2,shift_mispick_rate,2.3,per_1000_lines,day_shift_a,synthetic
+2026-Q2,shift_mispick_rate,3.7,per_1000_lines,twilight_shift_b,synthetic
+2026-Q2,shift_mispick_rate,7.3,per_1000_lines,night_shift_c,synthetic
+2025-11,aisle_31_44_mispick_rate,2.6,per_1000_lines,aisles_31_44,synthetic
+2025-12,aisle_31_44_mispick_rate,2.7,per_1000_lines,aisles_31_44,synthetic
+2026-01,aisle_31_44_mispick_rate,2.5,per_1000_lines,aisles_31_44,synthetic
+2026-02,aisle_31_44_mispick_rate,6.4,per_1000_lines,aisles_31_44,synthetic - reslot executed 2026-02-09
+2026-03,aisle_31_44_mispick_rate,9.1,per_1000_lines,aisles_31_44,synthetic
+2026-04,aisle_31_44_mispick_rate,9.4,per_1000_lines,aisles_31_44,synthetic
+2026-05,aisle_31_44_mispick_rate,9.5,per_1000_lines,aisles_31_44,synthetic
+2026-06,aisle_31_44_mispick_rate,9.6,per_1000_lines,aisles_31_44,synthetic
+2025-11,all_other_aisles_mispick_rate,2.6,per_1000_lines,all_other_aisles,synthetic
+2025-12,all_other_aisles_mispick_rate,2.6,per_1000_lines,all_other_aisles,synthetic
+2026-01,all_other_aisles_mispick_rate,2.2,per_1000_lines,all_other_aisles,synthetic - label refresh completed in aisles 1 to 30 on 2026-01-30
+2026-02,all_other_aisles_mispick_rate,1.8,per_1000_lines,all_other_aisles,synthetic
+2026-03,all_other_aisles_mispick_rate,1.7,per_1000_lines,all_other_aisles,synthetic
+2026-04,all_other_aisles_mispick_rate,1.6,per_1000_lines,all_other_aisles,synthetic
+2026-05,all_other_aisles_mispick_rate,1.6,per_1000_lines,all_other_aisles,synthetic
+2026-06,all_other_aisles_mispick_rate,1.6,per_1000_lines,all_other_aisles,synthetic
+2026-Q2,aisle_45_52_mispick_rate,1.7,per_1000_lines,aisles_45_52,synthetic - the pick-to-light aisles
+2025-Q4,lines_picked,2500000,count,all,synthetic
+2026-Q1,lines_picked,2300000,count,all,synthetic
+2026-Q2,lines_picked,2400000,count,all,synthetic
+2026-Q2,lines_picked,1080000,count,day_shift_a,synthetic
+2026-Q2,lines_picked,720000,count,twilight_shift_b,synthetic
+2026-Q2,lines_picked,600000,count,night_shift_c,synthetic
+2025-Q4,share_of_lines_in_aisles_31_44,12.0,percent,all,synthetic
+2026-Q2,share_of_lines_in_aisles_31_44,29.6,percent,all,synthetic
+2026-Q2,share_of_lines_in_aisles_31_44,9.0,percent,day_shift_a,synthetic
+2026-Q2,share_of_lines_in_aisles_31_44,26.0,percent,twilight_shift_b,synthetic
+2026-Q2,share_of_lines_in_aisles_31_44,71.0,percent,night_shift_c,synthetic
+2026-Q2,agency_labour_share,12,percent,day_shift_a,synthetic
+2026-Q2,agency_labour_share,28,percent,twilight_shift_b,synthetic
+2026-Q2,agency_labour_share,61,percent,night_shift_c,synthetic
+2026-Q2,median_associate_tenure,41,months,day_shift_a,synthetic
+2026-Q2,median_associate_tenure,19,months,twilight_shift_b,synthetic
+2026-Q2,median_associate_tenure,4,months,night_shift_c,synthetic
+2024-11,monthly_lines_picked,1072000,count,all,synthetic - November is the annual peak
+2025-08,monthly_lines_picked,688000,count,all,synthetic - August is the annual trough
+2024-11,agency_labour_share,39,percent,all,synthetic
+2025-08,agency_labour_share,21,percent,all,synthetic
+2026-Q2,mispicks_intercepted_at_pack_audit,,count,all,synthetic - pack-station audit suspended 2026-01-05; field exists but was never populated
+2026-Q1,trailer_turnaround_minutes,49.2,minutes,all,synthetic
+2026-Q2,trailer_turnaround_minutes,47.5,minutes,all,synthetic

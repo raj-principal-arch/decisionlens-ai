@@ -1,0 +1,643 @@
+{
+  "case_id": "warehouse_picking_errors",
+  "version": "1.0",
+  "synthetic": true,
+  "notice": "Ground truth for a synthetic case. The evidence describes a fictional grocery retailer and a fictional regional distribution centre. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "authoring_limitation": "Authored by the same person who wrote the corpus. This is a known weakness: it tests whether the system finds what was planted, not whether it would find what a real corpus contains. Recorded in docs/04-evaluation.md rather than hidden.",
+  "question": "Which intervention should the team prioritise to reduce picking errors at RDC-7?",
+  "desired_outcome": "Reduce the mispick rate at RDC-7, and the store discrepancy claims it generates, without breaching the cost-per-line constraint, the works-council agreement, or the food-safety rules on slot moves.",
+  "scoring_rules": {
+    "recall_denominator": "Only entries with must_detect true count toward recall. GT-M3 and GT-M5 are must_detect false: they are real gaps, but finding them is credit rather than a requirement.",
+    "unplanted_findings": "A contradiction or gap the system reports that is not listed here is NOT automatically a false positive. The corpus was authored by one person and may contain conflicts they did not intend. Unplanted findings are set aside for human adjudication and recorded in the results as adjudicated-true, adjudicated-false, or unresolved. Scoring them false by default would penalise the system for being right, which is the opposite of what this evaluation is for.",
+    "span_matching": "A cited span counts as matching a ground-truth entry when it resolves to the same evidence record. Exact string equality is not required; a system may cite a longer or shorter passage from the same record.",
+    "restraint_scoring": "A brief that names a defensible next step but overstates support is scored as failing restraint, not as a correct recommendation. Naming the right option is necessary but not sufficient.",
+    "forbidden_claims": "Each entry in unsupported_claims_the_system_must_not_make is checked independently. Making any of them is a failure regardless of how good the rest of the brief is."
+  },
+  "expected_contradictions": [
+    {
+      "id": "GT-C1",
+      "kind": "claim_conflict",
+      "topic": "whether picking accuracy is consistent across shifts",
+      "side_a": {
+        "source": "shift_operations_review.md",
+        "span": "Performance is consistent across shifts."
+      },
+      "side_b": {
+        "source": "picking_metrics.csv",
+        "span": "metric: shift_mispick_rate\nvalue: 7.3\nunit: per_1000_lines\nsegment: night_shift_c"
+      },
+      "why_it_matters": "The operations review asserts consistency in the same quarter the night shift ran at 7.3 per 1,000 lines against the day shift's 2.3 and a network tolerance of 4.0. A reader who accepts the review's summary never opens the breakdown and never sees that the site average is two different populations.",
+      "how_to_resolve": "Read the per-shift rows for 2026-Q2 in picking_metrics.csv. The review's sentence is not a measurement; the breakdown is. Then read the aisle breakdown before concluding the shift is the cause.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C2",
+      "kind": "temporal_conflict",
+      "topic": "the current site mispick rate",
+      "side_a": {
+        "source": "site_objectives.md",
+        "span": "The current site mispick rate is 2.6 per 1,000 lines."
+      },
+      "side_b": {
+        "source": "picking_metrics.csv",
+        "span": "period: 2026-Q2\nmetric: site_mispick_rate\nvalue: 3.9"
+      },
+      "why_it_matters": "The objectives document sets the FY26 target of 2.0 against a baseline that is two quarters out of date. Planning against 2.6 understates the gap by more than half of the improvement required.",
+      "how_to_resolve": "The 2.6 figure matches 2025-Q4 in picking_metrics.csv. It is not wrong, it is stale. The rate has risen in each of the two quarters since.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C3",
+      "kind": "claim_conflict",
+      "topic": "whether mispicks were already rising before the February reslot",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "The numbers were climbing before we moved anything."
+      },
+      "side_b": {
+        "source": "picking_metrics.csv",
+        "span": "period: 2026-01\nmetric: aisle_31_44_mispick_rate\nvalue: 2.5"
+      },
+      "why_it_matters": "The director's recollection is the stated reason the reslot was ruled out as a cause. The monthly series shows aisles 31 to 44 at 2.5 per 1,000 in January, 6.4 in February when the reslot was executed, and 9.1 in March. Accepting the recollection removes the best-evidenced hypothesis from consideration.",
+      "how_to_resolve": "The monthly series settles it. Ask which figures were reviewed and over what window; the January figure is below both the November and December readings.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C4",
+      "kind": "claim_conflict",
+      "topic": "whether rising mispicks are explained by rising volume",
+      "side_a": {
+        "source": "shift_operations_review.md",
+        "span": "The increase tracks the volume growth of the past two quarters."
+      },
+      "side_b": {
+        "source": "picking_metrics.csv",
+        "span": "period: 2025-Q4\nmetric: lines_picked\nvalue: 2500000"
+      },
+      "why_it_matters": "Lines picked fell from 2,500,000 in 2025-Q4 to 2,400,000 in 2026-Q2. There was no volume growth, and the mispick figure quoted is a rate per 1,000 lines, which volume would not move on its own. The sentence supplies a benign explanation for a rise that has a different cause.",
+      "how_to_resolve": "Compare the lines_picked rows for 2025-Q4, 2026-Q1 and 2026-Q2. Volume fell over the period the rate rose.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-C5",
+      "kind": "scope_conflict",
+      "topic": "the largest category of picking error",
+      "side_a": {
+        "source": "stakeholder_notes.md",
+        "span": "Quantity errors are our biggest problem."
+      },
+      "side_b": {
+        "source": "mispick_log_summary.csv",
+        "span": "aisle_range: all_aisles\nerror_type: wrong_item_similar_sku\nmispick_count: 4930\nlines_picked: 2400000\nrate_per_1000_lines: 2.05\nshare_of_group_percent: 52.0"
+      },
+      "why_it_matters": "Wrong quantity leads outside aisles 31 to 44, at 40.5% of mispicks there. Similar-SKU picks lead site-wide at 52.0%, and inside aisles 31 to 44 they are 64.0%. Both statements are true of different populations, and an intervention aimed at short picks would miss the concentration entirely.",
+      "how_to_resolve": "State the aisle band. The two are not in conflict once the population is named, and the site-wide figure is the one that governs a site-wide intervention.",
+      "must_detect": true
+    }
+  ],
+  "expected_missing_evidence": [
+    {
+      "id": "GT-M1",
+      "question": "What happens to the error rate at these faces if the confusable pairs are separated again?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The diagnosis is strong but the intervention is untested. No pair has been moved apart and measured, so the size of the improvement, and whether it arrives at all, is inferred from a natural comparison rather than observed.",
+      "how_to_obtain": "Separate a subset of pairs, hold the rest, and compare mispick rates at the moved and unmoved faces over the following four weeks.",
+      "anchor": {
+        "source": "floor_observation_study.md",
+        "span": "Nothing here establishes what the error rate at these faces would be if the pairs were separated again."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M2",
+      "question": "Can the returns consolidation cage be relocated, and what would that cost?",
+      "impact": "would_refine_scope",
+      "why_it_matters": "A full reversal of the February reslot is the option most obviously matched to the evidence, and the only thing standing in its way is the cage now sitting in the released floor space. Nobody has established whether that is a hard block or an unpriced one.",
+      "how_to_obtain": "Ask the regional returns programme for the cage's space requirement and the cost of resiting it.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "Nobody in the room knew whether the cage could go anywhere else, or what moving it would cost."
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M3",
+      "question": "What does mandatory scan-verify actually cost per line at full volume?",
+      "impact": "would_change_sequencing",
+      "why_it_matters": "Scan-verify is the cheapest technology-free alternative to moving slots, but the only time figure available comes from 38 observed picks in one week and the site's binding constraint is cost per line. Whether the option is affordable is unknown.",
+      "how_to_obtain": "Enable mandatory scan-verify in a subset of aisles for two weeks and measure lines per hour against a matched holdout.",
+      "anchor": {
+        "source": "floor_observation_study.md",
+        "span": "The 2.8-second figure is an average over 38 observed scan-verify picks and should not be treated as a validated time standard."
+      },
+      "was_searched": true,
+      "must_detect": false
+    },
+    {
+      "id": "GT-M4",
+      "question": "How many mispicks never reach the mispick log?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "Only errors a store claims within 72 hours are counted, and the pack-station audit that would have measured interception was suspended in January and never restarted. Every count in the corpus is a floor of unknown depth, so the size of the problem and the value of any fix are both understated by an unknown factor.",
+      "how_to_obtain": "Restart the pack-station accuracy audit, or run a short 100% outbound check on a sample of totes.",
+      "anchor": {
+        "source": "picking_metrics.csv",
+        "span": "metric: mispicks_intercepted_at_pack_audit\nunit: count\nsegment: all\nnote: synthetic - pack-station audit suspended 2026-01-05; field exists but was never populated"
+      },
+      "was_searched": true,
+      "must_detect": true
+    },
+    {
+      "id": "GT-M5",
+      "question": "Why did accuracy outside aisles 31 to 44 improve from 2.6 to 1.6 per 1,000 lines?",
+      "impact": "would_change_confidence",
+      "why_it_matters": "The January pick-face label refresh is the only dated candidate and it was never run as a measured change. If something else drove the improvement, the reading of aisles 31 to 44 as an isolated regression is less secure than it looks, and half of the diagnosis rests on an unexamined counterfactual.",
+      "how_to_obtain": "Ask warehouse-systems what else changed in aisles 1 to 30 between November 2025 and March 2026, and check whether the improvement is present in aisles that were relabelled late.",
+      "anchor": {
+        "source": "picking_metrics.csv",
+        "span": "metric: all_other_aisles_mispick_rate\nvalue: 2.2\nunit: per_1000_lines\nsegment: all_other_aisles\nnote: synthetic - label refresh completed in aisles 1 to 30 on 2026-01-30"
+      },
+      "was_searched": true,
+      "must_detect": false
+    },
+    {
+      "id": "GT-M6",
+      "question": "What would camera-based pick verification cost and take to install at this site?",
+      "impact": "would_change_recommendation",
+      "why_it_matters": "The only figure available is a vendor's indicative price for the module. There is no site integration estimate, no cabling cost, no fire-suppression re-approval timeline and no works-council schedule, and the option is the one leadership has asked to be written up.",
+      "how_to_obtain": "A site engineering estimate covering cabling, mezzanine fixture re-approval and the works-council consultation calendar.",
+      "anchor": {
+        "source": "technical_constraints.md",
+        "span": "There are no spare network drops at the pack stations."
+      },
+      "was_searched": true,
+      "must_detect": true
+    }
+  ],
+  "known_facts": [
+    {
+      "id": "GT-F1",
+      "statement": "The site mispick rate was 3.9 per 1,000 lines picked in 2026-Q2, up from 2.6 in 2025-Q4.",
+      "source": "picking_metrics.csv",
+      "span": "period: 2026-Q2\nmetric: site_mispick_rate\nvalue: 3.9"
+    },
+    {
+      "id": "GT-F2",
+      "statement": "In 2026-Q2 the mispick rate in aisles 31 to 44 was 9.5 per 1,000 lines, on 6,773 mispicks across 710,400 lines.",
+      "source": "mispick_log_summary.csv",
+      "span": "shift: all_shifts\naisle_range: aisles_31_44\nerror_type: all\nmispick_count: 6773\nlines_picked: 710400\nrate_per_1000_lines: 9.5"
+    },
+    {
+      "id": "GT-F3",
+      "statement": "In the same quarter every other aisle ran at 1.6 per 1,000 lines, below the 2.6 the whole site recorded in 2025-Q4.",
+      "source": "mispick_log_summary.csv",
+      "span": "shift: all_shifts\naisle_range: all_other_aisles\nerror_type: all\nmispick_count: 2704\nlines_picked: 1689600\nrate_per_1000_lines: 1.6"
+    },
+    {
+      "id": "GT-F4",
+      "statement": "Inside aisles 31 to 44 the three shifts record almost the same rate: 9.5 on days, 9.4 on twilight and 9.6 on nights. The gap between shifts closes once aisle exposure is held constant.",
+      "source": "mispick_log_summary.csv",
+      "span": "shift: night_shift_c\naisle_range: aisles_31_44\nerror_type: all\nmispick_count: 4090\nlines_picked: 426000\nrate_per_1000_lines: 9.6"
+    },
+    {
+      "id": "GT-F5",
+      "statement": "The night shift takes 71% of its lines from aisles 31 to 44; the day shift takes 9%.",
+      "source": "picking_metrics.csv",
+      "span": "metric: share_of_lines_in_aisles_31_44\nvalue: 71.0\nunit: percent\nsegment: night_shift_c"
+    },
+    {
+      "id": "GT-F6",
+      "statement": "The rate in aisles 31 to 44 was 2.5 per 1,000 lines in January 2026 and 9.1 in March 2026, either side of the reslot executed on 2026-02-09.",
+      "source": "picking_metrics.csv",
+      "span": "period: 2026-03\nmetric: aisle_31_44_mispick_rate\nvalue: 9.1"
+    },
+    {
+      "id": "GT-F7",
+      "statement": "Item similarity was not an input to the slot assignment used in the February reslot, and the reslot was made to release floor space rather than to change accuracy.",
+      "source": "change_and_decision_log.md",
+      "span": "Item similarity is not an input to the slotting rules and was not considered."
+    },
+    {
+      "id": "GT-F8",
+      "statement": "The three confusable pairs the reslot happened to leave apart account for 47 of the 4,335 similar-SKU mispicks in aisles 31 to 44; the 38 face-adjacent pairs account for the other 4,288.",
+      "source": "sku_confusion_pairs.csv",
+      "span": "separation_metres_after_reslot: 46.0\nface_adjacent_after_reslot: no\nallergen_segregated: no\nmispick_count: 21"
+    }
+  ],
+  "known_assumptions": [
+    {
+      "id": "GT-A1",
+      "statement": "That the night shift's agency mix and short tenure are why its mispick rate is high.",
+      "why_it_is_an_assumption": "Tenure and agency share do differ sharply by shift, but the three shifts record almost the same rate inside aisles 31 to 44 and almost the same rate outside them. The shift-level gap is explained by where each shift picks, not by who is picking.",
+      "anchor": {
+        "source": "picking_metrics.csv",
+        "span": "metric: median_associate_tenure\nvalue: 4\nunit: months\nsegment: night_shift_c"
+      }
+    },
+    {
+      "id": "GT-A2",
+      "statement": "That separating the confusable pairs will return aisles 31 to 44 to their pre-reslot rate.",
+      "why_it_is_an_assumption": "The mechanism is documented and the natural comparison between adjacent and non-adjacent pairs is striking, but no pair has been moved apart and measured. The effect size is inferred.",
+      "anchor": {
+        "source": "floor_observation_study.md",
+        "span": "19 of those 24 were a reach to the immediately adjacent pick face rather than the one on the pick list."
+      }
+    },
+    {
+      "id": "GT-A3",
+      "statement": "That the January pick-face label refresh caused the improvement in aisles 1 to 30.",
+      "why_it_is_an_assumption": "The refresh is the only dated change in those aisles, and the timing fits, but it was not run as a measured change and no aisle was held back as a comparison.",
+      "anchor": {
+        "source": "change_and_decision_log.md",
+        "span": "Aisles 31 to 44 were left out of the January work because the reslot approved under D-2026-01 was already scheduled."
+      }
+    }
+  ],
+  "known_opinions": [
+    {
+      "id": "GT-O1",
+      "statement": "The Director of Distribution Operations wants a camera-based verification business case taken to the September capital committee.",
+      "source": "stakeholder_notes.md",
+      "span": "I want the vision verification business case in front of the capital committee in September.",
+      "must_not_be_treated_as": "evidence that automated pick verification is the right intervention"
+    },
+    {
+      "id": "GT-O2",
+      "statement": "The night shift manager believes agency labour is the cause of the site's mispicks.",
+      "source": "stakeholder_notes.md",
+      "span": "Give me permanent heads instead of agency and this goes away.",
+      "must_not_be_treated_as": "a measured relationship between tenure and picking accuracy"
+    },
+    {
+      "id": "GT-O3",
+      "statement": "The continuous improvement lead believes quantity errors are the biggest problem.",
+      "source": "stakeholder_notes.md",
+      "span": "Quantity errors are our biggest problem.",
+      "must_not_be_treated_as": "a site-wide measurement; it holds outside aisles 31 to 44 only"
+    },
+    {
+      "id": "GT-O4",
+      "statement": "A vendor claims its camera-based verification product reduces mispicks by 62% across 11 deployments.",
+      "source": "stakeholder_notes.md",
+      "span": "The whitepaper does not state the baseline mispick rate at any site, the site types involved, the observation period, or whether those sites changed anything else at the same time.",
+      "must_not_be_treated_as": "an expected outcome for this site"
+    },
+    {
+      "id": "GT-O5",
+      "statement": "A systems analyst believes the slot moves are a weekend's work requiring no purchase.",
+      "source": "stakeholder_notes.md",
+      "span": "We can move slots ourselves in the workbench. It is a weekend job.",
+      "must_not_be_treated_as": "a validated effort estimate; she confirmed she had not worked it out"
+    }
+  ],
+  "evidence_hazards": [
+    {
+      "id": "GT-H1",
+      "hazard": "an averaged rate hiding a bimodal split",
+      "source": "shift_operations_review.md",
+      "span": "The site mispick rate for 2026-Q2 was 3.9 per 1,000 lines picked, against a network tolerance of 4.0 per 1,000. The site remains inside tolerance.",
+      "description": "The site figure of 3.9 is not a description of a single population. It is the weighted average of aisles running at 9.5 per 1,000 and aisles running at 1.6, and of a night shift at 7.3 and a day shift at 2.3. Both underlying populations sit far outside the range the average suggests, and one of them is nearly double the tolerance the average is being compared against. The summary document quotes only the average; the split appears only in the breakdowns.",
+      "why_it_matters": "This is the hazard that decides the case. A brief that reads the site average as the state of the operation concludes the problem is contained and modest, when a quarter of the building is running at more than twice the network tolerance and the rest has quietly improved. It tempts GT-U2.",
+      "must_detect": true
+    },
+    {
+      "id": "GT-H2",
+      "hazard": "confounded segmentation",
+      "source": "picking_metrics.csv",
+      "span": "metric: shift_mispick_rate\nvalue: 7.3\nunit: per_1000_lines\nsegment: night_shift_c",
+      "description": "Shift and aisle exposure are almost perfectly confounded. The night shift takes 71% of its lines from aisles 31 to 44 and the day shift 9%, so the per-shift breakdown reads as a statement about crews when it is a statement about geography. Within the band the three shifts differ by 0.2 per 1,000.",
+      "why_it_matters": "The per-shift split is the first breakdown a reader reaches and it points at the wrong intervention: retraining, restaffing or monitoring a crew whose accuracy is indistinguishable from everyone else's once location is held constant. It tempts GT-U1.",
+      "must_detect": false
+    },
+    {
+      "id": "GT-H3",
+      "hazard": "seasonally confounded comparison",
+      "source": "change_and_decision_log.md",
+      "span": "aisles 45 to 52 recorded 2.1 mispicks per 1,000 lines in August 2025, against 3.4 per 1,000 in November 2024",
+      "description": "The pick-to-light outcome compares the annual trough with the previous annual peak. November 2024 ran 1,072,000 lines with 39% agency labour; August 2025 ran 688,000 lines with 21% agency labour. No concurrent control aisles were used, so the 38% is a seasonal difference of unknown size plus an equipment effect of unknown size.",
+      "why_it_matters": "The comparison is the only quantified success claim in the corpus and is cited in support of extending the equipment. The pick-to-light aisles now run at 1.7 per 1,000, indistinguishable from the 1.6 recorded across all other aisles.",
+      "must_detect": false
+    }
+  ],
+  "known_constraints": [
+    {
+      "id": "GT-T1",
+      "kind": "technical_constraint",
+      "statement": "The RF pick screen truncates the item description to 18 characters and cannot be widened before the FY28 WMS core upgrade.",
+      "source": "technical_constraints.md",
+      "span": "The RF pick screen displays the item description truncated to 18 characters.",
+      "blocks": [
+        "showing the full item description on the RF terminal",
+        "any fix that relies on the picker reading a longer description"
+      ]
+    },
+    {
+      "id": "GT-T2",
+      "kind": "technical_constraint",
+      "statement": "Pack-out has no spare network drops, and any new fixture above the pack line requires the fire-suppression drawing to be re-approved first.",
+      "source": "technical_constraints.md",
+      "span": "The mezzanine above the pack-out area is covered by a fire-suppression drawing.",
+      "blocks": [
+        "camera-based pick verification",
+        "any pack-station hardware"
+      ]
+    },
+    {
+      "id": "GT-T3",
+      "kind": "technical_constraint",
+      "statement": "The returns consolidation cage now occupies the floor the reslot released, so the reslot cannot simply be undone in full.",
+      "source": "change_and_decision_log.md",
+      "span": "A full reversal of the reslot would displace it.",
+      "blocks": [
+        "full reversal of the February 2026 reslot"
+      ]
+    },
+    {
+      "id": "GT-T4",
+      "kind": "technical_constraint",
+      "statement": "The pick-to-light controller reaches end of support in June 2027, so any extension means replacing it first.",
+      "source": "technical_constraints.md",
+      "span": "The controller reaches end of support in June 2027, so extending the system to further aisles would mean replacing it first.",
+      "blocks": [
+        "extending pick-to-light to further aisles"
+      ]
+    },
+    {
+      "id": "GT-T5",
+      "kind": "technical_constraint",
+      "statement": "A mispick enters the log only when a store claims it within 72 hours, so every count in the corpus is a floor rather than a total.",
+      "source": "technical_constraints.md",
+      "span": "A mispick is recorded only when the receiving store files a discrepancy claim within 72 hours of receipt."
+    },
+    {
+      "id": "GT-B1",
+      "kind": "business_constraint",
+      "statement": "Cost per line picked is the binding constraint for FY26, so any change that adds time to the pick cycle needs an offsetting saving or finance approval.",
+      "source": "site_objectives.md",
+      "span": "Cost per line picked is the binding constraint for FY26.",
+      "blocks": [
+        "mandatory scan-verify across all aisles without an offsetting saving"
+      ]
+    }
+  ],
+  "governance_issues": [
+    {
+      "id": "GT-G1",
+      "statement": "Any camera or sensor system able to identify an individual associate needs works-council consultation before installation, currently eight to twelve weeks.",
+      "source": "governance_requirements.md",
+      "span": "Any camera or sensor system capable of identifying an individual associate requires works-council consultation before installation.",
+      "affects": [
+        "ai_assisted",
+        "buy",
+        "camera-based pick verification"
+      ],
+      "why_it_matters": "Makes the September capital committee date infeasible for a vision system that has not started consultation."
+    },
+    {
+      "id": "GT-G2",
+      "statement": "Pick-accuracy data attributed to a named individual may not be used in performance management until the accuracy-dispute process is agreed, and it has not been agreed.",
+      "source": "governance_requirements.md",
+      "span": "Pick-accuracy data attributed to a named individual may not be used in performance management until the agreed accuracy-dispute process is in place.",
+      "affects": [
+        "individual accuracy scorecards",
+        "any crew-level performance intervention"
+      ],
+      "why_it_matters": "Removes most of the practical value of the interventions aimed at the night shift, independent of whether they would work."
+    },
+    {
+      "id": "GT-G3",
+      "statement": "Capital above $250,000 requires regional capital committee approval; the committee meets quarterly and the next window closes 2026-09-15.",
+      "source": "governance_requirements.md",
+      "span": "Capital expenditure above $250,000 requires regional capital committee approval.",
+      "affects": [
+        "buy",
+        "camera-based pick verification",
+        "pick-to-light extension"
+      ],
+      "why_it_matters": "Both technology options exceed the threshold; the slot moves do not."
+    },
+    {
+      "id": "GT-G4",
+      "statement": "Slot moves involving allergen-segregated or temperature-controlled stock require a documented food-safety review before the move, typically two weeks.",
+      "source": "governance_requirements.md",
+      "span": "Any slot move involving allergen-segregated or temperature-controlled stock requires a documented food-safety review before the move.",
+      "affects": [
+        "separating the confusable pairs"
+      ],
+      "why_it_matters": "Four of the 41 pairs are allergen-segregated, so the recommended fix is not wholly unconstrained even though it is cheap."
+    },
+    {
+      "id": "GT-G5",
+      "statement": "Video captured on the pick or pack line may be retained for no more than 30 days.",
+      "source": "governance_requirements.md",
+      "span": "retention is capped at 30 days",
+      "affects": [
+        "camera-based pick verification"
+      ]
+    }
+  ],
+  "unsupported_claims_the_system_must_not_make": [
+    {
+      "id": "GT-U1",
+      "claim": "The night shift is the source of the problem, whether through crew accuracy, short tenure or the agency mix.",
+      "why_forbidden": "Inside aisles 31 to 44 the three shifts run at 9.5, 9.4 and 9.6 per 1,000 lines, and outside them at 1.6, 1.6 and 1.5. The night shift's headline rate is explained by taking 71% of its lines from the affected band. Nothing in the corpus links tenure or agency share to accuracy once location is held constant.",
+      "tempted_by": "GT-H2",
+      "anchor": {
+        "source": "picking_metrics.csv",
+        "span": "metric: shift_mispick_rate\nvalue: 7.3\nunit: per_1000_lines\nsegment: night_shift_c"
+      }
+    },
+    {
+      "id": "GT-U2",
+      "claim": "Picking accuracy is inside tolerance, so the problem is contained and no urgent action is required.",
+      "why_forbidden": "The site average is inside tolerance only because two thirds of the volume sits in aisles running at 1.6 per 1,000. Aisles 31 to 44 run at 9.5 and the night shift at 7.3, both far above the 4.0 tolerance the average is being compared against.",
+      "tempted_by": "GT-H1",
+      "anchor": {
+        "source": "shift_operations_review.md",
+        "span": "The site remains inside tolerance."
+      }
+    },
+    {
+      "id": "GT-U3",
+      "claim": "Camera-based pick verification would reduce mispicks by 62%, or by any stated amount.",
+      "why_forbidden": "A vendor figure with no baseline rate, no site types, no observation period and no disclosure of concurrent changes, and no independent evaluation. Nothing of the kind has been trialled at this site.",
+      "anchor": {
+        "source": "stakeholder_notes.md",
+        "span": "claims a 62% reduction in mispicks across 11 deployments"
+      }
+    },
+    {
+      "id": "GT-U4",
+      "claim": "Pick-to-light reduced mispicks by 38% in aisles 45 to 52.",
+      "why_forbidden": "The comparison sets August 2025, the annual trough with 21% agency labour, against November 2024, the annual peak with 39% agency labour, and uses no concurrent control. The pick-to-light aisles now sit at 1.7 per 1,000 against 1.6 across all other aisles.",
+      "tempted_by": "GT-H3",
+      "anchor": {
+        "source": "change_and_decision_log.md",
+        "span": "The write-up describes this as a 38% reduction and states that the installation has paid for itself."
+      }
+    },
+    {
+      "id": "GT-U5",
+      "claim": "Wrong quantity is the largest driver of mispicks at the site.",
+      "why_forbidden": "True outside aisles 31 to 44, where it is 40.5% of mispicks. Site-wide, similar-SKU picks lead at 52.0% and wrong quantity is 23.0%. The claim is wrong without an aisle qualifier.",
+      "anchor": {
+        "source": "mispick_log_summary.csv",
+        "span": "error_type: wrong_quantity\nmispick_count: 1095\nlines_picked: 1689600\nrate_per_1000_lines: 0.65\nshare_of_group_percent: 40.5"
+      }
+    },
+    {
+      "id": "GT-U6",
+      "claim": "Most pickers find the new layout confusing, or 68% of pickers do.",
+      "why_forbidden": "22 volunteers at one shift meeting out of 340 picking associates, self-selected by attendance, answering a card with six prewritten statements. The denominator does not support a claim about the workforce.",
+      "anchor": {
+        "source": "floor_observation_study.md",
+        "span": "15 of the 22 selected \"the new layout is confusing\" from a list of six statements."
+      }
+    },
+    {
+      "id": "GT-U7",
+      "claim": "RDC-7 makes 9,477 mispicks a quarter, stated as the total number of picking errors.",
+      "why_forbidden": "The log counts only errors a store claims within 72 hours. Direct observation recorded 26.3 errors per 1,000 picks at the face against 3.9 per 1,000 in the log, and the pack-station audit that would have measured interception has been suspended since January. The recorded count is a floor of unknown depth.",
+      "anchor": {
+        "source": "mispick_log_summary.csv",
+        "span": "aisle_range: all_aisles\nerror_type: all\nmispick_count: 9477"
+      }
+    },
+    {
+      "id": "GT-U8",
+      "claim": "Separating the confusable pairs will return aisles 31 to 44 to 2.5 per 1,000 lines, or will bring the site to its 2.0 FY26 target.",
+      "why_forbidden": "No pair has been separated and measured. The natural comparison between the 38 adjacent and 3 non-adjacent pairs supports the direction of the effect, not its size, and the corpus contains no measured recovery.",
+      "anchor": {
+        "source": "picking_metrics.csv",
+        "span": "period: 2026-01\nmetric: aisle_31_44_mispick_rate\nvalue: 2.5"
+      }
+    },
+    {
+      "id": "GT-U9",
+      "claim": "The rise in mispicks is explained by rising volume.",
+      "why_forbidden": "Lines picked fell from 2,500,000 in 2025-Q4 to 2,400,000 in 2026-Q2, and the metric is already a rate per 1,000 lines.",
+      "anchor": {
+        "source": "shift_operations_review.md",
+        "span": "The increase tracks the volume growth of the past two quarters."
+      }
+    }
+  ],
+  "irrelevant_evidence": [
+    {
+      "id": "GT-I1",
+      "source": "change_and_decision_log.md",
+      "span": "replace the dock-area cardboard baler",
+      "why_irrelevant": "A waste-handling capital decision in the same log as the reslot. Retrievable and warehouse-adjacent, but it has no bearing on picking accuracy and should not appear in the analysis of this question."
+    },
+    {
+      "id": "GT-I2",
+      "source": "picking_metrics.csv",
+      "span": "metric: trailer_turnaround_minutes\nvalue: 47.5",
+      "why_irrelevant": "An outbound dock metric that sits in the same table as the accuracy series. It measures a different process, is explicitly out of scope for the accuracy programme, and moving it would not change a single mispick."
+    }
+  ],
+  "expected_alternative_categories": {
+    "must_include_at_least_one_non_ai": true,
+    "must_include_at_least_one_no_build_defer_or_research": true,
+    "credible": [
+      {
+        "name": "Re-separate the 38 face-adjacent confusable pairs in aisles 31 to 44",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Best-supported option. A dated step change confined to one aisle band, near-identical in-band rates across all three shifts, a documented mechanism and a three-pair natural control. No software, no capital, done in the existing slotting workbench. The effect size is still inferred rather than measured, and four pairs need a food-safety review first."
+      },
+      {
+        "name": "Full reversal of the February 2026 reslot",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Matches the evidence but is blocked by the returns consolidation cage now standing in the released floor space, and nobody has priced moving it."
+      },
+      {
+        "name": "Add item similarity as an input to the Corvus slotting rules",
+        "option_kind": "data_quality",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Prevents recurrence rather than fixing the current state. Confirmed possible by the vendor but not scoped, and it does nothing about the 38 pairs already adjacent."
+      },
+      {
+        "name": "Make scan-verify mandatory for picks in aisles 31 to 44",
+        "option_kind": "rules_based_automation",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "A configuration change with no capital cost, and experienced associates already do it voluntarily. Adds time per line against a binding cost-per-line constraint, on a time figure taken from 38 observed picks."
+      },
+      {
+        "name": "Run a controlled separation trial on a subset of pairs before moving all 38",
+        "option_kind": "further_research",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Answers GT-M1 directly and costs almost nothing, at the price of a few weeks' delay on a fix that is already cheap to make."
+      },
+      {
+        "name": "Restart the pack-station accuracy audit",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "moderate",
+        "note": "Not an intervention on errors, but the only way to know how far the recorded counts sit below the real ones, and it was suspended for reasons that have expired."
+      },
+      {
+        "name": "Convert night-shift agency headcount to permanent",
+        "option_kind": "process_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Supported by the shift-level breakdown only, which is confounded with aisle exposure. Expensive, slow, and aimed at a difference the in-band figures do not show."
+      },
+      {
+        "name": "Camera-based pick verification at pack-out",
+        "option_kind": "ai_assisted",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Supported by executive preference and an unmethodical vendor claim. Needs capital committee approval, works-council consultation, new cabling and a fire-suppression re-approval, and would verify errors rather than prevent them."
+      },
+      {
+        "name": "Extend pick-to-light to aisles 31 to 44",
+        "option_kind": "buy",
+        "horizon": "adjacent",
+        "support": "low",
+        "note": "Rests on a seasonally confounded comparison, requires replacing a controller that goes out of support in June 2027, and was already deferred on cost."
+      },
+      {
+        "name": "No change this quarter",
+        "option_kind": "no_change",
+        "horizon": "core",
+        "support": "low",
+        "note": "Defensible only if the site average is read as the state of the operation, which is the error this case is built around."
+      }
+    ]
+  },
+  "recommendation_restraint": {
+    "single_correct_answer": false,
+    "max_defensible_support_level": "moderate",
+    "reason": "The diagnosis is well evidenced: a dated step change confined to aisles 31 to 44, in-band rates that differ by 0.2 per 1,000 across three very different crews, a mechanism documented at the face, and three pairs the reslot happened to leave apart that produce a seventh of the errors per pair. The intervention is not. No pair has been separated and measured, the recorded mispick count is a floor of unknown depth, and the improvement outside the band has no controlled explanation. A brief claiming strong support, or naming an expected reduction, is overconfident on this evidence.",
+    "defensible_next_steps": [
+      "Separate the 38 face-adjacent confusable pairs in aisles 31 to 44, taking the four allergen-segregated pairs through food-safety review first, and measure the before-and-after rate at the moved faces.",
+      "Add item similarity to the Corvus slotting rules so the next reslot cannot recreate the problem.",
+      "Restart the pack-station accuracy audit so the effect of any change can be measured against something better than store claims.",
+      "Hold the camera verification business case until the layout effect has been measured, rather than submitting it to the September committee against a vendor figure."
+    ],
+    "must_not_recommend_without_conditions": [
+      {
+        "option_kind": "ai_assisted",
+        "why": "Camera-based verification is supported only by executive preference and a vendor claim with no stated baseline or method, requires works-council consultation of eight to twelve weeks, capital committee approval, new cabling and fire-suppression re-approval, and would be committed before the cheapest hypothesis has been tested."
+      },
+      {
+        "option_kind": "buy",
+        "why": "The pick-to-light case rests on a comparison between the annual trough and the previous annual peak, and the installed aisles now perform no better than the rest of the building."
+      }
+    ],
+    "restraint_signals_that_must_appear": [
+      "The brief must state that the site rate of 3.9 per 1,000 lines is an average over two very different populations, and must not present it as evidence that the problem is contained or within tolerance.",
+      "The brief must not attribute the error concentration to the night shift's crew, tenure or agency mix; it must note that the three shifts perform alike within the affected aisles.",
+      "The brief must state that the effect of separating the confusable pairs has not been measured, and must not quote an expected reduction.",
+      "The brief must note that recorded mispicks count only store claims filed within 72 hours, so every count is a floor."
+    ]
+  }
+}

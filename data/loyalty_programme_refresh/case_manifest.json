@@ -1,0 +1,101 @@
+{
+  "case_id": "loyalty_programme_refresh",
+  "synthetic": true,
+  "notice": "All evidence in this directory is synthetic and fictional. It describes an invented pharmacy chain, an invented loyalty programme and an invented acquisition. No real Walmart data is used and no access to any Walmart system is claimed.",
+  "question": "Which intervention should the team prioritise to improve loyalty programme engagement?",
+  "desired_outcome": "Increase the number of members who actively earn and redeem, and grow member share of transactions, without increasing promotional margin and without creating pharmacy-data, consent or promotions-compliance risk.",
+  "product_area": "loyalty",
+  "as_of": "2026-08-02",
+  "files": {
+    "programme_objectives.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2025-01-16",
+      "updated_at": "2025-02-14",
+      "owner": "programme-leadership",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty",
+      "labels": ["synthetic", "objectives", "okr"]
+    },
+    "engagement_metrics.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2024-07-05",
+      "updated_at": "2026-07-20",
+      "owner": "analytics",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty",
+      "labels": ["synthetic", "metrics"]
+    },
+    "member_research_2023.md": {
+      "evidence_type": "qualitative_research",
+      "created_at": "2023-10-02",
+      "updated_at": "2023-11-28",
+      "owner": "insight",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty",
+      "labels": ["synthetic", "voice-of-member", "research"]
+    },
+    "competitive_scan_2024.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2024-02-19",
+      "updated_at": "2024-03-22",
+      "owner": "strategy",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty",
+      "labels": ["synthetic", "competitive", "desk-research"]
+    },
+    "member_segmentation_2024.csv": {
+      "evidence_type": "quantitative_metric",
+      "created_at": "2024-08-30",
+      "updated_at": "2024-08-30",
+      "owner": "analytics",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty",
+      "labels": ["synthetic", "segmentation"]
+    },
+    "membership_operations_log.md": {
+      "evidence_type": "operational_record",
+      "created_at": "2025-01-06",
+      "updated_at": "2026-06-30",
+      "owner": "member-operations",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty",
+      "labels": ["synthetic", "operations", "member-database"]
+    },
+    "prior_decisions.md": {
+      "evidence_type": "prior_decision",
+      "created_at": "2025-05-02",
+      "updated_at": "2026-01-20",
+      "owner": "programme-leadership",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty",
+      "labels": ["synthetic", "decisions"]
+    },
+    "governance_requirements.md": {
+      "evidence_type": "governance_policy",
+      "created_at": "2025-09-01",
+      "updated_at": "2026-03-10",
+      "owner": "legal-privacy",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty,legal",
+      "labels": ["synthetic", "governance", "privacy", "pharmacy"]
+    },
+    "platform_constraints.md": {
+      "evidence_type": "strategy_document",
+      "created_at": "2025-10-01",
+      "updated_at": "2025-11-20",
+      "owner": "engineering",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty",
+      "labels": ["synthetic", "constraints", "technical"]
+    },
+    "stakeholder_notes.md": {
+      "evidence_type": "stakeholder_input",
+      "created_at": "2026-07-21",
+      "updated_at": "2026-07-21",
+      "owner": "programme-leadership",
+      "product_area": "loyalty",
+      "permission_scope": "pm-loyalty",
+      "labels": ["synthetic", "stakeholder", "opinion"]
+    }
+  }
+}

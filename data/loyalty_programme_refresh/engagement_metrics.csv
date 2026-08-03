@@ -1,0 +1,48 @@
+period,metric,value,unit,segment,note
+2024-Q2,engaged_members_quarter,748000,count,all,members with at least one earn or redeem event in the quarter - synthetic
+2024-Q3,engaged_members_quarter,742000,count,all,synthetic
+2024-Q4,engaged_members_quarter,738000,count,all,synthetic
+2025-Q1,engaged_members_quarter,726000,count,all,synthetic
+2025-Q2,engaged_members_quarter,715000,count,all,synthetic
+2025-Q3,engaged_members_quarter,709000,count,all,synthetic
+2025-Q4,engaged_members_quarter,704000,count,all,synthetic
+2026-Q1,engaged_members_quarter,698000,count,all,synthetic
+2026-Q2,engaged_members_quarter,691000,count,all,synthetic
+2024-Q2,active_members_base,2262000,count,all,closing active-member base for the period - synthetic
+2024-Q3,active_members_base,2290000,count,all,synthetic
+2024-Q4,active_members_base,2318000,count,all,synthetic
+2025-Q1,active_members_base,2344000,count,all,synthetic
+2025-Q2,active_members_base,2610000,count,all,synthetic
+2025-Q3,active_members_base,2638000,count,all,synthetic
+2025-Q4,active_members_base,1742000,count,all,synthetic
+2026-Q1,active_members_base,1765000,count,all,synthetic
+2026-Q2,active_members_base,1781000,count,all,synthetic
+2024-Q2,engagement_rate,33.1,percent,all,engaged_members_quarter divided by active_members_base - synthetic
+2024-Q3,engagement_rate,32.4,percent,all,synthetic
+2024-Q4,engagement_rate,31.8,percent,all,synthetic
+2025-Q1,engagement_rate,31.0,percent,all,synthetic
+2025-Q2,engagement_rate,27.4,percent,all,synthetic
+2025-Q3,engagement_rate,26.9,percent,all,synthetic
+2025-Q4,engagement_rate,40.4,percent,all,synthetic
+2026-Q1,engagement_rate,39.5,percent,all,synthetic
+2026-Q2,engagement_rate,38.8,percent,all,synthetic
+2024-Q2,member_share_of_transactions,41.2,percent,all,share of till transactions with a member card scanned - synthetic
+2024-Q4,member_share_of_transactions,40.5,percent,all,synthetic
+2025-Q2,member_share_of_transactions,39.4,percent,all,synthetic
+2025-Q4,member_share_of_transactions,38.1,percent,all,synthetic
+2026-Q1,member_share_of_transactions,37.6,percent,all,synthetic
+2026-Q2,member_share_of_transactions,37.1,percent,all,synthetic
+2025-Q3,app_monthly_active_users,402000,count,all,previous app - synthetic
+2025-Q4,app_monthly_active_users,388000,count,all,rebuilt app released mid-quarter - synthetic
+2026-Q1,app_monthly_active_users,431000,count,all,synthetic
+2026-Q2,app_monthly_active_users,447000,count,all,synthetic
+2025-Q3,notification_opt_in_rate,61.0,percent,all,synthetic
+2025-Q4,notification_opt_in_rate,23.0,percent,all,synthetic
+2026-Q1,notification_opt_in_rate,29.4,percent,all,synthetic
+2026-Q2,notification_opt_in_rate,34.2,percent,all,synthetic
+2024-Q2,points_redemption_rate,54.8,percent,all,share of points earned in the period that were redeemed - synthetic
+2025-Q2,points_redemption_rate,51.2,percent,all,synthetic
+2025-Q4,points_redemption_rate,47.9,percent,all,synthetic
+2026-Q1,points_redemption_rate,41.3,percent,all,synthetic
+2026-Q2,points_redemption_rate,38.6,percent,all,synthetic
+2026-Q2,counter_only_engaged_members,,count,all,synthetic - not measured; the dispensing counter till does not write loyalty scans back to the member account
