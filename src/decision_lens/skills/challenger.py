@@ -56,6 +56,33 @@ from decision_lens.skills.base import SKILL_TIMEOUT_SECONDS, Skill, SkillContext
 from decision_lens.validation import weaker_of
 
 
+def canonical_claim_id(claim_id: str) -> str:
+    """Reduce a claim id to letters and significant digits: ``C-002`` -> ``c2``.
+
+    Used to resolve a reformatted id back to the claim it means. Real runs
+    answered ``C2``, ``C4`` and ``C8`` for claims shown to them as ``C-002``,
+    ``C-004`` and ``C-008``, twice, with the ids plainly in the prompt and the
+    rejection naming them. An instruction that has been ignored twice is not a
+    control.
+
+    Resolution is only accepted when the canonical form matches exactly one
+    claim, so this narrows a mechanical formatting difference and never guesses
+    between candidates. Ambiguity is still rejected.
+    """
+    letters = "".join(c for c in claim_id if c.isalpha()).lower()
+    digits = "".join(c for c in claim_id if c.isdigit()).lstrip("0")
+    return f"{letters}{digits}"
+
+
+def _resolve(claim_id: str, claims: Sequence[Claim]) -> str | None:
+    """The real id this one means, or ``None`` if that is not unambiguous."""
+    if any(c.id == claim_id for c in claims):
+        return claim_id
+    wanted = canonical_claim_id(claim_id)
+    matches = {c.id for c in claims if canonical_claim_id(c.id) == wanted}
+    return matches.pop() if len(matches) == 1 else None
+
+
 class ChallengeQuestion(StrEnum):
     """The eight questions, fixed by the build specification.
 
@@ -216,12 +243,14 @@ class ChallengerSkill(Skill[ChallengeOutput]):
                     f"evidence ({quotes})"
                 )
 
-        known = {c.id for c in self.claims}
-        unknown = sorted({r.claim_id for r in output.reclassify if r.claim_id not in known})
-        if unknown:
+        unresolvable = sorted(
+            {r.claim_id for r in output.reclassify if _resolve(r.claim_id, self.claims) is None}
+        )
+        if unresolvable:
+            known = ", ".join(c.id for c in self.claims[:5]) or "none were supplied"
             problems.append(
-                f"These claim ids do not exist: {', '.join(unknown)}. Reclassify only "
-                "claims from the list given."
+                f"These claim ids match no claim: {', '.join(unresolvable)}. Use the ids "
+                f"exactly as given (they look like: {known})."
             )
 
         if output.failing and not output.what_would_change_it:
@@ -241,6 +270,20 @@ class ChallengerSkill(Skill[ChallengeOutput]):
         """Override the two arithmetic answers, and refuse any raise in confidence."""
         findings = list(output.findings)
         warnings: list[str] = []
+
+        # Rewrite reformatted claim ids to the ones that actually exist. Only
+        # ever an unambiguous match — `violations` has already rejected anything
+        # that resolves to zero claims or to more than one.
+        reclassify = []
+        for item in output.reclassify:
+            resolved = _resolve(item.claim_id, self.claims)
+            if resolved is not None and resolved != item.claim_id:
+                warnings.append(
+                    f"Claim id {item.claim_id!r} was read as {resolved!r}, the only claim it "
+                    "could mean."
+                )
+                item = item.model_copy(update={"claim_id": resolved})
+            reclassify.append(item)
 
         existence = (
             (
@@ -286,7 +329,11 @@ class ChallengerSkill(Skill[ChallengeOutput]):
 
         return (
             output.model_copy(
-                update={"findings": tuple(findings), "recommended_support": recommended}
+                update={
+                    "findings": tuple(findings),
+                    "reclassify": tuple(reclassify),
+                    "recommended_support": recommended,
+                }
             ),
             tuple(warnings),
         )
