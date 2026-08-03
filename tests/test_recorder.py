@@ -1096,3 +1096,37 @@ def test_an_entry_recorded_before_fingerprints_were_stored_is_still_reusable(
     )
     assert "contradictions" not in live.calls
     assert key in summary.reused
+
+
+def test_the_shipped_cache_answers_every_case_the_interface_offers() -> None:
+    """The UI listed eleven cases and the cache held one.
+
+    Selecting any of the other ten produced a brief with every stage failed —
+    correct behaviour from the orchestrator, and a broken product. The ten
+    recordings existed the whole time; they were in `evals/recordings/` and had
+    never been merged into the cache the demo and the UI actually read.
+
+    The failure was invisible from the code, because nothing tied the list of
+    offered cases to the list of answerable ones. This ties them.
+    """
+    import json
+
+    from decision_lens.llm.cached_provider import DEFAULT_CACHE_PATH
+    from decision_lens.ui import available_cases
+
+    offered = {p.name for p in available_cases()}
+    if not offered:
+        pytest.skip("no bundled cases on disk")
+    if not DEFAULT_CACHE_PATH.exists():
+        pytest.skip("no cache has been recorded yet")
+
+    payload = json.loads(DEFAULT_CACHE_PATH.read_text(encoding="utf-8"))
+    answerable = {key.split("::")[0] for key in payload.get("responses", {})}
+    if not answerable:
+        pytest.skip("the shipped cache is empty")
+
+    unanswerable = sorted(offered - answerable)
+    assert not unanswerable, (
+        f"the interface offers cases with no recorded responses: {unanswerable}. "
+        "Selecting one produces a brief in which every stage failed."
+    )
