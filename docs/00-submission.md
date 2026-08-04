@@ -11,232 +11,158 @@ number comes from `make eval` over recorded runs in `evals/recordings/`.
 
 ---
 
-## The one-paragraph version
+## 1. What does it mean to be an AI-native PM?
 
-Most PMs use AI heavily for drafting and barely for decisions. The bet this submission
-makes is that the boundary is **verification cost**: for a consequential decision, checking
-AI output can cost more than doing the work unaided. DecisionLens is an evidence-grounded
-decision agent built to make that check cheap — every claim anchored to a retrievable span,
-contradictions surfaced rather than smoothed, missing evidence named, non-AI and no-build
-alternatives mandatory, and a challenger that attacks the draft before a human sees it.
-Measured against a strong single-call baseline across eleven cases, it never overclaims
-confidence, grounds half again as many claims at equal accuracy, and surfaces 70% more
-options — while under-claiming confidence more often than the baseline, which is a real
-weakness reported here rather than buried.
+An AI-native PM designs the work for AI first and keeps only the part that genuinely needs a human. Most do the reverse: they work as they always have, then hunt for a step to accelerate — which just produces the same decision faster. Being AI-native is an act of allocation, not automation. You assign each part of the job to whatever does it best: AI reads more than any person can hold and recalls all of it; data captures what actually happened, not what people remember; and the human contributes context, judgment, and accountability. That reframes AI from a tool you invoke into a thought partner you brief and hold to account — the same shift now reshaping how software gets built and how orgs make decisions.
 
----
+Three things change:
 
-## The five questions, answered
+* **The binding constraint moves.** A decision is no longer limited by how much evidence you can read, but by how sharply you can interrogate it. The scarce skill becomes asking the right questions, not gathering the inputs.
+* **The reasoning outlives the artifact.** Decisions no longer live and die with a deck; the rationale persists, so teams stop re-litigating settled calls from memory.
+* **The error curve improves.** You make fewer confidently wrong bets — and you catch the wrong ones sooner.
 
-**1. What does it mean to be an AI-native PM?** A PM who designs the work for AI first and
-keeps only the part that needs a human. Most do the reverse — they work the way they always
-have, then look for a step to speed up, which produces the same decision in less time. The
-AI-native version gives each part to whatever does it best: AI reads more than a person can
-hold and recalls all of it, data records what happened rather than what people remember, and
-the human supplies context, judgment and accountability. That makes AI a partner you brief
-and hold to account, not a tool you invoke. Three things change. The limit on a decision
-stops being how much evidence you can read and becomes how well you can question it. The
-reasoning outlives the deck, so teams stop re-litigating decisions from memory. And you make
-fewer confidently wrong bets, and catch the wrong ones sooner. 
-
-### 2. What ecosystem moves PMs from little AI use to responsible adoption?
-
-**Build a paved road, not a walled garden.**
-
-The organising decision is where the platform ends and the team begins.
-
-| Get it wrong this way | And you get |
-|---|---|
-| Centralise too much | A golden path nobody walks. Teams route around it within a quarter. |
-| Decentralise | Every team stands up its own connectors, negotiates its own data access, and produces analysis no reviewer can audit. |
-
-#### Three tiers
-
-| Tier | What sits here | Why |
-|---|---|---|
-| **Platform**<br>*non-negotiable* | Delegated identity and least-privilege access · one connector per system of record, retrieval-only · model gateway (vendor neutrality, version pinning, rate limits, cost attribution) · data classification enforced at retrieval · immutable audit trail | The blast radius is organisational, not team-level. An agent inherits exactly the entitlements the PM already holds — no shadow permissions, no service account with god rights. |
-| **Registry**<br>*shared defaults, forkable* | Analysis skills as versioned, content-fingerprinted, independently evaluated artefacts: relevance · classification · contradiction detection · gap analysis · option generation · recommendation · adversarial challenge | Teams inherit the organisation's accumulated judgment. A team the defaults underserve **forks a skill and upstreams it** if it beats the incumbent on the eval harness. |
-| **Team**<br>*never delegated* | Decision framing · evidence scope · weighting criteria · the decision itself | The PM is accountable for the call. The platform is not. |
-
-**Fork-and-upstream is the load-bearing part.** It is what turns a mandated platform into an
-adopted one. Without it you are asking teams to accept a worse answer for the sake of
-consistency, and they will not.
-
-#### Four things that cut across all three
-
-| | |
-|---|---|
-| **Agent topology** | One orchestrator per decision, running a bounded set of narrow, inspectable steps. Not a general-purpose copilot. Not a multi-agent swarm — auditability is the product requirement, and a swarm is not auditable by a PM under time pressure. |
-| **Governance** | Rides the tiers rather than sitting beside them as a review board. Entitlements inherited, sensitive classes blocked at retrieval, every run emitting provider, model, prompt version and content hash. **Guardrails, not gates.** |
-| **Enablement** | Train evidence interrogation, not prompt craft. Prompt technique depreciates with each model generation; evidence literacy compounds. Champions embedded per product area; the central team owns the platform and the eval harness. |
-| **Measurement** | Instrument the adoption funnel — activation, repeat use, decisions shipped with a brief attached. But hold the organisation to decision-quality leading indicators: groundedness, unsupported-claim rate, verification time, alternative coverage. **Usage volume is a vanity metric** — it rises when the tool is misused, and cannot separate a PM who verified the output from one who pasted it into a deck. |
-
-**3. What is the hardest and highest-value problem?** Verification cost. A PM reading an
-AI-written recommendation has to establish where each number came from, which conclusions
-rest on assumption, and what was left out — and answering that takes longer than the AI
-saved. The work moves from thinking to auditing, so PMs use AI for drafts and avoid it for
-decisions, which is the pattern actually observed. Alternatives were considered and
-rejected: a broad AI workflow coach has no falsifiable hypothesis and no boundary against a
-general assistant; prompt libraries treat the barrier as skill, and if the barrier is
-verification cost then better prompts simply produce more unverifiable output; faster
-document generation is what the brief explicitly excludes. The original framing — that PMs
-have weak evidence — was itself rejected, because weak evidence is a perennial PM-craft
-problem rather than an AI-adoption one.
-
-**4. What was built?** DecisionLens, a runnable agent — `make demo`, no API key, no network.
-It takes a folder of evidence and a problem-first question, and returns a recommendation in
-which every claim carries a quote you can find in the source, contradictions are surfaced
-with what would settle them rather than silently resolved, and missing evidence is named
-because absence is decision-relevant. Every brief must contain a non-AI option and a
-no-build option, enforced in code rather than requested in a prompt. A challenger puts fixed
-questions to the draft before a human sees it and can only lower confidence, never raise it.
-It is deliberately one orchestrator running seven inspectable stages rather than a
-multi-agent system, because a PM who cannot follow what the tool did cannot verify it, and
-verification is the entire thesis.
-
-**5. Does it work?** Measured across eleven synthetic cases against a strong single-call
-baseline given the same model, the same evidence and the same briefing. It never overstated
-its confidence — zero cases of eleven against one for the baseline, and that one failure
-came on the case built so a thick corpus contains almost no real evidence, which is exactly
-the trap the product exists to catch. It grounded half again as many claims at equal
-accuracy and surfaced 134 options against 79. Against that: it under-claims confidence on
-six of eleven cases, so it is systematically cautious rather than well-calibrated; it costs
-3.2 times more to run; and citation accuracy, expected to be the central advantage, was 100%
-against 99.8% and is therefore not a differentiator. The recall margin is four graded items
-out of fifty from a single run per case, so the honest claim is that DecisionLens did not
-lose rather than that it reliably wins. No research with real product managers was
-conducted; that study is designed, not run.
+> **In this repository.** The third point is the only one measured: DecisionLens overclaims
+> its confidence on **0 of 11** cases against the baseline's 1. Business outcomes are **not**
+> measured — execution, market timing and luck sit between a decision and a result, and the
+> lag exceeds this exercise.
+>
+> → [01 — Product Strategy](01-product-strategy.md)
 
 ---
 
-## 1. What it means to be an AI-native PM
+## 2. What ecosystem moves PMs from little AI use to responsible adoption?
 
-An AI-native PM designs the work for AI first, then keeps what only a human can do.
+Adoption doesn't fail on enthusiasm — it fails on the absence of scaffolding. Left alone, most PMs land in the same place: a few personal prompts that save minutes but change nothing about how decisions get made. Moving an organization from novelty to responsible adoption isn't a tool rollout; it's an ecosystem — eight pieces that have to reinforce each other.
 
-Most PMs do the reverse. They finish a task the way they always have, then look for a step
-AI can speed up. That produces a faster document and the same decision.
+* **Tools that meet PMs in the work.** AI has to live inside the docs, tickets, and reviews PMs already run — not in a separate tab they have to remember to visit. Adoption tracks convenience; the winning pattern is embedded assistance, not a destination app.
+* **Agents that own recurring jobs.** The leap past prompting is delegation: agents that run standing tasks — triaging feedback, drafting narratives, monitoring launches — and report back. The PM shifts from operator to orchestrator, briefing agents and holding them to account.
+* **Reusable skills, not one-off prompts.** Value only compounds when good prompting is captured as shared, versioned skills the whole org can invoke. This is the difference between 500 PMs re-inventing the same prompt and one proven pattern propagating instantly — the Learn → Build → Certify muscle applied to artifacts, not just people.
+* **Data and knowledge as shared ground truth.** Agents are only as good as what they can reach. Grounding AI in the org's own data and decisions — retrieval-backed, not memory-primed — is what makes output trustworthy and institutional rather than private. This is the real payoff of the shift toward grounded, agentic systems: context becomes a shared asset.
+* **Governance that enables rather than gates.** Responsible adoption needs guardrails PMs can move within — clear rules on data boundaries, human-in-the-loop decisions, and accountability for AI-assisted calls. Done well, governance is what gives PMs the confidence to use AI on real decisions, not a brake on it.
+* **Training as a progression, not an event.** Access alone produces dabblers. A Learn → Build → Certify path turns curiosity into demonstrated capability — people learn the primitives, ship something real, and get recognized against a standard, not for attendance.
+* **Measurement that proves trust, not just usage.** The metric that matters isn't seat activation; it's whether AI-assisted decisions hold up. Evals — not vibes — are what let a PM defend an AI-assisted call to a room, and what separate scale from risk. Pair adoption metrics with quality evals or you're measuring motion, not progress.
+* **Proof and peer pull that make it social.** Champions, visible wins, and a living playbook create permission. People adopt what credible peers already trust — recognition and a reusable pattern travel faster than any mandate.
 
-Start from the strengths instead. AI reads more than a person can hold and recalls all of
-it. Data records what happened, not what people remember. The PM supplies context, judgment
-and accountability. Assign each the part it is best at. **[Product judgment]**
+The through-line: you don't move PMs by giving them AI. You build the surround — embedded tools and agents to do the work, reusable skills and shared data so it compounds, governance and evals so it's trusted, training and proof so it spreads — and let capability, not compliance, carry the rest.
 
-This makes AI a partner rather than a tool. A tool is invoked. A partner is briefed,
-delegated to, argued with, and held to account. A PM who pastes a question into a chat
-window has used a tool. A PM who states the decision, the constraints, and what would make
-the answer wrong has briefed a partner.
-
-Three things change.
-
-**Product decisions.** The binding constraint moves from how much evidence a PM can read to
-how well they can interrogate it. An eighteen-month-old research deck now costs nothing to
-include. "What would make this wrong?" becomes routine rather than unusual discipline. The
-no-build option gets argued every time, because a system can be required to produce it and
-a person under deadline will not.
-
-**Team effectiveness.** Reasoning outlives the deck. A new joiner reconstructs a decision
-from its evidence instead of asking who was in the room. Disagreement moves from "I think
-X" to "the brief cites Y, and Y is wrong because Z." A reversal becomes legible: a decision
-that was right on the evidence then available is a different event from one that was always
-poorly reasoned.
-
-**Business outcomes.** Fewer confidently wrong investments, and the wrong ones found
-earlier. These are measurable. They are **not measured here** — execution, market timing
-and luck sit between a decision and a result, and the lag exceeds this exercise.
-**[Observation]**
-
-One condition decides whether any of it happens. Checking AI output must cost less than
-doing the work unaided. Today it does not, which is why PMs use AI for drafts and not for
-decisions. That is the problem this submission takes on, and question 3 explains why it was
-chosen over the alternatives.
-
-→ [01 — Product Strategy](01-product-strategy.md)
+> **In this repository.** Only DecisionLens is built; everything above is a design and is
+> labelled as such. [02](02-ecosystem-and-adoption.md) adds two operating positions: a team
+> may **fork a shared skill and upstream it** if their variant beats the incumbent on the eval
+> harness — without that route back you are asking teams to accept a worse answer for the sake
+> of consistency, and they will not. And **raw usage volume is a vanity metric**: it rises when
+> a tool is misused, and cannot distinguish a PM who verified the output from one who pasted
+> it into a deck.
+>
+> → [02 — Ecosystem and Adoption](02-ecosystem-and-adoption.md)
 
 ---
 
-## 2. The ecosystem
+## 3. What is the hardest and highest-value problem?
 
-Moving PMs from little AI use to effective, responsible adoption. **Only DecisionLens is
-built; everything else here is a design and is labelled as such.**
+Every element in the ecosystem matters, but they are not equally hard, and they do not gate each other equally. The sharp question isn't "what's missing?" — it's which problem, left unsolved, makes every other investment fail to compound?
 
-| Layer | The decision |
-|---|---|
-| **Maturity model** | Five stages with observable behaviours, not adjectives. What you would actually see a PM doing at each one. |
-| **Tooling** | Deliberately *not* a general-purpose copilot. A narrow, inspectable tool for one high-consequence job. |
-| **Model gateway** | Centralised access: vendor neutrality, cost control, version pinning, logging. Individual teams do not hold provider credentials. |
-| **Reusable skills** | Analysis skills as versioned, independently testable organisational assets with content fingerprints — not prompts pasted between teams. |
-| **Connectors** | One per source, shared, retrieval-only. Never one connector per PM. Connectors retrieve; skills interpret. |
-| **Configuration** | Three layers: enterprise (credentials, security), team (sources, terminology, governance), PM runtime (question, scope). PMs never configure credentials. |
-| **Training** | PMs should **not** have to learn prompt technique. They learn evidence interrogation. |
-| **Governance** | Security, compliance and contractual work are priority exceptions that *constrain* the decision — never options ranked against growth work. |
-| **Measurement** | Leading indicators measured here; lagging outcomes (revenue, retention) stated as **not demonstrable in a take-home**. |
+The candidates I weighed:
 
-**Why raw usage volume is the wrong headline metric:** it rises when a tool is used badly,
-it rises when a tool is used for low-stakes work it was not built for, and it cannot
-distinguish a PM who checked the output from one who pasted it into a deck.
+* **Access and tooling.** The most visible gap — and the easiest to solve, least differentiating. Give everyone tools and you get dabblers. Necessary, not sufficient.
+* **Training and certification.** Real capability, but it scales individuals. Certify 500 PMs and you still have 500 people re-inventing the same prompts in private.
+* **Governance.** Genuinely hard, severe failure mode — but it's a constraint function. Solve it perfectly and you've made AI safe to use, not worth using.
+* **Shared context** — grounding AI in the org's own data, knowledge, and reusable skills. Powerful, because it's the one element with compounding returns: every decision captured and skill published raises the baseline for everyone at once. This was my first instinct.
+* **Redesigning the PM's core decision** — "what to build" — and the trust that decision carries. This is the one I chose.
 
-→ [02 — Ecosystem and Adoption](02-ecosystem-and-adoption.md)
+**Why "what to build" beats even shared context:**
 
----
+Shared context is the highest-value enabler — but it's still infrastructure in service of a decision. The decision it serves is the PM's actual job: what to build, for whom, and why now. Every other element — tools, agents, skills, data, governance, training — exists to make that judgment better. So the hardest, highest-value problem isn't feeding the decision; it's transforming the decision itself, and earning trust in it.
 
-## 3. The hardest, highest-value problem
+This is the problem because it strikes at the fundamental role function, not the workflow around it. Automating a PM's tasks produces the same "what to build" call, faster. The AI-native move is different: AI can now hold more evidence, surface more options, and pressure-test a bet than any PM could alone — which means the constraint on "what to build" shifts from how much can I analyze to how well can I decide under a machine that argues back. That is a redefinition of the role, not an acceleration of it.
 
-**Verification cost at the boundary of consequence.**
+And it's the hardest because the blocker is trust, not capability. A PM can get an AI-generated recommendation today; what they can't easily get is the confidence to stake a roadmap on it in front of leadership. Trust is the true bottleneck — and it's why this problem requires the rest of the ecosystem to exist: grounding makes the reasoning inspectable, evals make quality provable, governance makes accountability clear. Those elements aren't parallel alternatives to this problem; they are the machinery that makes a redesigned decision trustworthy. That's the tell that this is the root problem — everything else is a precondition for solving it.
 
-A PM who cannot tell where a claim came from, which conclusions rest on assumption, or what
-the model quietly left out has not saved any work. They have moved it from analysis into
-audit, and added the risk of missing something on the way.
+The reasoning behind the choice: Access, training, and governance change the level of capability. Shared context changes the slope — it compounds. But redesigning "what to build" changes the thing being decided — and improving a decision the whole org bets on dominates improving any input to it. Solve the plumbing and decisions get better inputs; solve the decision and the entire role — and everything the org builds — moves.
 
-### Alternatives considered, and why they lost
-
-| Considered | Rejected because |
-|---|---|
-| Broad AI workflow coach | No falsifiable hypothesis, no boundary against a general assistant. A tool that helps with everything can be evaluated on nothing. |
-| Prompt libraries and training | Treats the barrier as skill. If the barrier is verification cost, better prompts produce more output nobody can check. |
-| Faster document generation | The thing the brief explicitly excludes, and the thing PMs already do. |
-| "PMs have weak evidence" | **The original framing, and it was wrong.** Weak evidence is a perennial PM-craft problem, not an AI-adoption problem. An AI-enablement assignment needs a problem that is specifically about AI adoption. Changing this was the single most consequential decision in the project — recorded as D3/D4. |
-
-### Why this one
-
-It explains the observed pattern (heavy AI use for drafting, light use for decisions) as a
-consequence of verification cost rather than of tool access or skill. It is falsifiable. And
-it is demonstrable in a prototype, which most enablement problems are not.
-
-→ [01 — Product Strategy](01-product-strategy.md) · [05 — Decision Log](05-decision-log.md)
+> **In this repository.** Trust has a concrete price, and it is what the prototype attacks:
+> **verification cost at the boundary of consequence.** A PM who cannot tell where a claim came
+> from, which conclusions rest on assumption, or what the model left out has not saved work —
+> they have moved it from analysis into audit. That explains the observed pattern: heavy AI use
+> for drafting, light use for decisions.
+>
+> **One framing I rejected was my own.** This project began as *"PMs have weak evidence."* That
+> was wrong — weak evidence is a perennial PM-craft problem, not an AI-adoption one. Changing
+> it was the most consequential decision in the project, recorded as **D3/D4**.
+>
+> → [01 — Product Strategy](01-product-strategy.md) · [05 — Decision Log](05-decision-log.md)
 
 ---
 
-## 4. The agent
+## 4. The agent I'd build — and why it's the one that solves the problem
+
+If the problem is transforming the "what to build" decision and earning trust in it, then the agent can't be a research assistant that produces a better memo. A better memo still leaves the PM staking a roadmap on a black box. The agent has to attack trust directly — which means it must argue, show its work, and be pressure-tested, not just be right.
+
+I'd build an adversarial decision partner for "what to build" — a Bet Examiner. Not a tool that recommends what to build, but an agent that interrogates the bet you're about to make and produces an inspectable, defensible decision record.
+
+What it does — the loop that builds trust:
+
+* **Frames the bet.** You state the call ("build X for segment Y because Z"). The agent structures it into an explicit hypothesis: the customer, the problem, the assumed value, and the evidence you're leaning on.
+* **Grounds it.** It pulls from the org's own context — tickets, research, usage data, prior decisions — and separates what's evidenced from what you're assuming. This is where shared context earns its keep: the agent is only trustworthy because it's grounded, not memory-primed.
+* **Argues back.** It runs the steel-manned counter-case: the strongest reason this is the wrong bet, the segment you're overweighting, the disconfirming data you skipped. This is the AI-native move made concrete — a machine that argues back, so the constraint becomes how well you answer, not how much you read.
+* **Scores its own confidence — with evals.** Every claim carries a graded confidence and a source. The agent runs evals on its own reasoning so its output isn't vibes — it's a quality signal a PM can defend in a room.
+* **Emits a decision record.** The durable artifact: the bet, the evidence, the counter-case, the open risks, and the rationale — so the reasoning outlives the deck and the team stops re-litigating from memory.
+
+Why this shape, and why it's runnable:
+
+* **Interface:** a chat-first agent that produces a structured decision doc — meets PMs in the work (docs and reviews), not a separate destination.
+* **Models:** a strong reasoning model for the argue-back and synthesis; a cheaper model for retrieval and extraction — the confidence scoring and adversarial critique are where reasoning quality actually pays off.
+* **Tools:** retrieval over the org's corpus, a structured "decision record" writer, and an eval harness that grades the agent's own claims against sources.
+* **Data:** the org's tickets, research notes, usage metrics, and past decision records — grounding is the whole point.
+
+The prototype is deliberately small: it doesn't need hosting to prove the thesis. A local, runnable version — retrieval over a seed corpus, a reasoning model doing frame → ground → argue → score, emitting a decision record — is enough to demonstrate the one thing that matters: a PM leaves the loop trusting the decision more, with the reasoning to defend it. That's the whole bet.
+
+### What runs today
 
 ```bash
-make setup && make demo     # no API key, no network
+make setup && make demo     # no API key, no network, 0.15 seconds
 ```
 
-One orchestrator running seven inspectable stages. **Not** a multi-agent system, not a
-chatbot — deliberately, because a PM who cannot follow what the tool did cannot verify it,
-and verification is the entire product thesis.
+DecisionLens implements that loop as **one orchestrator running seven inspectable stages** —
+relevance → classification → contradictions → missing evidence → alternatives →
+recommendation → challenger. Not a multi-agent system, deliberately: a PM who cannot follow
+what the tool did cannot verify it (**D8**).
 
-| | |
+| The loop | What runs |
 |---|---|
-| **Retrieval** | `LocalFileEvidenceSource` over Markdown, CSV, JSON. Connectors retrieve; they never interpret. |
-| **Seven stages** | relevance → classification → contradictions → missing evidence → alternatives → recommendation → challenger |
-| **The challenger** | Puts eight fixed questions to the draft before a human sees it. **Can only lower confidence, never raise it.** |
-| **Deterministic validation** | Citation spans checked programmatically against source text. Required sections, non-AI and no-build options enforced in code — not by asking the model nicely. |
-| **Audit trace** | Provider, model, prompt version **and content fingerprint** per stage, so a brief can be checked against the text that produced it. |
-| **Provider boundary** | Vendor-neutral. The demo replays recorded responses; no key required. |
+| Frames the bet | A decision question, desired outcome and criteria over a defined evidence scope |
+| Grounds it | ~57 addressable evidence records per case. Connectors **retrieve; never interpret.** Every statement classified fact, assumption, opinion or constraint |
+| Argues back | Contradictions surfaced *with what would settle them*; missing evidence named; then a **challenger** runs eight fixed attacks and **can only lower confidence, never raise it** |
+| Scores its confidence | Citations checked programmatically against source text; confidence compared against what the evidence carries; eval harness in [04](04-evaluation.md) |
+| Emits a decision record | Markdown brief and JSON artifact, plus a run trace pinning provider, model, prompt version **and content fingerprint** per stage. The PM's decision is recorded **separately** from the recommendation |
 
-**What it looks like when it works.** `make demo` currently produces a brief that **blocks
-itself**: the challenger caught the recommendation claiming "multiple comments describe
-entering the unit number at checkout" when exactly one of the three cited rows mentions
-checkout. Verified by hand — the challenger is right.
+**The guarantees are code, not prompting.** Citation spans are matched against source text; a
+non-AI option and a no-build option are *enforced*, not requested. Asking a model nicely for a
+no-build option is a hope; rejecting the brief when it is missing is a guarantee.
 
-That error is left standing. Removing it would mean weakening the check or re-running until
-the output flattered us, which is the habit this product argues against.
+**Two deviations from the design above, both deliberate:**
+
+- **The interface is a structured form today, with chat on the roadmap.** The brief has to be
+  scanned by a sceptic — checks before the answer, a stable place for evidence, a visible
+  record of what was left out. Chat is the wrong shape for *verification*; it is the right
+  shape for framing and follow-up, which is where it lands next over the same validated
+  pipeline.
+- **One model, not two tiers.** `claude-opus-5` throughout, behind a vendor-neutral
+  `ModelProvider` boundary with two interchangeable implementations — cached replay and a live
+  Anthropic adapter — that the orchestrator cannot tell apart. Splitting tiers is a cost
+  optimisation worth measuring, not assuming.
+
+**What it looks like when it works.** `make demo` produces a brief that **blocks itself**: the
+challenger caught the recommendation claiming *"multiple comments describe entering the unit
+number at checkout"* when exactly one of three cited rows mentions checkout. Verified by
+hand — the challenger is right. That error is left standing. Removing it would mean weakening
+the check or re-running until the output flattered us, which is the habit this product argues
+against.
 
 → [03 — Architecture and Governance](03-architecture-and-governance.md)
 
 ---
 
-## 5. The evaluation
+## 5. Does it work?
 
 **Eleven cases, both arms, one live run each against `claude-opus-5`.** 88 recorded stages.
 The baseline is a strong single call — same model, same evidence, same output schema, and
@@ -255,35 +181,36 @@ than about who was told more.
 
 ### What holds
 
-**It never overclaims.** Zero of eleven. The baseline's single failure is the most
-diagnostic result in the set: it occurred on `returns_fraud_signals`, a case built so that a
-thick corpus contains almost no load-bearing evidence — a finance estimate with no method,
-two self-selected anecdotes, a vendor deck, and a field that was added and never populated.
-The defensible ceiling is `low`. The baseline read the volume and said `moderate`.
-DecisionLens said `low`. **That is the failure this product exists to prevent, reproduced
-under measurement.**
+**It never overclaims.** Zero of eleven. The baseline's single failure is the most diagnostic
+result in the set: it occurred on `returns_fraud_signals`, a case built so that a thick corpus
+contains almost no load-bearing evidence — a finance estimate with no method, two
+self-selected anecdotes, a vendor deck, and a field that was added and never populated. The
+defensible ceiling is `low`. The baseline read the volume and said `moderate`. DecisionLens
+said `low`. **That is the failure this product exists to prevent, reproduced under
+measurement.**
 
 **It grounds more without grounding worse** — 1,451 citations against 969, at equal validity.
 
 ### What does not
 
-**Caution is not calibration.** DecisionLens under-claims on 6 of 11 cases; the baseline on
-1. On `checkout_error_rate` — built so `strong` support is genuinely earned by a
-pre-registered randomised experiment with n=412,905 — **both arms said `moderate`**. This is
-a system biased low, not one that judges confidence well. It happens to be the safer
-direction.
+**Caution is not calibration.** DecisionLens under-claims on 6 of 11 cases; the baseline on 1.
+On `checkout_error_rate` — built so `strong` support is genuinely earned by a pre-registered
+randomised experiment with n=412,905 — **both arms said `moderate`**. This is a system biased
+low, not one that judges confidence well. It happens to be the safer direction.
 
 **Citation validity is not a differentiator.** 100% against 99.8% is not a distinction. A
-well-prompted single call grounds its claims essentially as reliably. This was expected to
-be a central advantage and the measurement says it is not one.
+well-prompted single call grounds its claims essentially as reliably. This was expected to be
+a central advantage and the measurement says it is not one.
 
-**The margin is small.** Eight points on contradiction recall is four items out of fifty,
-from one run per case with no variance measurement. The honest statement is that
-DecisionLens **did not lose**, and led on a small sample by a margin not shown to be
-reproducible. The restraint result is stronger because it is a mechanism on a case designed
-to induce the failure, not an average.
+**The margin is small.** Eight points on contradiction recall is four items out of fifty, from
+one run per case with no variance measurement. The honest statement is that DecisionLens **did
+not lose**, and led on a small sample by a margin not shown to be reproducible. The restraint
+result is stronger because it is a mechanism on a case designed to induce the failure, not an
+average.
 
 **It costs 3.2× more.** On this evidence, that is not yet justified by recall alone.
+
+**And the baseline won twice**, including 2/4 against 4/4 on `checkout_error_rate`.
 
 ### Testing with real PMs
 
@@ -324,6 +251,7 @@ Stated here rather than left to be discovered:
 | `evals/` | Answer keys, recordings, results, audit record |
 | `docs/` | The five documents linked above |
 
-**Engineering:** Python 3.11+, Pydantic v2, `mypy --strict`, 996 tests at 100% line
-coverage — the coverage gate is what is enforced; the count is whatever it is on the day. Every recorded response carries the model and date it came from; nothing in the
-cache is hand-written.
+**Engineering:** Python 3.11+, Pydantic v2, `mypy --strict`, 1,010 tests at 100% line
+coverage — the coverage gate is what is enforced; the count is whatever it is on the day.
+Every recorded response carries the model and date it came from; nothing in the cache is
+hand-written.
