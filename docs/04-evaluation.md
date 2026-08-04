@@ -122,6 +122,10 @@ populated. The defensible ceiling is `low`. The baseline read the volume and sai
 `moderate`. DecisionLens said `low`. That is the failure mode this product was built to
 prevent, reproduced under measurement.
 
+**Section 7 traces which stage produced that difference, and it is not the obvious one.**
+DecisionLens's `recommendation` stage also said `moderate`. The challenger overturned it.
+The margin comes from one component, not from seven stages reasoning better.
+
 *It grounds more, without grounding worse.* 1,451 citations against 969 — half again as
 many claims anchored — at 100% validity against 99.8%.
 
@@ -173,7 +177,67 @@ a difference. Until a second live run exists, no claim is made that any observed
 would survive one.
 
 ### 7. Side-by-side example
-One vivid case shown in full: baseline output next to DecisionLens output on identical evidence, with the specific differences a PM would care about called out.
+
+One case, both arms, identical evidence: **`returns_fraud_signals`**. It is the case that
+separates the two arms most sharply, and the reason is not the one this project expected.
+
+The corpus is thick and almost entirely load-free: a finance estimate with no method, two
+self-selected store anecdotes, a vendor deck, and a `confirmed_abuse_cases` field that was
+added and never populated. Nothing in it sizes returns abuse. **The defensible support
+ceiling is `low`.**
+
+| | DecisionLens | Baseline |
+|---|---|---|
+| Recommended action | Fund the $60,000 inspection audit, and gate everything else on it | Fund the $60,000 inspection audit, plus instrument abuse capture |
+| **Support claimed** | **`low`** — at the ceiling | **`moderate`** — over it |
+| Contradictions found | 3/4 | 2/4 |
+| Options generated | 10 | 6 |
+| Citations resolved | 113/113 | 77/**79** |
+
+Both arms picked the same action. A PM would act the same way on either brief. **The
+difference is entirely in how much confidence each one claimed**, and that is the difference
+this product exists to produce.
+
+#### The finding that matters: the reasoning stage was no better
+
+The result above is easy to misread as DecisionLens reasoning more carefully. It did not.
+
+Its `recommendation` stage returned **`moderate`** — the identical overclaim the baseline
+made. The recorded evidence is in `evals/recordings/returns_fraud_signals.json` under
+`returns_fraud_signals::recommendation::v1`.
+
+The `challenger` stage then returned `concern` on **all eight** of its fixed questions and
+set `recommended_support: low`. Because the challenger may lower confidence but never raise
+it, `low` is what reached the brief.
+
+The most specific catch, quoted from the recorded challenger output:
+
+> C2 says the audit's *"scope and price are known rather than estimated"* … The memo says
+> the opposite: it was an **"Estimated cost"** for a request submitted in March 2026 and
+> never scheduled — no vendor quote, no labour line … Calling an estimate "known" is the
+> single most consequential misread in the pack, **because the whole case is that this
+> option is cheap and bounded.**
+
+It also caught the draft asserting that a post-refund condition audit is *"the one form of
+scrutiny governance clearly permits"*, when the policy clause cited says only that inspection
+must be triggered by a property of the item or transaction — an inference presented as a
+governance finding, and one that contradicts the draft's own description of another option.
+
+#### What this changes about the claim
+
+The honest reading of the headline restraint result — 0/11 against 1/11 — is **not** that
+seven stages reason better than one. On this case they reasoned identically and made the same
+error.
+
+What the seven-stage arm has is **a stage whose only job is to attack the draft, and a rule
+that it can only lower confidence.** That is the mechanism, it is the one component the
+baseline lacks, and it is the component that produced the difference. A single call has
+nowhere to put an adversarial pass over its own output.
+
+That is a narrower claim than "the workflow is better," and it is the one the evidence
+supports. It also implies the cheapest useful version of this product may not be seven
+stages: it may be **one call plus a challenger**, which is a specific, testable next
+experiment rather than a general belief that more stages help.
 
 ### 8. Failures
 Where DecisionLens performed worse, produced a wrong classification, missed a planted contradiction, or over-claimed. Reported in detail.
