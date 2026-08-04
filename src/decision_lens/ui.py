@@ -15,8 +15,12 @@ Three choices worth naming:
 *   **The PM's decision is a separate panel, below and visually apart.** It is
     not a button labelled "accept". DecisionLens recommends; the person decides;
     the interface should make that boundary obvious without explaining it.
-*   **Going live is two deliberate acts.** A toggle, and then a key. The page
-    never picks up a credential from the environment on its own.
+*   **Live is built, and switched off by default.** The provider boundary and the
+    key handling are real and tested, but the toggle ships disabled: a seven-stage
+    live run takes tens of minutes, and a reader who flips it casually learns that
+    the slow way. Setting ``DECISIONLENS_ENABLE_LIVE=1`` re-enables it. Even then
+    the key comes from the form, never from the environment, so the page cannot
+    spend money the person looking at it did not agree to spend.
 
 This module is intentionally thin. Everything it shows comes from tested code in
 :mod:`decision_lens.report`, :mod:`decision_lens.case` and the orchestrator, so
@@ -29,6 +33,7 @@ Run it with::
 
 from __future__ import annotations
 
+import os
 import shutil
 import tempfile
 from collections.abc import Sequence
@@ -58,6 +63,15 @@ from decision_lens.skills import SKILL_TIMEOUT_SECONDS
 
 CASES_ROOT = Path("data")
 DEFAULT_MODEL = "claude-opus-5"
+
+#: Environment variable that re-enables the live toggle in the sidebar.
+#:
+#: The live path is built and tested; what ships disabled is the *button*. A
+#: seven-stage live run is tens of minutes of sequential model calls, and a
+#: reader who flips a toggle in a sidebar has not agreed to wait that long or to
+#: pay for it. Recording is a deliberate act performed once at the command line
+#: (``decisionlens record``); the browser replays what that produced.
+LIVE_UI_ENV = "DECISIONLENS_ENABLE_LIVE"
 
 
 # --------------------------------------------------------------------------- #
@@ -102,6 +116,17 @@ def materialise_case(directory: Path, uploads: Sequence[Upload]) -> Path:
     for upload in uploads:
         (staged / Path(upload.name).name).write_bytes(bytes(upload.getbuffer()))
     return staged
+
+
+def live_ui_enabled(env: dict[str, str] | None = None) -> bool:
+    """Whether the sidebar's live toggle is operable.
+
+    Off unless deliberately switched on. Anything other than an affirmative value
+    reads as off, so a stray or empty setting cannot quietly arm a path that
+    spends money and takes tens of minutes.
+    """
+    source = os.environ if env is None else env
+    return source.get(LIVE_UI_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def build_provider(
@@ -183,10 +208,18 @@ def _sidebar() -> dict[str, Any]:
     require_no_build = st.sidebar.checkbox("Require a no-build / defer option", value=True)
 
     st.sidebar.subheader("Model")
+    live_available = live_ui_enabled()
     live = st.sidebar.toggle(
         "Use a live model",
         value=False,
-        help="Off replays recorded output: free, offline, identical every run.",
+        disabled=not live_available,
+        help=(
+            "Off replays recorded output: free, offline, identical every run."
+            if live_available
+            else "Disabled in this build. The page replays recorded runs — instant and "
+            "free. A live run is seven sequential model calls over tens of minutes; "
+            "record one at the command line with `decisionlens record`."
+        ),
     )
     api_key = ""
     model = DEFAULT_MODEL
@@ -595,8 +628,8 @@ def _run_brief(inputs: dict[str, Any]) -> DecisionBrief | None:
         st.error(str(exc))
         if not inputs["live"]:
             st.caption(
-                "The demo cache may be empty. Run `decisionlens record` once with an API key, "
-                "or switch on live mode above."
+                "The demo cache may be empty for this case. Run `decisionlens record` once "
+                "with an API key to populate it."
             )
         return None
 

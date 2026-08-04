@@ -22,7 +22,13 @@ from decision_lens.config import ConfigError
 from decision_lens.llm import CachedDemoProvider
 from decision_lens.llm.anthropic_provider import AnthropicNotInstalled
 from decision_lens.models import Dimension
-from decision_lens.ui import available_cases, build_provider, materialise_case
+from decision_lens.ui import (
+    LIVE_UI_ENV,
+    available_cases,
+    build_provider,
+    live_ui_enabled,
+    materialise_case,
+)
 from tests.scripted import write_case
 
 streamlit_testing = pytest.importorskip("streamlit.testing.v1")
@@ -175,13 +181,46 @@ def test_the_pm_supplies_the_inputs_the_spec_names() -> None:
     assert any(cb.label.startswith("Require a non-AI") for cb in app.sidebar.checkbox)
 
 
-def test_live_mode_asks_for_a_key_only_when_switched_on() -> None:
+def test_live_mode_asks_for_a_key_only_when_switched_on(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(LIVE_UI_ENV, "1")
     app = AppTest.from_file(UI_PATH, default_timeout=60).run()
     assert not any(w.label == "Anthropic API key" for w in app.sidebar.text_input)
 
     app.sidebar.toggle[0].set_value(True).run()
     assert any(w.label == "Anthropic API key" for w in app.sidebar.text_input)
     assert app.sidebar.warning, "the cost of going live is stated"
+
+
+def test_the_live_toggle_ships_disabled_so_a_reader_cannot_start_a_long_run() -> None:
+    """A reader flipping a sidebar switch has not agreed to wait tens of minutes.
+
+    The live path itself stays built and tested — what is off by default is the
+    control, and the help text says where the real one lives.
+    """
+    app = AppTest.from_file(UI_PATH, default_timeout=60).run()
+
+    toggle = app.sidebar.toggle[0]
+    assert toggle.disabled, "the live toggle must not be operable by default"
+    assert not toggle.value
+    assert "decisionlens record" in (toggle.help or "")
+    assert not any(w.label == "Anthropic API key" for w in app.sidebar.text_input)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("1", True), ("true", True), ("YES", True), ("on", True), ("0", False), ("", False)],
+)
+def test_only_an_affirmative_setting_arms_the_live_toggle(value: str, expected: bool) -> None:
+    assert live_ui_enabled({LIVE_UI_ENV: value}) is expected
+
+
+def test_the_live_toggle_reads_the_real_environment_when_none_is_passed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv(LIVE_UI_ENV, raising=False)
+    assert live_ui_enabled() is False
 
 
 def test_nothing_runs_until_the_button_is_pressed() -> None:

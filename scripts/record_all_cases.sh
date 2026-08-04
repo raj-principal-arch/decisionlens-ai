@@ -88,10 +88,16 @@ printf 'finished in %dm %ds\n\n' $((total / 60)) $((total % 60))
 # while 43% of stages were missing, because the processes had all exited
 # cleanly after the API ran out of credit. Ask the artifact, not the process.
 failed=()
-python3 - "$OUT_DIR" <<'PYEOF'
+PYTHONPATH=src .venv/bin/python - "$OUT_DIR" <<'PYEOF'
 import json, pathlib, sys
-WANT = {"relevance", "classification", "contradictions", "missing_evidence",
-        "alternatives", "recommendation", "challenger", "baseline"}
+from decision_lens.recorder import current_stage_versions
+
+# Versions, not just stage names. An earlier version of this counter split the
+# cache key and kept only the stage, so a `classification::v2` left behind by a
+# prompt edit counted as "classification present" and the summary reported 99%
+# while a case could not replay at all. The artifact was asked the wrong
+# question. A stage counts only if the exact key the run will look for is there.
+WANT = current_stage_versions()
 out = pathlib.Path(sys.argv[1])
 total = done = 0
 for f in sorted(out.glob("*.json")):
@@ -102,12 +108,11 @@ for f in sorted(out.glob("*.json")):
     except Exception as exc:
         print(f"  UNREADABLE {f.name}: {exc}")
         continue
-    have = {k.split("::")[1] for k in keys}
-    missing = sorted(WANT - have)
+    missing = sorted(s for s, v in WANT.items() if f"{f.stem}::{s}::{v}" not in keys)
     total += len(WANT)
-    done += len(have & WANT)
+    done += len(WANT) - len(missing)
     mark = "ok  " if not missing else "PART"
-    print(f"  {mark} {f.stem:30} {len(have & WANT)}/{len(WANT)}"
+    print(f"  {mark} {f.stem:30} {len(WANT) - len(missing)}/{len(WANT)}"
           + (f"   missing: {', '.join(missing)}" if missing else ""))
 pct = (done / total * 100) if total else 0
 print(f"\n  {done}/{total} stages recorded ({pct:.0f}%)")
