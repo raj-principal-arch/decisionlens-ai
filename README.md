@@ -98,7 +98,7 @@ diagram's source facts are in [diagram-brief.md](docs/diagram-brief.md).
 | 11 | Enterprise ecosystem and governance docs | Complete |
 | 12 | Final quality review | Complete |
 
-996 tests, 100% line coverage, `mypy --strict` clean.
+1,010 tests, 100% line coverage, `mypy --strict` clean.
 
 ### What `make demo` prints today
 
@@ -251,7 +251,7 @@ Both are required — a key alone changes nothing, by design. `make record` capt
 ```
 decisionlens-ai/
 ├── data/         synthetic evidence corpus       the bundled case
-├── docs/         product strategy and reasoning  01, 05 complete; 02-04 outlined
+├── docs/         product strategy and reasoning  00-06, all written
 ├── evals/        ground truth for the case       cases/ and results/ await Phase 10
 ├── out/          generated briefs                gitignored; rebuilt by `make demo`
 ├── src/
