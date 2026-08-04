@@ -162,11 +162,22 @@ def _sidebar() -> dict[str, Any]:
     )
 
     st.sidebar.subheader("Criteria")
+    # Three, not nine. Every criterion costs one written assessment per option, so
+    # nine pre-ticked criteria against a seven-option set is sixty-three of them —
+    # and the sidebar gave no hint that a chip had a price. The default is now the
+    # three that bear on almost every prioritisation call; the rest are one click
+    # away for anyone who wants them.
     dimensions = st.sidebar.multiselect(
         "Compare options across",
         list(Dimension),
-        default=list(Dimension),
+        default=[
+            Dimension.CUSTOMER_REACH,
+            Dimension.DELIVERY_EFFORT,
+            Dimension.EVIDENCE_CONFIDENCE,
+        ],
         format_func=lambda d: d.value.replace("_", " "),
+        help="Each criterion adds one written assessment per option. More criteria "
+        "means a longer brief and a slower live run.",
     )
     require_non_ai = st.sidebar.checkbox("Require a non-AI option", value=True)
     require_no_build = st.sidebar.checkbox("Require a no-build / defer option", value=True)
@@ -562,16 +573,24 @@ def _run_brief(inputs: dict[str, Any]) -> DecisionBrief | None:
         st.error(str(exc))
         return None
 
-    lens = DecisionLens(
-        provider,
-        loaded.sources,
-        as_of=loaded.as_of,
-        timeout_seconds=LIVE_SKILL_TIMEOUT_SECONDS if inputs["live"] else SKILL_TIMEOUT_SECONDS,
-    )
-    spinner = "Calling a live model…" if inputs["live"] else "Replaying recorded output…"
+    label = "Calling a live model…" if inputs["live"] else "Replaying recorded output…"
     try:
-        with st.spinner(spinner):
-            return lens.run(loaded.request)
+        # A live run is seven sequential model calls over several minutes. A single
+        # spinner over the whole thing is indistinguishable from a hung page, so each
+        # stage reports as it starts and finishes.
+        with st.status(label, expanded=inputs["live"]) as status:
+            lens = DecisionLens(
+                provider,
+                loaded.sources,
+                as_of=loaded.as_of,
+                timeout_seconds=(
+                    LIVE_SKILL_TIMEOUT_SECONDS if inputs["live"] else SKILL_TIMEOUT_SECONDS
+                ),
+                progress=status.write,
+            )
+            brief = lens.run(loaded.request)
+            status.update(label="Brief ready", state="complete", expanded=False)
+            return brief
     except (DecisionLensError, ModelError) as exc:
         st.error(str(exc))
         if not inputs["live"]:

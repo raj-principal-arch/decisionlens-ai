@@ -347,3 +347,40 @@ class TestTheTraceRecordsWhichTextRan:
         retrieval = [s for s in trace.stages if not s.model]
         assert retrieval, "the fixture should include a retrieval stage"
         assert all(not s.prompt_fingerprint for s in retrieval)
+
+
+class TestLongListsAreCappedHonestly:
+    """A recommendation section ran to 1,631 words on the bundled case, of which
+    1,441 were four unbounded lists. The caps are here rather than in a validation
+    rule because a display limit costs no retry, and they announce what they hide
+    because a silently truncated list reads as a complete one."""
+
+    def test_a_short_list_is_shown_whole(self) -> None:
+        from decision_lens.report import TOP_N, _top_bullets
+
+        items = tuple(f"item {n}" for n in range(TOP_N))
+        rendered = _top_bullets(items)
+        assert len(rendered) == TOP_N
+        assert not any("more" in line for line in rendered)
+
+    def test_a_long_list_is_capped_and_says_how_many_are_hidden(self) -> None:
+        from decision_lens.report import TOP_N, _top_bullets
+
+        items = tuple(f"item {n}" for n in range(TOP_N + 3))
+        rendered = _top_bullets(items)
+        assert len(rendered) == TOP_N + 1
+        assert "and 3 more" in rendered[-1]
+        assert "JSON artifact" in rendered[-1], "the reader is told where the rest lives"
+
+    def test_an_empty_list_falls_back_to_its_message(self) -> None:
+        from decision_lens.report import _top_bullets
+
+        assert _top_bullets((), "_(nothing stated)_") == ["_(nothing stated)_"]
+
+    def test_the_recommendation_section_stays_short(self, brief: DecisionBrief) -> None:
+        """The whole point: a reader deciding, not studying."""
+        text = report.to_markdown(brief)
+        if "\n## Recommendation" not in text:
+            pytest.skip("this brief produced no recommendation")
+        section = text.split("\n## Recommendation")[1].split("\n## ")[0]
+        assert len(section.split()) < 1_000, "the section this cap exists to bound"

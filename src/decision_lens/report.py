@@ -70,8 +70,32 @@ def _cites(citations: Sequence[Citation]) -> str:
     return " ".join(f"[{c.evidence_id}]" for c in citations) or "_(uncited)_"
 
 
+#: How many entries a supporting list may show before the rest are summarised.
+#: A brief is read by someone deciding, not someone studying. The recommendation
+#: section ran to 1,631 words on the bundled case, of which 1,441 were four
+#: unbounded lists — "what it rests on" alone was twelve forty-word paragraphs.
+#: The prompt now asks for four sharp entries; this is what makes the page short
+#: even when it does not comply, and unlike a validation rule it costs no retry.
+TOP_N = 4
+
+
 def _bullets(items: Sequence[str], empty: str = "_(none)_") -> list[str]:
     return [f"- {item}" for item in items] or [empty]
+
+
+def _top_bullets(items: Sequence[str], empty: str = "_(none)_") -> list[str]:
+    """The strongest few, with an honest count of what is not shown.
+
+    Never silently truncated: a list that quietly drops items reads as a complete
+    list, and the reader has no way to know they are seeing part of one. The
+    remainder stays in the JSON artifact.
+    """
+    if not items:
+        return [empty]
+    shown = [f"- {item}" for item in items[:TOP_N]]
+    if len(items) > TOP_N:
+        shown.append(f"- _…and {len(items) - TOP_N} more, in the JSON artifact._")
+    return shown
 
 
 # --------------------------------------------------------------------------- #
@@ -143,18 +167,21 @@ def _recommendation(brief: DecisionBrief) -> list[str]:
 
     if recommendation.claims:
         lines += ["**What it rests on**", ""]
-        lines += [f"- {c.statement} {_cites(c.citations)}" for c in recommendation.claims]
+        claims = recommendation.claims
+        lines += [f"- {c.statement} {_cites(c.citations)}" for c in claims[:TOP_N]]
+        if len(claims) > TOP_N:
+            lines.append(f"- _…and {len(claims) - TOP_N} more, in the JSON artifact._")
         lines.append("")
 
     lines += ["**What would change it**", ""]
-    lines += _bullets(
+    lines += _top_bullets(
         recommendation.what_would_change_it,
         "_(nothing stated — a support level a reader cannot act on is decoration)_",
     )
     lines.append("")
 
     if recommendation.conditions:
-        lines += ["**Conditions**", "", *_bullets(recommendation.conditions), ""]
+        lines += ["**Conditions**", "", *_top_bullets(recommendation.conditions), ""]
     return lines
 
 
