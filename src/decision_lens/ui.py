@@ -291,13 +291,68 @@ def _gaps(brief: DecisionBrief) -> None:
             )
 
 
+def _comparison_table(brief: DecisionBrief) -> None:
+    """Every option against every criterion, in one grid.
+
+    This is the view the product is named for and it was the one thing the
+    interface would not show. The assessments existed — eleven options scored on
+    nine dimensions — but each option was sealed inside its own collapsed row, so
+    a reader could see one option at a time and never compare two. A comparison
+    tool whose comparison cannot be seen is not doing its job.
+
+    Deliberately no composite score. The cell says whether the dimension could be
+    assessed at all, because "we could not tell" is the answer a ranking would
+    erase, and it is usually the more useful one.
+    """
+    if not brief.alternatives:
+        return
+
+    dimensions: list[str] = []
+    for alternative in brief.alternatives:
+        for assessment in alternative.assessments:
+            name = assessment.dimension.value
+            if name not in dimensions:
+                dimensions.append(name)
+    if not dimensions:
+        return
+
+    selected = brief.recommendation.selected_alternative_id if brief.recommendation else ""
+    header = "| Option | " + " | ".join(d.replace("_", " ") for d in dimensions) + " |"
+    rule = "| --- " * (len(dimensions) + 1) + "|"
+    rows = [header, rule]
+    for alternative in brief.alternatives:
+        by_dimension = {a.dimension.value: a.state.value for a in alternative.assessments}
+        cells = []
+        for dimension in dimensions:
+            state = by_dimension.get(dimension)
+            if state is None:
+                cells.append("—")
+            elif state == "assessed":
+                cells.append("●")
+            else:
+                cells.append("·")
+        mark = " ←" if alternative.id == selected else ""
+        name = alternative.name if len(alternative.name) <= 46 else alternative.name[:45] + "…"
+        rows.append(f"| {name}{mark} | " + " | ".join(cells) + " |")
+
+    st.markdown("\n".join(rows))
+    st.caption(
+        "● assessed from evidence · · could not be assessed · ← recommended. "
+        "No score is computed: the dimensions are not commensurable, and a "
+        "composite number would hide which cells are empty."
+    )
+
+
 def _alternatives(brief: DecisionBrief) -> None:
     st.subheader(f"Alternatives ({len(brief.alternatives)})")
     left, right = st.columns(2)
     left.metric("Non-AI option", "yes" if brief.has_non_ai_alternative else "MISSING")
     right.metric("No-build / defer option", "yes" if brief.has_no_build_alternative else "MISSING")
 
+    _comparison_table(brief)
+
     selected = brief.recommendation.selected_alternative_id if brief.recommendation else ""
+    st.caption("Open an option for the reasoning behind each cell.")
     for alternative in brief.alternatives:
         label = f"{alternative.name} · {alternative.kind.value}"
         with st.expander(label + ("  ← recommended" if alternative.id == selected else "")):
