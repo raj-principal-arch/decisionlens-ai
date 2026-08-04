@@ -33,6 +33,7 @@ Run it with::
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import tempfile
@@ -118,6 +119,20 @@ def materialise_case(directory: Path, uploads: Sequence[Upload]) -> Path:
     return staged
 
 
+def case_question(directory: Path) -> str:
+    """The question a case was built to answer, or its name if it declares none.
+
+    Read straight from the manifest rather than from a table kept here, so a case
+    added to `data/` shows up with its real question and no second place to edit.
+    """
+    manifest = directory / "case_manifest.json"
+    try:
+        declared = json.loads(manifest.read_text(encoding="utf-8")).get("question")
+    except (OSError, ValueError):
+        return directory.name
+    return str(declared).strip() if declared else directory.name
+
+
 def live_ui_enabled(env: dict[str, str] | None = None) -> bool:
     """Whether the sidebar's live toggle is operable.
 
@@ -165,19 +180,40 @@ def _sidebar() -> dict[str, Any]:
         st.sidebar.error(f"No case directories under {CASES_ROOT}/")
         st.stop()
 
-    st.sidebar.subheader("Case")
+    live_available = live_ui_enabled()
+
+    # The decision comes first, and it is a list rather than a text box.
+    #
+    # A free-text question was worse than useless when replaying: the cache is
+    # keyed on case, skill and prompt version and deliberately not on the
+    # question, so anything typed here was silently ignored and the brief
+    # answered the case's own question instead. The reader got a confident
+    # answer to a question they had not asked, with nothing on the page saying
+    # so — the exact failure this product exists to prevent.
+    #
+    # Offering only the questions that can actually be answered removes the
+    # trap. It also reads the way a PM thinks: pick the decision, not the folder.
+    st.sidebar.subheader("The decision")
     directory = st.sidebar.selectbox(
-        "Bundled case", cases, format_func=lambda p: p.name, help="A folder of synthetic evidence"
+        "What are you deciding?",
+        cases,
+        format_func=case_question,
+        help="Each question has a folder of synthetic evidence behind it.",
     )
+    st.sidebar.caption(f"Evidence: `data/{directory.name}/`")
+
+    question = ""
+    if live_available:
+        question = st.sidebar.text_area(
+            "…or ask your own (live mode only)",
+            height=80,
+            placeholder="Leave blank to use the question above",
+        )
+
     uploaded = st.sidebar.file_uploader(
         "…or add synthetic files to it",
         accept_multiple_files=True,
         help="Files are added to the selected case for this session only. Synthetic data only.",
-    )
-
-    st.sidebar.subheader("The decision")
-    question = st.sidebar.text_area(
-        "Question", height=80, placeholder="Leave blank to use the case's own question"
     )
     outcome = st.sidebar.text_area(
         "Desired outcome", height=80, placeholder="Leave blank to use the case's"
@@ -208,7 +244,6 @@ def _sidebar() -> dict[str, Any]:
     require_no_build = st.sidebar.checkbox("Require a no-build / defer option", value=True)
 
     st.sidebar.subheader("Model")
-    live_available = live_ui_enabled()
     live = st.sidebar.toggle(
         "Use a live model",
         value=False,
