@@ -469,3 +469,58 @@ def test_empty_sections_say_what_is_absent_rather_than_showing_nothing(
         "a brief with blocking errors says so above the answer"
     )
     assert any("No claims were extracted" in i.value for i in app.info)
+
+
+class TestTheComparisonTable:
+    """The view the product is named for.
+
+    Eleven options scored on nine dimensions existed in the brief the whole
+    time, sealed one-per-collapsed-row so no two could be seen together. A
+    comparison tool whose comparison cannot be seen is not doing its job.
+    """
+
+    @staticmethod
+    def _brief_with(alternatives: tuple[object, ...]) -> Any:
+        from datetime import datetime
+
+        from decision_lens.models import DecisionBrief, DecisionRequest, UserContext
+
+        return DecisionBrief(
+            id="DB-1",
+            request=DecisionRequest(
+                id="DR-1",
+                question="Which intervention should the team prioritise?",
+                user=UserContext(user_id="pm"),
+            ),
+            generated_at=datetime(2026, 8, 3, 9, 0, 0),
+            alternatives=alternatives,
+        )
+
+    def test_a_brief_with_no_options_renders_nothing(self) -> None:
+        from decision_lens.ui import _comparison_table
+
+        _comparison_table(self._brief_with(()))  # must not raise
+
+    def test_options_carrying_no_assessments_render_nothing(self) -> None:
+        """No dimensions means no table to draw, not an empty table."""
+        from decision_lens.models import Alternative, OptionKind
+        from decision_lens.ui import _comparison_table
+
+        option = Alternative(id="OPT-1", name="n", kind=OptionKind.PROCESS_CHANGE, description="d")
+        _comparison_table(self._brief_with((option,)))  # must not raise
+
+    def test_every_option_and_dimension_reaches_the_grid(self) -> None:
+        from pathlib import Path
+
+        from decision_lens.case import load_case
+        from decision_lens.llm.cached_provider import DEFAULT_CACHE_PATH
+        from decision_lens.orchestrator import DecisionLens
+
+        loaded = load_case(Path("data/checkout_error_rate"))
+        brief = DecisionLens(
+            CachedDemoProvider(DEFAULT_CACHE_PATH), loaded.sources, as_of=loaded.as_of
+        ).run(loaded.request)
+
+        dimensions = {a.dimension.value for opt in brief.alternatives for a in opt.assessments}
+        assert len(brief.alternatives) > 1, "a comparison needs something to compare"
+        assert len(dimensions) > 1
