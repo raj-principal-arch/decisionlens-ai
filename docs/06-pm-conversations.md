@@ -1,7 +1,15 @@
 # 06 — PM Conversations
 
-> **STATUS: NOT YET CONDUCTED.**
-> This file contains the questions and an empty findings template. **No conversations have happened and no findings exist.** Nothing here may be cited as evidence until the findings sections below are filled with real responses.
+> **STATUS: OUTREACH SENT, NO RESPONSES YET.**
+>
+> Three product managers were contacted with the opening message below. **No replies had
+> arrived by the submission date, so no conversations have happened and no findings exist.**
+> The instrument is complete; the data is not. Nothing here may be cited as evidence until
+> the findings sections below are filled with real responses.
+>
+> This is recorded rather than smoothed over, because the gap it leaves is real:
+> [Assumption #1](01-product-strategy.md) in the product strategy remains unvalidated, and
+> the submission says so wherever it matters.
 
 **Method.** Informal conversations with **3 product managers**, conducted over text. This is **not research** — n=3, self-selected, no controls, conducted by the person whose hypothesis it tests. It is reported as what it is: a sanity check on [Assumption #1](01-product-strategy.md) in the product strategy.
 
