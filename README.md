@@ -16,6 +16,11 @@ To support those decisions, DecisionLens turns fragmented evidence into a tracea
 
 ## Architecture at a glance
 
+![DecisionLens architecture. Evidence on disk is retrieved by a connector that never interprets, analysed by one orchestrator running seven sequential stages — relevance, classification, contradictions, missing evidence, alternatives, recommendation, challenger — behind a vendor-neutral model boundary that replays recorded responses or calls claude-opus-5 live. Deterministic checks then run in code with no model involved, and a single-call baseline runs against the same evidence for comparison.](docs/images/decisionLensAI.png)
+
+<details>
+<summary>Same diagram as text, for screen readers and small screens</summary>
+
 ```mermaid
 flowchart TD
     A["Evidence on disk<br/><i>data/&lt;case&gt;/</i><br/>~10 files · Markdown, CSV, JSON"]
@@ -49,6 +54,8 @@ flowchart TD
     class S5 heavy
     class V check
 ```
+
+</details>
 
 One orchestrator, seven sequential stages, and a model boundary either side of which the
 orchestrator cannot tell whether it is talking to a live model or a recorded one. The checks
