@@ -103,7 +103,7 @@ install has no UI framework and no model SDK.
 | **Model** | `claude-opus-5` via the `anthropic` SDK | **Optional install.** Nothing in the default path imports it, and no test ever calls it. |
 | **Interface** | `streamlit` | **Optional install.** Kept out of the runtime set so the CLI, tests and evaluation never depend on a UI framework. |
 | **CLI** | `argparse`, stdlib | `decisionlens run / record / show` |
-| **Tests** | `pytest`, `pytest-cov` | ~990 tests, 100% line coverage enforced |
+| **Tests** | `pytest`, `pytest-cov` | 100% line coverage, enforced by the build |
 | **Types** | `mypy --strict` | Clean across 68 files |
 | **Lint & format** | `ruff` | |
 | **Build** | `make` | `setup · demo · ui · check · record · eval` |

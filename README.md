@@ -16,7 +16,7 @@ To support those decisions, DecisionLens turns fragmented evidence into a tracea
 
 ## Current status
 
-> **Phases 0–11 complete. The prototype runs and has been evaluated.**
+> **All twelve phases complete. The prototype runs and has been evaluated.**
 >
 > ```bash
 > make setup && make demo
@@ -42,9 +42,9 @@ To support those decisions, DecisionLens turns fragmented evidence into a tracea
 | 9 | Rendering, CLI, structured Streamlit UI | Complete |
 | 10 | Evaluation harness and results | Complete |
 | 11 | Enterprise ecosystem and governance docs | Complete |
-| 12 | Final quality review | Not started |
+| 12 | Final quality review | Complete |
 
-988 tests, 100% line coverage, `mypy --strict` clean.
+996 tests, 100% line coverage, `mypy --strict` clean.
 
 ### What `make demo` prints today
 
@@ -206,7 +206,7 @@ decisionlens-ai/
 │       ├── prompts/      versioned prompts, shared heuristics
 │       ├── cli.py        run / record / show
 │       └── ui.py         the Streamlit interface
-└── tests/        988 tests, 100% line coverage
+└── tests/        100% line coverage, enforced by `make check`
 ```
 
 ## Documentation

@@ -318,12 +318,12 @@ Stated here rather than left to be discovered:
 |---|---|
 | `make demo` | Produce a brief from the bundled case, offline |
 | `make ui` | The same thing in a browser |
-| `make check` | Lint, typecheck, 988 tests, 100% coverage |
+| `make check` | Lint, typecheck, the full suite at 100% line coverage |
 | `make eval` | Re-score every case from the recordings |
 | `data/` | Eleven synthetic cases |
 | `evals/` | Answer keys, recordings, results, audit record |
 | `docs/` | The five documents linked above |
 
-**Engineering:** Python 3.11+, Pydantic v2, `mypy --strict`, 988 tests at 100% line
-coverage. Every recorded response carries the model and date it came from; nothing in the
+**Engineering:** Python 3.11+, Pydantic v2, `mypy --strict`, 996 tests at 100% line
+coverage — the coverage gate is what is enforced; the count is whatever it is on the day. Every recorded response carries the model and date it came from; nothing in the
 cache is hand-written.
