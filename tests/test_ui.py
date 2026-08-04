@@ -12,6 +12,7 @@ every restyle while catching nothing that matters.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,7 @@ from decision_lens.ui import (
     LIVE_UI_ENV,
     available_cases,
     build_provider,
+    case_question,
     live_ui_enabled,
     materialise_case,
 )
@@ -168,8 +170,9 @@ def test_the_interface_is_a_form_not_a_chat() -> None:
     assert not app.chat_input, "a chat box would defeat the point of the interface"
     assert not app.chat_message
     labels = {w.label for w in app.sidebar.text_area} | {w.label for w in app.sidebar.text_input}
-    assert "Question" in labels
     assert "Desired outcome" in labels
+    # The question is chosen, not typed — see the replay-mode test below for why.
+    assert any(w.label == "What are you deciding?" for w in app.sidebar.selectbox)
 
 
 def test_the_pm_supplies_the_inputs_the_spec_names() -> None:
@@ -563,3 +566,60 @@ class TestTheComparisonTable:
         dimensions = {a.dimension.value for opt in brief.alternatives for a in opt.assessments}
         assert len(brief.alternatives) > 1, "a comparison needs something to compare"
         assert len(dimensions) > 1
+
+
+# --------------------------------------------------------------------------- #
+# The decision is chosen from a list, not typed
+# --------------------------------------------------------------------------- #
+
+
+def test_a_case_is_labelled_by_the_question_it_answers(tmp_path: Path) -> None:
+    directory = write_case(tmp_path)
+    assert (
+        case_question(directory)
+        == json.loads((directory / "case_manifest.json").read_text())["question"]
+    )
+
+
+def test_a_case_with_no_declared_question_falls_back_to_its_name(tmp_path: Path) -> None:
+    directory = write_case(tmp_path)
+    manifest = directory / "case_manifest.json"
+    data = json.loads(manifest.read_text())
+    data.pop("question", None)
+    manifest.write_text(json.dumps(data))
+    assert case_question(directory) == directory.name
+
+
+def test_an_unreadable_manifest_does_not_break_the_sidebar(tmp_path: Path) -> None:
+    """A corrupt case must not take the whole page down with it."""
+    directory = write_case(tmp_path)
+    (directory / "case_manifest.json").write_text("{not json")
+    assert case_question(directory) == directory.name
+
+
+def test_every_bundled_case_offers_a_real_question() -> None:
+    for directory in available_cases():
+        question = case_question(directory)
+        assert question != directory.name, f"{directory.name} shows a folder name, not a question"
+        assert question.endswith("?")
+
+
+def test_replay_mode_does_not_offer_a_question_box_it_would_ignore() -> None:
+    """The cache is keyed on case and skill, never on the question.
+
+    A text box here answered a different question than the one typed, with
+    nothing on the page saying so. Only the questions that can actually be
+    answered are offered.
+    """
+    app = AppTest.from_file(UI_PATH, default_timeout=60).run()
+
+    labels = {w.label for w in app.sidebar.text_area}
+    assert not any("ask your own" in label for label in labels)
+    assert any(w.label == "What are you deciding?" for w in app.sidebar.selectbox)
+
+
+def test_live_mode_restores_the_free_text_question(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(LIVE_UI_ENV, "1")
+    app = AppTest.from_file(UI_PATH, default_timeout=60).run()
+
+    assert any("ask your own" in w.label for w in app.sidebar.text_area)
