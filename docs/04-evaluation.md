@@ -51,13 +51,106 @@ One deliberate exception, in the safe direction: the baseline keeps a standalone
 ## Planned sections
 
 ### 1. Baseline definition
-Exact prompt, model, version, parameters, and what makes it strong rather than convenient.
+
+`src/decision_lens/prompts/baseline.py` · `BASELINE_V2` · `src/decision_lens/baseline.py`
+
+| | |
+|---|---|
+| **Model** | `claude-opus-5` — identical to the DecisionLens arm |
+| **Calls** | One, plus one repair attempt if the response fails schema validation (`BASELINE_REPAIR_V1`). The repair is a re-ask of the same question, never a hint |
+| **Output schema** | The same `DecisionBrief` Pydantic model the other arm produces. Neither arm can win on format |
+| **Evidence** | The same records from the same connector, in the same order |
+| **Validation** | The same deterministic checks: citation spans matched against source text, required sections, mandatory option kinds |
+
+**What makes it strong rather than convenient.** The system prompt opens by telling the model
+its reader will check the work. It then requires: citations by evidence id with no invented
+ids; every statement classified as fact, assumption, opinion or one of three constraint kinds;
+both sides of a conflict cited with what would settle it; gaps named with what they would
+change; at least one non-AI option and one no-change/defer/research option, argued as
+seriously as the others; support levels stated as judgments with what would change them; every
+number qualified by denominator, sample size, date and population; and falsification metrics.
+
+**The decisive fairness property: both arms read the same heuristics.** Every judgment cue
+lives in `prompts/heuristics.py` — `READING_EVIDENCE`, `SPOTTING_CONFLICTS`, `FINDING_GAPS`,
+`CITING`, `ASSESSMENT_STATES`, `STATING_SUPPORT` — and both prompts compose from it. A test
+asserts each block reaches both. This was not true in an earlier version, and the gap is
+documented above under *Both arms are briefed from one source*.
+
+The only intended difference is structural: DecisionLens runs the work as separately validated
+stages with a challenger; the baseline does all of it in one call with nothing checking the
+answer afterwards. Section 7 shows that this single difference is where the margin comes from.
 
 ### 2. Test cases
-At least seven, covering: strong supporting evidence; conflicting qualitative and quantitative evidence; insufficient evidence; a governance-sensitive scenario; executive pressure presented as evidence; misleading or irrelevant evidence; and a case where non-AI, no-build, defer, or further research is the best next step.
+
+**Eleven cases · 108 evidence files · 674 evidence records · 50 graded contradictions.**
+Markdown, CSV and JSON, all synthetic. Ten were authored *after* the prompts were frozen at
+commit `1d6ddaf`.
+
+Each case plants a hazard that is **not** named in the shared heuristics, so finding it cannot
+be a matter of pattern-matching the briefing:
+
+| Case | Planted hazard | Ceiling |
+|---|---|---|
+| `checkout_error_rate` | Metric redefined mid-series; no history restated | `strong` |
+| `identity_verification` | Date range starts after an outage that distorted the series | `moderate` |
+| `loyalty_programme_refresh` | Denominator changed by a dormant-account purge | `moderate` |
+| `payment_retry_reliability` | Volume-weighted mean hides one method at 71.6% | `moderate` |
+| `pricing_tool_selection` | Seasonally confounded pilot comparison | `moderate` |
+| `returns_fraud_signals` | Proxy metric: return *rate* designated the measure of *abuse* | **`low`** |
+| `sample_delivery_exceptions` | Survivorship — feedback only from affected customers | `moderate` |
+| `search_relevance_mandate` | Citation laundering — a memo's assertion later cited as evidence | `moderate` |
+| `subscription_churn` | Survivorship in the exit survey's collection channel | `moderate` |
+| `support_ticket_routing` | Double counting — reopened tickets stored as new records | `moderate` |
+| `warehouse_picking_errors` | Average hides a bimodal split across aisles | `moderate` |
+
+**Coverage of the categories this section committed to:**
+
+| Required | Case |
+|---|---|
+| Strong supporting evidence | `checkout_error_rate` — pre-registered randomised experiment, n=412,905, ceiling `strong` |
+| Conflicting qualitative and quantitative evidence | `sample_delivery_exceptions`, `subscription_churn` |
+| Insufficient evidence | `returns_fraud_signals` — thick corpus, ceiling `low` |
+| Governance-sensitive | `payment_retry_reliability` (contractual security), `warehouse_picking_errors` (works-council agreement), `identity_verification` |
+| Executive pressure presented as evidence | `search_relevance_mandate` — a memo asserts a root cause with no analysis, and a roadmap draft cites it |
+| Misleading or irrelevant evidence | All eleven, by construction; irrelevant records are marked in the answer keys so setting them aside is scored as correct |
+| Non-AI / no-build / defer / research is the best next step | `returns_fraud_signals` — the defensible action is to fund an audit before choosing any intervention |
 
 ### 3. Ground-truth construction
-How ground truth was authored for the synthetic corpus, what it asserts, and — importantly — where it deliberately does not force a single correct recommendation when several cautious next steps are defensible.
+
+`src/decision_lens/evaluation/ground_truth.py` defines the schema; one JSON answer key per
+case lives in `evals/ground_truth/`.
+
+**What a key asserts:** known facts, assumptions, opinions and constraints with their source
+spans; expected contradictions with both sides quoted and how to resolve them; expected gaps
+with impact; governance issues; planted evidence hazards; irrelevant records; forbidden
+claims; credible alternatives; and a recommendation-restraint block.
+
+**`must_detect` separates graded from noted.** Recall is measured only over entries flagged
+`must_detect`. Everything else is recorded because it is true, not because an arm is penalised
+for missing it. Of the planted material, 50 contradictions are graded; `EvidenceHazard`
+defaults to `must_detect = False`, so a hazard is context for the adjudicator rather than a
+score.
+
+**Where it deliberately refuses to name one right answer.** `RecommendationRestraint` carries
+`single_correct_answer: bool = False`, and the docstring states why:
+
+> Most real decisions have several defensible next steps, and an answer key that insists on
+> one would score restraint as error.
+
+So the keys grade a **ceiling**, not a choice: `max_defensible_support_level` with a written
+reason, a set of `defensible_next_steps` any of which scores as correct, and
+`must_not_recommend_without_conditions` for options that are only defensible with a stated
+guard. Ten of the eleven ceilings are `moderate`; `checkout_error_rate` is `strong` because
+the experiment earns it, and `returns_fraud_signals` is `low` because nothing in the corpus
+sizes the problem.
+
+**Spans are matched against evidence records, not raw file bytes.** A quote from a CSV row is
+checked against the record that row became, so a citation that names the right file but the
+wrong row does not silently pass.
+
+**The keys were audited, and the audit found defects in the keys themselves.** They are
+recorded in `evals/audit/adjudication.md` rather than quietly corrected — entries that would
+have manufactured a false failure against either arm.
 
 ### 4. Metrics
 
@@ -258,7 +351,34 @@ Synthetic evidence; small case count; single author writing both the corpus and 
 Leading the list: the bundled case is in-sample, as recorded above. Not the weaker claim that a system evaluated against planted conditions *may* be advantaged by knowing such conditions exist — the specific and confirmed one, that the prompts were written after the corpus by its author and encode heuristics matching its planted hazards. Any Phase 10 result on this case is reported under that constraint.
 
 ### 10. Model-based evaluation risks
-Judge bias toward verbose or structured output, correlation between generator and judge, and why deterministic checks carry the weight of the argument.
+
+**No number in this document depends on a model judging anything.** Every reported figure —
+contradiction recall, citation validity, option counts, support-level calibration — is
+produced by deterministic code in `src/decision_lens/evaluation/metrics.py`: string matching
+against source text and set comparison against the answer keys. `make eval` makes zero model
+calls and completes in under a second.
+
+An LLM judge exists (`src/decision_lens/evaluation/judge.py`, `JUDGE_V1`) and is tested, but
+**it is not wired into the scoring path.** That is deliberate, and the reasons are the risks
+this section was meant to name:
+
+| Risk | Why it bites here |
+|---|---|
+| **Generator–judge correlation** | The judge would be `claude-opus-5` grading `claude-opus-5`. A model is not a neutral referee of its own output, and the failure is invisible: it looks like agreement. |
+| **Verbosity bias** | Judges reward longer, more structured answers. DecisionLens produces ~5× the words of the baseline. A judged comparison would hand it a win for length. This is the single most disqualifying risk in this evaluation, because the arms differ in verbosity by construction. |
+| **Structure bias** | Both arms emit the same schema, so structure is controlled — but a judge shown two briefs would still favour the one with more populated sections, which is again the seven-stage arm. |
+| **Unfalsifiability** | A deterministic check fails loudly and reproducibly. A judge's verdict cannot be re-derived by a reader, which defeats the point of a document arguing for verifiability. |
+
+**What the judge was built for, and would be used for.** Claims that no string match can
+settle — whether a citation actually *supports* the sentence it is attached to, as opposed to
+merely existing. `JUDGE_V1` is deliberately **not** in the product `REGISTRY`, reads only the
+rendered markdown, is never told which arm produced it, resolves uncertainty to "not made",
+and discards any positive verdict unaccompanied by a verbatim quote. Those are mitigations,
+not solutions, and they are why the results above are carried entirely by deterministic
+checks.
+
+If a model-based figure is ever reported here, it will be labelled model-based on every
+occurrence.
 
 ### 11. Proposed real-PM study
 Design only — **not conducted, and not to be described as conducted.** Measures: decision-quality rating, verification time, total completion time, trust, willingness to use, actionability, unsupported claims found, assumptions surfaced, alternatives considered, whether the PM changed the decision, and continued usage over time.
