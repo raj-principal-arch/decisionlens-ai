@@ -528,18 +528,38 @@ def _run_brief(inputs: dict[str, Any]) -> DecisionBrief | None:
 
 
 def render(brief: DecisionBrief) -> None:
-    """Lay the brief out in the order a decision should be read."""
+    """Answer first, then the reasons to doubt it, then the detail.
+
+    An earlier version led with the evidence and put the recommendation sixth,
+    below forty-odd facts, assumptions, opinions and constraints. That is the
+    order in which the analysis was produced and the order a paper is written;
+    it is not the order a decision is read. A PM opening this wants the answer,
+    then what would change it, and only then the material it was built from.
+
+    The classification tables stay in the brief because they are the audit
+    trail — but they are collapsed, because a section nobody can finish is a
+    section nobody checks.
+    """
     _checks(brief)
     st.divider()
-    _evidence_says(brief)
-    _contradictions(brief)
-    _gaps(brief)
+
+    # The answer, and immediately what else was on the table.
+    _recommendation(brief)
     _alternatives(brief)
     st.divider()
-    _recommendation(brief)
+
+    # The reasons to doubt it. These belong above the raw evidence: a reader who
+    # stops here has still seen every material objection.
+    _contradictions(brief)
+    _gaps(brief)
     _experiment(brief)
+    st.divider()
+
     _pm_decision(brief)
     st.divider()
+
+    with st.expander("How each statement was classified"):
+        _evidence_says(brief)
     with st.expander("Evidence and run trace"):
         _evidence(brief)
         _trace(brief)
