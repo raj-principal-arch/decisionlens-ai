@@ -14,6 +14,53 @@ To support those decisions, DecisionLens turns fragmented evidence into a tracea
 
 ---
 
+## Architecture at a glance
+
+```mermaid
+flowchart TD
+    A["Evidence on disk<br/><i>data/&lt;case&gt;/</i><br/>~10 files · Markdown, CSV, JSON"]
+    B["Connector — retrieves, never interprets<br/><i>connectors/local_files.py</i><br/>~57 evidence records, each with an id"]
+
+    subgraph AGENT["The agent — orchestrator.py · seven sequential model calls"]
+        direction TB
+        S1["1 · relevance<br/><small>which records matter</small>"]
+        S2["2 · classification<br/><small>fact / assumption / opinion / constraint</small>"]
+        S3["3 · contradictions<br/><small>where sources disagree, and what settles it</small>"]
+        S4["4 · missing evidence<br/><small>what is absent that would change the answer</small>"]
+        S5["5 · alternatives<br/><small>options × criteria — dominant cost</small>"]
+        S6["6 · recommendation<br/><small>which option, at what confidence</small>"]
+        S7["7 · challenger<br/><small>eight attacks — can only lower confidence</small>"]
+        S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
+    end
+
+    M{{"Model boundary — llm/<br/>cached replay 0.14s &nbsp;|&nbsp; live claude-opus-5"}}
+    V["Checks in code — no model<br/><i>validation.py · provenance.py</i><br/>quotes verified · non-AI and no-build options enforced<br/>confidence lowered, never raised"]
+    O["Decision brief<br/><i>report.py · ui.py</i><br/>markdown · JSON · run trace<br/>PM decision recorded separately"]
+    BL["Comparison arm — baseline.py<br/><small>one call · 64% vs 72% recall · 1/3 the cost</small>"]
+
+    A --> B --> AGENT
+    AGENT -.talks to.-> M
+    BL -.talks to.-> M
+    AGENT --> V --> O
+    B -.same evidence.-> BL
+
+    classDef heavy fill:#D9963F,stroke:#B36A1D,color:#16191C
+    classDef check fill:#2C6D6B,stroke:#1F4F4E,color:#FFFFFF
+    class S5 heavy
+    class V check
+```
+
+One orchestrator, seven sequential stages, and a model boundary either side of which the
+orchestrator cannot tell whether it is talking to a live model or a recorded one. The checks
+that make a brief trustworthy — quote verification, mandatory non-AI and no-build options,
+confidence that can be lowered but never raised — run in **code, with no model involved**.
+
+Every file path in the diagram is real. The reasoning behind each choice is in
+[03 — Architecture and Governance](docs/03-architecture-and-governance.md), and the
+diagram's source facts are in [diagram-brief.md](docs/diagram-brief.md).
+
+---
+
 ## Current status
 
 > **All twelve phases complete. The prototype runs and has been evaluated.**
