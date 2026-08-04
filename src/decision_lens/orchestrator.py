@@ -70,7 +70,7 @@ absent section is reported as absent-because-it-failed.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import date, datetime
 from typing import TypeVar
 
@@ -150,6 +150,10 @@ class DecisionLens:
         clock: Fixed timestamp for the run, for the same reason.
         allow_retry: Whether skills may re-prompt once after a broken requirement.
         timeout_seconds: Per-skill deadline.
+        progress: Called with one line as each stage starts and finishes. A live
+            run takes minutes and produced no output at all until it was over,
+            which is indistinguishable from being hung. Same callback shape the
+            recorder already defines and the CLI already consumes.
     """
 
     def __init__(
@@ -161,6 +165,7 @@ class DecisionLens:
         clock: datetime | None = None,
         allow_retry: bool = True,
         timeout_seconds: float = SKILL_TIMEOUT_SECONDS,
+        progress: Callable[[str], None] | None = None,
     ) -> None:
         self.provider = provider
         self.sources = tuple(sources)
@@ -168,6 +173,11 @@ class DecisionLens:
         self.clock = clock
         self.allow_retry = allow_retry
         self.timeout_seconds = timeout_seconds
+        self.progress = progress
+
+    def _say(self, line: str) -> None:
+        if self.progress is not None:
+            self.progress(line)
 
     def _now(self) -> datetime:
         return self.clock or datetime.now()
@@ -273,9 +283,11 @@ class DecisionLens:
         notes: list[str],
     ) -> T | None:
         """Run one skill. Returns ``None`` if it failed, having recorded why."""
+        self._say(f"{skill.name} …")
         try:
             run = skill.run(context)
         except SkillError as exc:
+            self._say(f"{skill.name} — failed")
             if exc.stages:
                 stages.extend(exc.stages)
             else:  # pragma: no cover - defensive; skills always attach a stage
@@ -283,6 +295,7 @@ class DecisionLens:
             return None
         stages.extend(run.stages)
         notes.extend(run.warnings)
+        self._say(f"{skill.name} — done")
         return run.output
 
     # -- 4-14. the analysis sequence ----------------------------------------- #
