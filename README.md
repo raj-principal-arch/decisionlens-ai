@@ -188,6 +188,8 @@ MODEL_PROVIDER=anthropic
 
 Both are required — a key alone changes nothing, by design. `make record` captures a live run into the demo cache so it can be replayed offline afterwards; `make record-resume` re-records only the stages whose prompts have changed. Every cached response carries the model and date it came from, and nothing in that file is hand-written.
 
+**The browser interface never calls a model.** Its live toggle ships disabled, because a seven-stage live run is tens of minutes of sequential calls and a sidebar switch is the wrong place to discover that. The code path is built and tested; only the control is off. Set `DECISIONLENS_ENABLE_LIVE=1` before `make ui` to re-enable it. Even then the key is typed into the form — the page never reads one from the environment.
+
 ---
 
 ## Repository map
