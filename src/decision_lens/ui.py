@@ -35,13 +35,17 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import tempfile
 from collections.abc import Sequence
 from datetime import datetime
+from html import escape
 from pathlib import Path
 from typing import Any, Protocol
 
+import altair as alt
+import pandas as pd
 import streamlit as st
 
 from decision_lens import report
@@ -52,6 +56,8 @@ from decision_lens.llm.anthropic_provider import AnthropicProvider
 from decision_lens.models import (
     DECISION_OWNER_NOTICE,
     SYNTHETIC_DATA_NOTICE,
+    Alternative,
+    AssessmentState,
     ClaimType,
     DecisionBrief,
     Dimension,
@@ -61,6 +67,7 @@ from decision_lens.models import (
 from decision_lens.orchestrator import DecisionLens, DecisionLensError, record_pm_decision
 from decision_lens.recorder import LIVE_SKILL_TIMEOUT_SECONDS
 from decision_lens.skills import SKILL_TIMEOUT_SECONDS
+from decision_lens.validation import ValidationCode
 
 CASES_ROOT = Path("data")
 DEFAULT_MODEL = "claude-opus-5"
@@ -133,6 +140,108 @@ def case_question(directory: Path) -> str:
     return str(declared).strip() if declared else directory.name
 
 
+def recorded_questions(directory: Path) -> list[str]:
+    """The questions this case has recorded output for.
+
+    One per case today, because the cache is keyed on case, skill and prompt
+    version — so a case carries exactly the question it was recorded against.
+    Returned as a list anyway: the shape is what changes when a case is recorded
+    against more than one question, and a caller written against a list does not
+    have to change with it.
+    """
+    return [case_question(directory)]
+
+
+def coverage_slices(alternative: Alternative | None) -> tuple[tuple[str, bool], ...]:
+    """Every one of the nine criteria, and whether evidence was found for it.
+
+    All nine are returned whether or not the option carries an assessment for
+    them, because a criterion the model never mentioned and a criterion it
+    explicitly could not assess are the same fact to a reader: no evidence. A
+    chart built only from the assessments present would silently shrink to the
+    criteria that happened to work.
+    """
+    if alternative is None:
+        return tuple((d.value, False) for d in Dimension)
+    evidenced = {
+        a.dimension for a in alternative.assessments if a.state is AssessmentState.ASSESSED
+    }
+    return tuple((d.value, d in evidenced) for d in Dimension)
+
+
+#: Matches the sentence :func:`~decision_lens.validation.enforce_support_ceiling`
+#: writes when it lowers a support level. Parsing a message is fragile in
+#: general; it is safe here because that sentence is built in exactly one place,
+#: and `test_the_support_journey_matches_what_validation_writes` fails if the
+#: wording drifts.
+_REDUCED = re.compile(r"Support was reduced from (\w+) to (\w+)")
+
+
+def support_journey(brief: DecisionBrief) -> tuple[str, str] | None:
+    """What the recommendation stage claimed, and what it was cut to.
+
+    ``None`` when nothing lowered it — which is the honest rendering of "the
+    challenger looked and had no objection", not of "the challenger did not run".
+    """
+    for issue in brief.validation_issues:
+        if issue.code == ValidationCode.SUPPORT_REDUCED.value:
+            found = _REDUCED.search(issue.message)
+            if found:  # pragma: no branch - the code and the wording ship together
+                return found.group(1), found.group(2)
+    return None
+
+
+def option_evidence(alternative: Alternative) -> tuple[int, int]:
+    """Citations for this option, and citations against it.
+
+    Counted, not judged. An earlier version of this column read the option's
+    ``evidence_confidence`` support level instead, which was wrong in a way worth
+    recording: that field carried ``strong`` for options whose own summary said
+    the evidence was *"effectively nil"*. The model had used it to mean "I am
+    confident in this assessment", not "the evidence is good", and nothing
+    validated either reading. These two numbers cannot drift from their label —
+    every citation counted here has already been resolved against source text.
+    """
+    return len(alternative.supporting), len(alternative.opposing)
+
+
+def option_rows(brief: DecisionBrief) -> list[dict[str, Any]]:
+    """One row per option, recommended first, then best-supported.
+
+    Carries no composite score. `Criteria evidenced` counts how many of the nine
+    stand on evidence; it measures how much is *known* about an option, never how
+    good the option is. The sort follows the same rule, which is why the columns
+    and the ordering agree and neither claims to rank value.
+    """
+    selected = brief.recommendation.selected_alternative_id if brief.recommendation else ""
+
+    def sort_key(alternative: Alternative) -> tuple[int, int, int]:
+        supporting, opposing = option_evidence(alternative)
+        return (
+            0 if alternative.id == selected else 1,
+            -(supporting - opposing),
+            -sum(1 for _, ok in coverage_slices(alternative) if ok),
+        )
+
+    rows: list[dict[str, Any]] = []
+    for position, alternative in enumerate(sorted(brief.alternatives, key=sort_key), start=1):
+        supporting, opposing = option_evidence(alternative)
+        evidenced = sum(1 for _, ok in coverage_slices(alternative) if ok)
+        rows.append(
+            {
+                "#": position,
+                "Possible feature to build": alternative.name,
+                "Kind of change": alternative.kind.value.replace("_", " "),
+                "Evidence for": supporting,
+                "Evidence against": opposing,
+                "Criteria evidenced": f"{evidenced}/{len(Dimension)}",
+                "Status": "Recommended" if alternative.id == selected else "",
+                "_why_not": alternative.why_not_selected,
+            }
+        )
+    return rows
+
+
 def live_ui_enabled(env: dict[str, str] | None = None) -> bool:
     """Whether the sidebar's live toggle is operable.
 
@@ -195,12 +304,32 @@ def _sidebar() -> dict[str, Any]:
     # trap. It also reads the way a PM thinks: pick the decision, not the folder.
     st.sidebar.subheader("The decision")
     directory = st.sidebar.selectbox(
-        "What are you deciding?",
+        "Evidence folder",
         cases,
-        format_func=case_question,
-        help="Each question has a folder of synthetic evidence behind it.",
+        format_func=lambda p: p.name.replace("_", " "),
+        help="Each folder is a self-contained case: evidence files plus a manifest.",
     )
-    st.sidebar.caption(f"Evidence: `data/{directory.name}/`")
+    questions = recorded_questions(directory)
+    st.sidebar.selectbox(
+        "Question",
+        questions,
+        help="The question this folder has recorded output for.",
+    )
+    st.sidebar.caption(
+        f"`data/{directory.name}/` · {len(questions)} recorded question. "
+        "The cache is keyed on the case, so this is the only question this "
+        "folder can answer offline."
+    )
+
+    # Directly under the two things it acts on, and above every optional field.
+    #
+    # It sat at the foot of the sidebar, below the uploader, two text boxes and
+    # three settings — so the one control that does anything was the last thing
+    # found. Everything below this line has a working default; a reader who
+    # changes nothing should not have to scroll past all of it to start.
+    run = st.sidebar.button("Examine this decision", type="primary", width="stretch")
+    st.sidebar.caption("Everything below is optional.")
+    st.sidebar.divider()
 
     question = ""
     if live_available:
@@ -222,24 +351,24 @@ def _sidebar() -> dict[str, Any]:
         "Product area", placeholder="Leave blank to use the case's"
     )
 
+    # All nine, always, and not selectable.
+    #
+    # They were a multiselect defaulting to three, on the reasoning that each
+    # criterion costs one written assessment per option. Two things were wrong
+    # with that. The nine *are* the framework — an option compared on three
+    # criteria is not comparable to one compared on nine, and the whole claim of
+    # this product is that every option meets the same fixed bar. And in replay
+    # mode the control did not even work: `LLMRequest.cache_key` is
+    # `case::skill::prompt_version`, so unticking a criterion changed the prompt
+    # and got back the same recorded answer, assessed on all nine. The reader was
+    # shown a control that silently did nothing — the same trap already removed
+    # from the free-text question box.
     st.sidebar.subheader("Criteria")
-    # Three, not nine. Every criterion costs one written assessment per option, so
-    # nine pre-ticked criteria against a seven-option set is sixty-three of them —
-    # and the sidebar gave no hint that a chip had a price. The default is now the
-    # three that bear on almost every prioritisation call; the rest are one click
-    # away for anyone who wants them.
-    dimensions = st.sidebar.multiselect(
-        "Compare options across",
-        list(Dimension),
-        default=[
-            Dimension.CUSTOMER_REACH,
-            Dimension.DELIVERY_EFFORT,
-            Dimension.EVIDENCE_CONFIDENCE,
-        ],
-        format_func=lambda d: d.value.replace("_", " "),
-        help="Each criterion adds one written assessment per option. More criteria "
-        "means a longer brief and a slower live run.",
+    st.sidebar.caption(
+        "All nine, always. They are the framework, not a preference — options "
+        "compared on different criteria are not comparable."
     )
+    dimensions = set(Dimension)
     require_non_ai = st.sidebar.checkbox("Require a non-AI option", value=True)
     require_no_build = st.sidebar.checkbox("Require a no-build / defer option", value=True)
 
@@ -269,13 +398,13 @@ def _sidebar() -> dict[str, Any]:
         "question": question.strip(),
         "outcome": outcome.strip(),
         "product_area": product_area.strip(),
-        "dimensions": set(dimensions),
+        "dimensions": dimensions,
         "require_non_ai": require_non_ai,
         "require_no_build": require_no_build,
         "live": live,
         "api_key": api_key,
         "model": model,
-        "run": st.sidebar.button("Produce a brief", type="primary", width="stretch"),
+        "run": run,
     }
 
 
@@ -423,18 +552,65 @@ def _comparison_table(brief: DecisionBrief) -> None:
 
 
 def _alternatives(brief: DecisionBrief) -> None:
-    st.subheader(f"Alternatives ({len(brief.alternatives)})")
-    left, right = st.columns(2)
-    left.metric("Non-AI option", "yes" if brief.has_non_ai_alternative else "MISSING")
-    right.metric("No-build / defer option", "yes" if brief.has_no_build_alternative else "MISSING")
+    """The option list, and only the option list, open by default.
 
-    _comparison_table(brief)
+    This table is what the product is for: eleven options against one fixed bar,
+    comparable at a glance. The dot grid and the per-option reasoning are a click
+    away — both are reference material a reader reaches for after a row has
+    caught their eye, not before.
+    """
+    st.subheader(f"Alternatives ({len(brief.alternatives)})")
+    # Two guarantees, not two statistics. The brief is rejected without either,
+    # so what these report is that the check ran and passed — which is why they
+    # say what was required rather than just "yes".
+    left, right = st.columns(2)
+    left.metric(
+        "Non-AI option offered",
+        "yes" if brief.has_non_ai_alternative else "MISSING",
+        help=(
+            "**A way to fix this without using AI.**\n\n"
+            "Ask AI for options and it suggests AI ones — like asking a car "
+            "salesman how to get to work. He will never say *take the bus*.\n\n"
+            "So every brief must contain at least one option that solves the "
+            "problem with no AI in it. Without one the brief is **rejected in "
+            "code**, not warned about.\n\n"
+            "It matters because a list of only-AI options makes *the best option* "
+            "mean *the best AI option* — the answer is assumed before anything is "
+            "compared. In this case the non-AI option won and both AI options "
+            "came last."
+        ),
+    )
+    right.metric(
+        "Do-nothing option offered",
+        "yes" if brief.has_no_build_alternative else "MISSING",
+        help=(
+            "**The option to change nothing.**\n\n"
+            "Build nothing, defer it, or go and research it first. Doing nothing "
+            "is always genuinely available, and is sometimes the right call — but "
+            "if it is not written on the list, nobody weighs it.\n\n"
+            "Listing it makes doing nothing a visible decision with its own "
+            "evidence, rather than what happens when no one chooses. Also "
+            "**enforced in code**: no such option, no brief.\n\n"
+            "Here it is *Hold current course*, and the evidence argues against "
+            "it — first-attempt success has fallen every quarter for five "
+            "quarters."
+        ),
+    )
+    st.caption(
+        "Both are **required**, not counted. Asking a model nicely for a no-build "
+        "option is a hope; rejecting the brief when it is missing is a guarantee."
+    )
+
+    _options_table(brief)
+
+    with st.expander(f"Every option against every criterion ({len(Dimension)} criteria)"):
+        _comparison_table(brief)
 
     selected = brief.recommendation.selected_alternative_id if brief.recommendation else ""
-    st.caption("Open an option for the reasoning behind each cell.")
-    for alternative in brief.alternatives:
-        label = f"{alternative.name} · {alternative.kind.value}"
-        with st.expander(label + ("  ← recommended" if alternative.id == selected else "")):
+    with st.expander("The reasoning behind each option"):
+        for alternative in brief.alternatives:
+            label = f"{alternative.name} · {alternative.kind.value}"
+            st.markdown(f"**{label}**" + ("  ← recommended" if alternative.id == selected else ""))
             if alternative.description:
                 st.markdown(alternative.description)
             for assessment in alternative.assessments:
@@ -446,49 +622,329 @@ def _alternatives(brief: DecisionBrief) -> None:
                 st.caption(f"Not selected: {alternative.why_not_selected}")
 
 
-def _recommendation(brief: DecisionBrief) -> None:
-    st.subheader("Recommendation")
+def _selected_alternative(brief: DecisionBrief) -> Alternative | None:
+    if brief.recommendation is None:
+        return None
+    wanted = brief.recommendation.selected_alternative_id
+    return next((a for a in brief.alternatives if a.id == wanted), None)
+
+
+#: Evidenced, and not. The only two colours on the page that carry meaning, so
+#: nothing else is allowed to use them.
+_EVIDENCED = "#3FBFA5"
+_BLANK = "#3A4150"
+
+CSS = """
+<style>
+  .block-container { padding-top: 2.4rem; max-width: 1180px; }
+  h1, h2, h3 { letter-spacing: -0.02em; }
+  [data-testid="stMetric"] {
+      background: #161A22;
+      border: 1px solid #242A36;
+      border-radius: 12px;
+      padding: 1rem 1.15rem;
+  }
+  [data-testid="stMetricLabel"] p {
+      font-size: .74rem !important;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #8B93A5 !important;
+  }
+  [data-testid="stMetricValue"] { font-size: 1.9rem; }
+  .dl-hero {
+      display: flex; align-items: baseline; gap: .9rem; flex-wrap: wrap;
+      border-bottom: 1px solid #242A36; padding-bottom: 1rem; margin-bottom: 1.4rem;
+  }
+  .dl-hero h1 { font-size: 1.7rem; margin: 0; font-weight: 640; }
+  .dl-hero .dl-case {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .8rem; color: #8B93A5;
+      background: #161A22; border: 1px solid #242A36;
+      border-radius: 6px; padding: .18rem .55rem;
+  }
+  .dl-card {
+      background: #161A22; border: 1px solid #242A36;
+      border-radius: 12px; padding: 1.15rem 1.3rem;
+  }
+  .dl-card h4 { margin: 0 0 .55rem 0; font-size: .74rem; letter-spacing: .12em;
+      text-transform: uppercase; color: #8B93A5; font-weight: 600; }
+  .dl-chip {
+      display: inline-block; font-size: .74rem; border-radius: 999px;
+      padding: .16rem .6rem; margin: 0 .3rem .35rem 0;
+      border: 1px solid #242A36; color: #C3C9D6;
+  }
+  .dl-chip.on  { border-color: rgba(63,191,165,.45); color: #7FD9C6;
+                 background: rgba(63,191,165,.10); }
+  .dl-chip.off { color: #7B8496; }
+  .dl-eyebrow {
+      font-size: .74rem; letter-spacing: .12em; text-transform: uppercase;
+      color: #8B93A5; margin: 2.2rem 0 .5rem 0;
+  }
+  .dl-table {
+      width: 100%; border-collapse: collapse; margin: .3rem 0 .2rem 0;
+      font-size: .93rem; table-layout: fixed;
+  }
+  .dl-table th {
+      text-align: left; font-size: .72rem; letter-spacing: .1em;
+      text-transform: uppercase; color: #8B93A5; font-weight: 600;
+      padding: .55rem .7rem; border-bottom: 1px solid #2E3542; vertical-align: bottom;
+  }
+  .dl-table td {
+      padding: .7rem; border-bottom: 1px solid #1E2430; vertical-align: top;
+      color: #D7DBE4; word-wrap: break-word;
+  }
+  .dl-table td.c, .dl-table th.c { text-align: center; }
+  .dl-table td.dim { color: #8B93A5; }
+  .dl-table tbody tr:hover { background: #14181F; }
+  .dl-table tr.rec { background: rgba(63,191,165,.06); }
+  .dl-table tr.rec td { border-bottom-color: rgba(63,191,165,.20); }
+  .dl-table td strong { color: #E6E8EE; font-weight: 600; }
+  section[data-testid="stSidebar"] { border-right: 1px solid #242A36; }
+  div[data-testid="stExpander"] details {
+      border: 1px solid #242A36; border-radius: 10px; background: #12161D;
+  }
+</style>
+"""
+
+
+def _style() -> None:
+    """One stylesheet, applied once.
+
+    Streamlit's defaults are built for dashboards that are scanned, not for a
+    document that is argued with. The overrides here do one thing: make the two
+    states that carry meaning — evidenced, and not — legible at a glance, and
+    stop everything else from competing with them.
+    """
+    st.markdown(CSS, unsafe_allow_html=True)
+
+
+def _coverage_chart(slices: tuple[tuple[str, bool], ...]) -> alt.LayerChart:
+    """A labelled doughnut: nine equal segments, named on the ring.
+
+    Equal segments rather than two proportional arcs, because the nine criteria
+    are the framework and a reader should see all nine whether or not evidence
+    reached them. The count sits in the hole so the headline figure is readable
+    without counting segments, and every segment carries its own name so the
+    chart does not depend on a legend to be understood.
+    """
+    # Evidenced segments first, then the blanks, so the ring reads as one solid
+    # arc of what is known against one of what is not — rather than nine
+    # alternating slices a reader has to count.
+    ordered = sorted(slices, key=lambda s: (not s[1], s[0]))
+    frame = pd.DataFrame(
+        [
+            {
+                "Criterion": name.replace("_", " "),
+                "State": "Evidenced" if ok else "No evidence",
+                "n": 1,
+                "Order": position,
+            }
+            for position, (name, ok) in enumerate(ordered)
+        ]
+    )
+
+    base = alt.Chart(frame).encode(
+        theta=alt.Theta("n:Q", stack=True),
+        order=alt.Order("Order:Q"),
+        color=alt.Color(
+            "State:N",
+            scale=alt.Scale(domain=["Evidenced", "No evidence"], range=[_EVIDENCED, _BLANK]),
+            legend=alt.Legend(title=None, orient="bottom", labelColor="#C3C9D6"),
+        ),
+    )
+    ring = base.mark_arc(
+        innerRadius=52, outerRadius=82, stroke="#0E1015", strokeWidth=3, cornerRadius=2
+    ).encode(tooltip=["Criterion:N", "State:N"])
+    # `limit=0` is Vega for "do not truncate". At 120 the longest criterion —
+    # strategic customer importance — came out as "strategic customer imp…",
+    # which reads as a rendering fault rather than a label.
+    labels = base.mark_text(radius=104, fontSize=9.5, limit=0).encode(
+        text="Criterion:N", color=alt.value("#98A0B0")
+    )
+    evidenced = sum(1 for _, ok in slices if ok)
+    middle = (
+        alt.Chart(pd.DataFrame([{"t": f"{evidenced}/{len(Dimension)}"}]))
+        .mark_text(fontSize=28, fontWeight=700, color="#E6E8EE", dy=-5)
+        .encode(text="t:N")
+    )
+    caption = (
+        alt.Chart(pd.DataFrame([{"t": "criteria evidenced"}]))
+        .mark_text(fontSize=11, color="#8B93A5", dy=22)
+        .encode(text="t:N")
+    )
+    # The heading is rendered above the chart in HTML rather than as a Vega
+    # title: a Vega title is laid out inside the plot box, so a long one is
+    # clipped by the container instead of wrapping.
+    chart = (
+        alt.layer(ring, labels, middle, caption)
+        .properties(height=300, padding={"top": 8, "bottom": 8, "left": 30, "right": 30})
+        .configure_view(stroke=None)
+        .configure_legend(labelColor="#C3C9D6", symbolSize=90, labelFontSize=12)
+    )
+    assert isinstance(chart, alt.LayerChart)  # noqa: S101 - narrows the fluent API's Any
+    return chart
+
+
+def _coverage(brief: DecisionBrief) -> None:
+    """How much of the framework the evidence could actually fill in.
+
+    First on the page, before the answer. A reader who sees "5 of 9" before they
+    see the recommendation reads the recommendation differently, which is the
+    entire intent — the chart is a caveat, not an ornament.
+    """
+    slices = coverage_slices(_selected_alternative(brief))
+    blank = [name for name, ok in slices if not ok]
+
+    st.altair_chart(_coverage_chart(slices), width="stretch")
+    if blank:
+        chips = "".join(f'<span class="dl-chip off">{n.replace("_", " ")}</span>' for n in blank)
+        st.markdown(
+            f'<div class="dl-card"><h4>No evidence · {len(blank)}</h4>{chips}'
+            "<p style='color:#8B93A5;font-size:.8rem;margin:.7rem 0 0 0'>"
+            "Absence of evidence is not evidence of low value. Left blank rather "
+            "than filled with a plausible guess.</p></div>",
+            unsafe_allow_html=True,
+        )
+
+
+def _options_table(brief: DecisionBrief) -> None:
+    """The table, then the reasons, cross-referenced by number.
+
+    Hand-rendered rather than `st.dataframe`, which draws to a canvas: column
+    alignment cannot be set, long names are clipped mid-word with no way to see
+    the rest, and the last column falls off the right edge. The counts are
+    centred under their headings because a reader compares them down the column,
+    and the names wrap in full because a truncated option is not an option a PM
+    can weigh.
+    """
+    rows = option_rows(brief)
+    if not rows:
+        return
+
+    head = (
+        '<table class="dl-table"><thead><tr>'
+        '<th class="c" style="width:3rem">#</th>'
+        "<th>Possible feature to build</th>"
+        '<th style="width:10rem">Kind of change</th>'
+        '<th class="c" style="width:6rem">Evidence<br>for</th>'
+        '<th class="c" style="width:6rem">Evidence<br>against</th>'
+        '<th class="c" style="width:6.5rem">Criteria<br>evidenced</th>'
+        '<th class="c" style="width:8rem">Status</th>'
+        "</tr></thead><tbody>"
+    )
+    cells = []
+    for row in rows:
+        recommended = bool(row["Status"])
+        open_tag = '<tr class="rec">' if recommended else "<tr>"
+        chip = '<span class="dl-chip on">Recommended</span>' if recommended else ""
+        cells.append(
+            open_tag
+            + f'<td class="c dim">{row["#"]}</td>'
+            + "<td><strong>"
+            + escape(row["Possible feature to build"])
+            + "</strong></td>"
+            + f'<td class="dim">{escape(row["Kind of change"])}</td>'
+            + f'<td class="c">{row["Evidence for"]}</td>'
+            + f'<td class="c">{row["Evidence against"]}</td>'
+            + f'<td class="c">{escape(row["Criteria evidenced"])}</td>'
+            + f'<td class="c">{chip}</td></tr>'
+        )
+    body = "".join(cells)
+    st.markdown(head + body + "</tbody></table>", unsafe_allow_html=True)
+    st.caption(
+        "Recommended first, then by citations for minus citations against. "
+        "**This is not a ranking of value** — the nine criteria are not "
+        "commensurable and are never combined into a score. **Criteria evidenced** "
+        "says how much is *known* about an option, not how good it is."
+    )
+
+    with st.expander("Why each option was or was not selected"):
+        for row in rows:
+            reason = row["_why_not"] or "_Selected. See “Why this one” below._"
+            st.markdown(f"**{row['#']}. {row['Possible feature to build']}** — {reason}")
+
+
+def _headline(brief: DecisionBrief) -> None:
+    """The answer in one screen: what, how sure, and who lowered it.
+
+    Three figures rather than one, because the number a reader wants — "how
+    confident is this?" — is only honest alongside what it started at and what
+    cut it. A single confidence chip invites the reading that the system was
+    always this sure.
+    """
     recommendation = brief.recommendation
+    selected = _selected_alternative(brief)
     if recommendation is None:
         st.error("No recommendation was produced. See the checks above and the run trace below.")
         return
 
-    st.markdown(f"### {recommendation.statement}")
-    a, b = st.columns(2)
-    a.metric("Support", recommendation.support_level.value, help="Qualitative, never a probability")
-    b.metric("Option kind", recommendation.option_kind.value)
-    st.caption(f"Support rests on: {recommendation.support_basis or 'not stated'}")
+    st.subheader("Recommendation")
+    st.markdown(f"### {selected.name if selected else recommendation.statement}")
 
-    if recommendation.claims:
-        st.markdown("**What it rests on**")
+    journey = support_journey(brief)
+    drafted = journey[0] if journey else recommendation.support_level.value
+    delta = "lowered by challenger" if journey else "challenger agreed"
+    evidenced = sum(1 for _, ok in coverage_slices(selected) if ok)
+
+    a, b, c = st.columns(3)
+    a.metric(
+        "Drafted",
+        drafted,
+        help="What the recommendation stage claimed before anything checked it.",
+    )
+    b.metric(
+        "Support",
+        recommendation.support_level.value,
+        delta=delta,
+        delta_color="inverse" if journey else "off",
+        help="Stage 7 can lower a support level and can never raise one.",
+    )
+    c.metric(
+        "Evidenced",
+        f"{evidenced}/{len(Dimension)}",
+        help="How much of the nine-criterion framework the evidence could fill in.",
+    )
+    st.caption(
+        "Support is `low` / `moderate` / `strong` — a qualitative judgment, never "
+        "a probability. A decimal here would imply a calibration nobody computed."
+    )
+    # The full statement is a paragraph, not a headline. It stays one click away
+    # rather than pushing the option list below the fold.
+    with st.expander("The recommendation in full"):
+        st.markdown(recommendation.statement)
+
+
+def _recommendation(brief: DecisionBrief) -> None:
+    """The reasoning, folded away.
+
+    All of it is load-bearing and none of it is a headline. Rendered open, the
+    four lists below ran to some two thousand words and pushed the option table
+    — the thing a PM is actually here to compare — three screens down.
+    """
+    st.subheader("Why this one")
+    recommendation = brief.recommendation
+    if recommendation is None:
+        return
+
+    with st.expander("What it rests on"):
+        st.caption(f"Support rests on: {recommendation.support_basis or 'not stated'}")
         for claim in recommendation.claims:
             cites = " ".join(f"`{c.evidence_id}`" for c in claim.citations) or "_uncited_"
             st.markdown(f"- {claim.statement} {cites}")
 
-    st.markdown("**What would change it**")
-    for item in recommendation.what_would_change_it or ("_nothing stated_",):
-        st.markdown(f"- {item}")
-
-    if recommendation.conditions:
-        st.markdown("**Conditions**")
-        for item in recommendation.conditions:
+    with st.expander("What would change it"):
+        for item in recommendation.what_would_change_it or ("_nothing stated_",):
             st.markdown(f"- {item}")
+        for item in recommendation.conditions:
+            st.markdown(f"- **Condition:** {item}")
 
-    if recommendation.tradeoffs:
-        st.markdown("**Tradeoffs**")
+    with st.expander("Tradeoffs and risk"):
         for tradeoff in recommendation.tradeoffs:
             st.markdown(f"- {tradeoff.description}")
-
-    risks = [
-        f"{alt.name}: {a.summary}"
-        for alt in brief.alternatives
-        for a in alt.assessments
-        if a.dimension is Dimension.RISK and a.summary
-    ]
-    if risks:
-        st.markdown("**Risk**")
-        for risk in risks:
-            st.markdown(f"- {risk}")
+        for alternative in brief.alternatives:
+            for assessment in alternative.assessments:
+                if assessment.dimension is Dimension.RISK and assessment.summary:
+                    st.markdown(f"- **{alternative.name}** — {assessment.summary}")
 
 
 def _experiment(brief: DecisionBrief) -> None:
@@ -500,7 +956,8 @@ def _experiment(brief: DecisionBrief) -> None:
 
     st.markdown(f"**{experiment.hypothesis}**")
     if experiment.method:
-        st.caption(experiment.method)
+        with st.expander("How to run it"):
+            st.markdown(experiment.method)
     success, guardrail = st.columns(2)
     success.markdown("**Success metrics**")
     for metric in experiment.metrics:
@@ -670,7 +1127,7 @@ def _run_brief(inputs: dict[str, Any]) -> DecisionBrief | None:
 
 
 def render(brief: DecisionBrief) -> None:
-    """Answer first, then the reasons to doubt it, then the detail.
+    """Coverage, then the answer, then the reasons to doubt it, then the detail.
 
     An earlier version led with the evidence and put the recommendation sixth,
     below forty-odd facts, assumptions, opinions and constraints. That is the
@@ -682,12 +1139,26 @@ def render(brief: DecisionBrief) -> None:
     trail — but they are collapsed, because a section nobody can finish is a
     section nobody checks.
     """
+    _style()
     _checks(brief)
-    st.divider()
 
-    # The answer, and immediately what else was on the table.
-    _recommendation(brief)
+    # The answer and its coverage side by side, then the option list.
+    #
+    # Coverage was its own full-width section above the answer, which read as a
+    # separate report. Beside the support figures it does the job it is for: the
+    # same glance that reads "low" reads "5 of 9 criteria evidenced", and the two
+    # are the same fact stated twice.
+    answer, coverage = st.columns([1.6, 1])
+    with answer:
+        _headline(brief)
+    with coverage:
+        _coverage(brief)
+
+    # The option list is what a PM came to compare, so nothing prose-heavy sits
+    # above it. The reasoning is below, and folded.
+    st.markdown('<div class="dl-eyebrow">Options on the table</div>', unsafe_allow_html=True)
     _alternatives(brief)
+    _recommendation(brief)
     st.divider()
 
     # The reasons to doubt it. These belong above the raw evidence: a reader who
@@ -710,9 +1181,15 @@ def render(brief: DecisionBrief) -> None:
 
 def main() -> None:  # pragma: no cover - exercised by the Streamlit runtime
     st.set_page_config(page_title="DecisionLens", page_icon="🔍", layout="wide")
+    _style()
     inputs = _sidebar()
 
-    st.title("DecisionLens")
+    st.markdown(
+        '<div class="dl-hero"><h1>DecisionLens</h1>'
+        f'<span class="dl-case">data/{inputs["directory"].name}/</span>'
+        "</div>",
+        unsafe_allow_html=True,
+    )
     st.caption(SYNTHETIC_DATA_NOTICE)
     st.caption(DECISION_OWNER_NOTICE)
 

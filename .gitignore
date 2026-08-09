@@ -232,3 +232,6 @@ logs/
 
 # Rebuilt by `make eval` from the per-case recordings beside it.
 evals/recordings/_merged.json
+
+# Office lock files, created while a document is open
+~$*

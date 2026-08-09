@@ -78,9 +78,98 @@ def test_the_evidence_is_read_before_the_recommendation(markdown: str) -> None:
     assert markdown.index("## Missing evidence") < markdown.index("## Recommendation")
 
 
+# --------------------------------------------------------------------------- #
+# The summary block
+# --------------------------------------------------------------------------- #
+
+
+def test_the_summary_opens_on_the_verdict_not_the_answer(markdown: str) -> None:
+    """The one section above the working must not read as an answer to accept.
+
+    A reader who stops at the summary should stop on whether the brief is
+    blocked, so the verdict is rendered before the recommendation is named.
+    """
+    summary = markdown[markdown.index("## In brief") : markdown.index("## The question")]
+    verdict = next(t for t in ("**Blocked —", "**No blocking errors") if t in summary)
+    assert summary.index(verdict) < summary.index("**Recommended**")
+
+
+def test_a_blocked_brief_leads_the_summary_with_the_block(brief: DecisionBrief) -> None:
+    from decision_lens.models import ValidationIssue, ValidationSeverity
+
+    blocked = brief.model_copy(
+        update={
+            "validation_issues": (
+                ValidationIssue(
+                    code="challenge_failed",
+                    severity=ValidationSeverity.ERROR,
+                    message="The load-bearing claim cites three rows; one supports it.",
+                ),
+            )
+        }
+    )
+    rendered = report.to_markdown(blocked)
+    summary = rendered[rendered.index("## In brief") : rendered.index("## The question")]
+    assert "**Blocked — 1 error(s)." in summary
+    assert summary.index("should not be acted on") < summary.index("**Recommended**")
+
+
+def test_the_summary_is_the_first_section(markdown: str) -> None:
+    assert markdown.index("## In brief") < markdown.index("## Checks")
+
+
+def test_the_summary_keeps_support_ordinal(markdown: str) -> None:
+    """A summary is where a spurious probability would be most tempting."""
+    summary = markdown[markdown.index("## In brief") : markdown.index("## The question")]
+    assert "a qualitative judgment, not a probability" in summary
+
+
+def test_the_summary_counts_what_is_unresolved(markdown: str) -> None:
+    """Scale is reported so a reader knows how much working sits below."""
+    summary = markdown[markdown.index("## In brief") : markdown.index("## The question")]
+    assert "contradictions ·" in summary
+    assert "gaps ·" in summary
+
+
+def test_the_summary_names_what_could_not_be_assessed(brief: DecisionBrief) -> None:
+    """Absence of evidence is not evidence of low value, in the summary too."""
+    rendered = report.to_markdown(brief)
+    summary = rendered[rendered.index("## In brief") : rendered.index("## The question")]
+    selected = next(
+        (
+            a
+            for a in brief.alternatives
+            if brief.recommendation and a.id == brief.recommendation.selected_alternative_id
+        ),
+        None,
+    )
+    if selected and selected.unassessed_dimensions:
+        assert "**Not assessed on**" in summary
+        assert "absence of evidence is not evidence of low value" in summary
+
+
+def test_a_brief_with_warnings_but_no_errors_says_so(brief: DecisionBrief) -> None:
+    from decision_lens.models import ValidationIssue, ValidationSeverity
+
+    warned = brief.model_copy(
+        update={
+            "validation_issues": (
+                ValidationIssue(
+                    code="analysis_note",
+                    severity=ValidationSeverity.WARNING,
+                    message="One source is over a year old.",
+                ),
+            )
+        }
+    )
+    rendered = report.to_markdown(warned)
+    assert "**No blocking errors.** 1 warning(s) to read before acting." in rendered
+
+
 @pytest.mark.parametrize(
     "heading",
     [
+        "## In brief",
         "## The question",
         "## Checks",
         "## What the evidence says",
@@ -230,6 +319,7 @@ def test_a_brief_with_no_recommendation_still_renders(tmp_path: Path) -> None:
 
     assert "_No recommendation was produced._" in rendered
     assert "should not be acted on as it stands" in rendered
+    assert "_None produced — see Checks for which stage failed._" in rendered
     assert SYNTHETIC_DATA_NOTICE in rendered
 
 
@@ -252,6 +342,7 @@ def test_a_clean_brief_says_so_rather_than_showing_an_empty_section(
     rendered = report.to_markdown(spotless)
 
     assert "Every deterministic check passed." in rendered
+    assert "**No blocking errors, no warnings.**" in rendered
     assert "- Period: Q2 2026" in rendered
     assert "_No trace recorded._" in rendered
 

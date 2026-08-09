@@ -1,0 +1,20 @@
+# The interface ships with one look rather than following the viewer's OS.
+#
+# A brief is read to be checked, and the two colours that carry meaning here —
+# evidenced and no-evidence — have to hold their contrast against a known
+# ground. Letting the theme flip would leave the one signal on the page
+# depending on a setting nobody set deliberately.
+
+[theme]
+base = "dark"
+primaryColor = "#7C6BF2"
+backgroundColor = "#0E1015"
+secondaryBackgroundColor = "#161A22"
+textColor = "#E6E8EE"
+font = "sans serif"
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false

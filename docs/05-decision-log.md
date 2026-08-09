@@ -126,6 +126,33 @@ Found while writing [03 — Architecture and Governance](03-architecture-and-gov
 
 Third instance of one pattern in this repository, and the reason it is worth naming: a check whose output nobody receives is indistinguishable from no check. The provider's staleness warning was built and thrown away (D14). The fingerprint was compared and thrown away (here). The connector's retrieval diagnostics are recorded and still thrown away — documented in §1.11 of 03 as an open limitation rather than quietly left. Detection is the easy half; the path from detection to a human reading it is where these keep failing.
 
+### D16. Three `support_level` fields the model fills in unguided — **recorded, not fixed**
+
+Found late, while walking the pipeline stage by stage to explain it. Not caught by the evaluation, and the reason it was not caught is the more useful half.
+
+`SupportLevel` appears on four models. One is defined and used. Three are neither.
+
+| Field | Set by | Guidance given | Read by anything |
+|---|---|---|---|
+| `Recommendation.support_level` | model | `STATING_SUPPORT`, in the prompt | yes — the headline figure, and the only one the challenger can lower |
+| `EvidenceClassification.support_level` | code, from type and age | n/a — it is a rule | **no** |
+| `Claim.support_level` | model | **none** | **no** |
+| `DimensionAssessment.support_level` | model | **none** | **no** — until the interface read it |
+
+Two distinct defects, and they compound.
+
+**The vocabulary has no stated meaning on three of the four.** `STATING_SUPPORT` — *"if the strongest support is a single small or non-randomised study, that is not strong support"* — reaches the recommendation prompt and the baseline, and nothing else. So classification and alternatives emit `low`/`moderate`/`strong` against no definition. The model supplied one of its own, and it is not the same one: on the bundled case, `DimensionAssessment.support_level` reads `strong` for options whose own summary calls the evidence *"effectively nil"* and *"no internal evidence at all"*. Read as "the evidence is strong" that is flatly wrong; read as "I am confident in this assessment" it is defensible. Nothing in the repository says which was meant, so both readings are available and one of them is a lie.
+
+**Nothing consumed them, so nothing exposed the divergence.** Two are written and never read — not by the report, the interface, validation, or the challenger. They reach the JSON artifact and stop. An unread field cannot disagree with anything visible, so it drifts silently and indefinitely.
+
+Then the interface read one. Building the option table, `DimensionAssessment.support_level` was surfaced as a column headed *Evidence confidence* on the reasonable assumption that a field of that type meant what its name suggested. The column showed `strong` against the worst-evidenced option in the set — the vendor AI product whose single supporting artefact is an uncontrolled marketing claim. A latent defect became a visible false statement the moment something rendered it, and it took a reader asking *"why did you recommend that one?"* to catch it. The column now reports counted citations for and against, which cannot drift from its label because it is arithmetic over already-resolved citations.
+
+**What is not being done.** Defining the vocabulary for all three and re-recording would cost a full evaluation re-run, and the fix is not obviously one line: `evidence_confidence` as a *criterion* carrying a support level is arguably confused at the model layer rather than the prompt layer, and that is a design question, not a wording one. Deleting the two unread fields is the cheaper honest option and is the likely resolution. Neither is being done inside this submission, because both change recorded output and the evaluation numbers are already reported.
+
+The eval could not have caught this. No answer key scores `Claim.support_level`, and no metric reads it. The harness measures what the brief says; these fields are not in the brief. That is a real limit on what "0 of 11 overclaims" certifies — it certifies the one support level that is defined, prompted, validated and rendered, and says nothing about the three that are not.
+
+Fourth instance of the pattern D14 and D15 name. There it was detection with no path to a reader — a staleness warning discarded, a fingerprint discarded, retrieval diagnostics discarded. Here it is the mirror image: **a value written with no reader, and therefore no one to notice it was wrong.** Unread output and unheard warnings fail the same way. Something has to consume a field for anyone to find out it is false.
+
 ---
 
 ## Part 2 — How AI was used to build this

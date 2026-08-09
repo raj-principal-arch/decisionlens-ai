@@ -12,6 +12,11 @@ What the layout is built around:
     then what is recommended. A brief that opens with its answer invites a reader
     to accept the answer and skip the working, which is the habit this product
     exists to break.
+*   **The one summary is led by the verdict, not the answer.** A brief nobody
+    can skim is a brief nobody reads, so ``In brief`` sits at the top — but it
+    opens with whether the brief is blocked and how much is unresolved, and only
+    then names the recommendation. A reader who stops there stops on the checks.
+    It adds no information; every row points at a section below.
 *   **Every claim carries its citation inline.** A reader checking one statement
     should not have to hold an evidence id in their head and scroll. The evidence
     section repeats the quoted text so a check is a glance, not a search.
@@ -101,6 +106,79 @@ def _top_bullets(items: Sequence[str], empty: str = "_(none)_") -> list[str]:
 # --------------------------------------------------------------------------- #
 # Sections
 # --------------------------------------------------------------------------- #
+
+
+def _summary(brief: DecisionBrief) -> list[str]:
+    """The whole brief in a table, led by whether it can be acted on at all.
+
+    This is the one section that breaks the reading order the rest of the module
+    is built on, so it is built to break it in the safe direction. It opens with
+    the verdict from the checks, not with the recommendation — a reader who
+    stops here stops on *"blocked, and here is the count of what is unresolved"*,
+    not on an answer. Nothing here is new information; every row is a pointer to
+    a section below, which is why it can be read in ten seconds and why skipping
+    it costs nothing.
+
+    Support stays ordinal, and says so on the page. A summary is exactly where a
+    spurious 0.91 would be most tempting and least defensible.
+    """
+    errors = [i for i in brief.validation_issues if i.severity is ValidationSeverity.ERROR]
+    warnings = [i for i in brief.validation_issues if i.severity is ValidationSeverity.WARNING]
+
+    lines = ["## In brief", ""]
+    if errors:
+        lines += [
+            f"**Blocked — {len(errors)} error(s). This brief should not be acted on as "
+            "it stands.** See Checks.",
+            "",
+        ]
+    else:
+        lines += [
+            f"**No blocking errors.** {len(warnings)} warning(s) to read before acting."
+            if warnings
+            else "**No blocking errors, no warnings.** Every deterministic check passed.",
+            "",
+        ]
+
+    lines += ["| | |", "| --- | --- |"]
+    recommendation = brief.recommendation
+    if recommendation is None:
+        lines.append("| **Recommended** | _None produced — see Checks for which stage failed._ |")
+    else:
+        selected = next(
+            (a for a in brief.alternatives if a.id == recommendation.selected_alternative_id),
+            None,
+        )
+        name = selected.name if selected else recommendation.statement
+        kind = f" `{recommendation.option_kind.value}`"
+        lines += [
+            f"| **Recommended** | {name}{kind} |",
+            f"| **Support** | **{recommendation.support_level.value}** — a qualitative "
+            "judgment, not a probability |",
+        ]
+        if recommendation.claims:
+            first = recommendation.claims[0]
+            lines.append(f"| **Rests on** | {first.statement} {_cites(first.citations)} |")
+        if selected and selected.unassessed_dimensions:
+            unassessed = selected.unassessed_dimensions
+            total = len(brief.request.criteria.applicable)
+            lines.append(
+                f"| **Not assessed on** | {len(unassessed)} of {total} criteria: "
+                f"{', '.join(d.value for d in unassessed)} — absence of evidence is not "
+                "evidence of low value |"
+            )
+
+    lines += [
+        f"| **Scale** | {len(brief.evidence)} records · {len(brief.claims)} claims · "
+        f"{len(brief.contradictions)} contradictions · {len(brief.missing_evidence)} gaps · "
+        f"{len(brief.alternatives)} options |",
+        "",
+        "_The working is below, in the order it should be read: what the evidence says, "
+        "what conflicts, what is missing, what else was considered — and only then the "
+        "recommendation._",
+        "",
+    ]
+    return lines
 
 
 def _framing(brief: DecisionBrief) -> list[str]:
@@ -467,6 +545,7 @@ def to_markdown(brief: DecisionBrief, *, decision: PMDecision | None = None) -> 
         f"Generated {brief.generated_at.isoformat()}",
         "",
     ]
+    lines += _summary(brief)
     lines += _framing(brief)
     lines.append("")
     lines += _issues(brief.validation_issues)

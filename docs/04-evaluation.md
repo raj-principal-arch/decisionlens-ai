@@ -348,6 +348,13 @@ the evaluation was not looking hard enough. Three classes are recorded separatel
 ### 9. Limitations
 Synthetic evidence; small case count; single author writing both the corpus and the ground truth; no real PM users.
 
+**What the support-level result does and does not certify.** The overclaim metric reads
+`Recommendation.support_level` — the one support level that is defined in a prompt, capped by the
+challenger, validated and rendered. Three other `SupportLevel` fields are set by the model against
+no stated definition and read by nothing, so no metric here touches them, and at least one of them
+is demonstrably wrong on the bundled case. Recorded as **D16**. "0 of 11 overclaims" is a claim
+about the brief's headline confidence, not about every confidence value in the artifact.
+
 Leading the list: the bundled case is in-sample, as recorded above. Not the weaker claim that a system evaluated against planted conditions *may* be advantaged by knowing such conditions exist — the specific and confirmed one, that the prompts were written after the corpus by its author and encode heuristics matching its planted hazards. Any Phase 10 result on this case is reported under that constraint.
 
 ### 10. Model-based evaluation risks
