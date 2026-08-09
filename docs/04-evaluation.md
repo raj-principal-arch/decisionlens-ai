@@ -263,11 +263,45 @@ average, and mechanisms survive small samples better than percentages do.
 ### 6. Variance
 Repeated runs where credentials, cost, and time allow. Non-determinism is a finding, not noise to be averaged away silently.
 
-**Not yet measured.** Every result reported here comes from a single live run per case,
+**Not measured by design.** Every result reported here comes from a single live run per case,
 replayed deterministically thereafter. That is a real limitation and it bounds what any
 margin can mean: a difference smaller than the run-to-run variation of either arm is not
-a difference. Until a second live run exists, no claim is made that any observed gap
-would survive one.
+a difference. No claim is made that any observed gap would survive a repeat.
+
+**One case was nevertheless recorded twice, and the two runs disagree.** Not planned —
+`sample_delivery_exceptions` was recorded once for the bundled demo and again fifteen hours
+later when every case was recorded for scoring, and the copies were never reconciled. Same
+model, same prompt versions, same evidence, temperature 0.0. Found while walking the pipeline
+stage by stage, and reported here rather than quietly reconciled, because a second run is the
+measurement this section says is missing.
+
+| | demo recording | scored recording |
+|---|---|---|
+| Claims extracted | 37 | 47 |
+| Contradictions found | 9 | 13 |
+| Gaps reported | 18 | 15 |
+| Options generated | 11 | 12 |
+| Recommendation | `data_quality` | `further_research` |
+| Blocking errors | 1 — brief blocked | 0 — brief clean |
+
+Read the volume figures against the headline margin before reading anything else into them.
+Contradiction recall leads the baseline by **four items out of fifty**; the run-to-run
+difference on this one case is **four contradictions**. The margin is not shown to be
+reproducible, and this is the direct evidence for that statement rather than an inference
+from sample size.
+
+Two things the same table does *not* undermine. Recall against the answer key was **4 of 4 on
+the scored run** — the planted contradictions were all found despite the volume difference, so
+what varies is how much surrounding material is reported, not whether the graded items are
+caught. And **both runs were restrained**: one blocked itself, the other claimed `low` against
+a `moderate` ceiling. Neither overclaimed. Volume varied; the restraint result did not, which
+is consistent with it being a mechanism rather than an average.
+
+Both recordings ship. `make demo` replays the first, `make eval` scores the second, and they
+are different runs of the same case — stated here so a reviewer who counts nine contradictions
+in the demo and thirteen in the results has read the explanation before finding the
+discrepancy. What this is not is a variance study: n=2 on one case, and no attempt is made to
+put an error bar on anything.
 
 ### 7. Side-by-side example
 

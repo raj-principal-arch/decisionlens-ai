@@ -232,7 +232,9 @@ Stated here rather than left to be discovered:
 - **One of eleven cases is in-sample** — the prompts were written after it. The other ten
   were written after the prompts were frozen at a recorded commit, which is checkable but
   weaker than a genuine held-out set.
-- **One run per case.** No variance measurement, so no margin here has an error bar.
+- **One run per case.** No variance measurement, so no margin here has an error bar. One case
+  was recorded twice by accident, and the two runs differ by four contradictions — the same
+  size as the headline margin. Reported in [04](04-evaluation.md) §6.
 - **Enterprise connectors are documented, not implemented.** There is no identity model, no
   permission delegation, no cost control, and no red-teaming in the prototype.
 - **Lagging business outcomes cannot be demonstrated** in a take-home and are not claimed.
