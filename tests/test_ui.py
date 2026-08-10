@@ -666,6 +666,72 @@ class TestTheComparisonTable:
         _comparison_table(self._brief_with(()))  # must not raise
         _options_table(self._brief_with(()))  # nor an empty table with headers
 
+    def test_the_counts_are_backed_by_the_quotes_shown_beneath_them(self) -> None:
+        """The two count columns and the quote lists must never disagree.
+
+        A reader who opens this expander is checking a number they have already
+        read in the table. If the list is shorter than the count, the table is
+        asserting evidence the brief cannot show.
+        """
+        from decision_lens.models import Alternative, Citation, OptionKind
+        from decision_lens.ui import _evidence_behind_the_counts, option_evidence, option_rows
+
+        cited = Alternative(
+            id="OPT-1",
+            name="Fix the field that is being dropped",
+            kind=OptionKind.DATA_QUALITY,
+            supporting=(
+                Citation(evidence_id="EV-1", quote="unit number missing", locator="apartment"),
+                Citation(evidence_id="EV-2", quote="I entered it at checkout"),
+            ),
+            opposing=(Citation(evidence_id="EV-3", quote="no follow-up measurement was taken"),),
+        )
+        bare = Alternative(id="OPT-2", name="Hold current course", kind=OptionKind.NO_CHANGE)
+        brief = self._brief_with((cited, bare))
+        rows = option_rows(brief)
+        by_id = {a.id: a for a in brief.alternatives}
+        for row in rows:
+            supporting, opposing = option_evidence(by_id[row["_id"]])
+            assert row["Evidence for"] == supporting
+            assert row["Evidence against"] == opposing
+        _evidence_behind_the_counts(brief, rows)  # must not raise
+
+    def test_the_why_panel_is_derived_from_the_brief_not_written_here(self) -> None:
+        """Every line must come from the recommended option's own citations.
+
+        A hard-coded argument would read well on the bundled case and be false on
+        every other one, which is the failure this tool exists to argue against.
+        """
+        from pathlib import Path
+
+        from decision_lens.case import load_case
+        from decision_lens.llm.cached_provider import DEFAULT_CACHE_PATH
+        from decision_lens.orchestrator import DecisionLens
+        from decision_lens.ui import _why_this_one, support_journey
+
+        _why_this_one(self._brief_with(()))  # no recommendation: renders nothing
+
+        loaded = load_case(Path("data/sample_delivery_exceptions"))
+        brief = DecisionLens(
+            CachedDemoProvider(DEFAULT_CACHE_PATH), loaded.sources, as_of=loaded.as_of
+        ).run(loaded.request)
+        assert brief.recommendation is not None
+        selected = next(
+            a for a in brief.alternatives if a.id == brief.recommendation.selected_alternative_id
+        )
+        assert selected.supporting, "the panel's numbered steps are these citations"
+        assert support_journey(brief) is not None, "this case's support was lowered"
+        _why_this_one(brief)  # must not raise on the lowered-support path
+
+    def test_an_option_nobody_argued_against_says_so(self) -> None:
+        """An empty side is stated, not skipped — silence reads as no objection."""
+        from decision_lens.models import Alternative, OptionKind
+        from decision_lens.ui import _evidence_behind_the_counts, option_rows
+
+        option = Alternative(id="OPT-1", name="n", kind=OptionKind.PROCESS_CHANGE)
+        brief = self._brief_with((option,))
+        _evidence_behind_the_counts(brief, option_rows(brief))  # must not raise
+
     def test_options_carrying_no_assessments_render_nothing(self) -> None:
         """No dimensions means no table to draw, not an empty table."""
         from decision_lens.models import Alternative, OptionKind

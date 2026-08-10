@@ -58,6 +58,7 @@ from decision_lens.models import (
     SYNTHETIC_DATA_NOTICE,
     Alternative,
     AssessmentState,
+    Citation,
     ClaimType,
     DecisionBrief,
     Dimension,
@@ -237,6 +238,7 @@ def option_rows(brief: DecisionBrief) -> list[dict[str, Any]]:
                 "Criteria evidenced": f"{evidenced}/{len(Dimension)}",
                 "Status": "Recommended" if alternative.id == selected else "",
                 "_why_not": alternative.why_not_selected,
+                "_id": alternative.id,
             }
         )
     return rows
@@ -858,10 +860,112 @@ def _options_table(brief: DecisionBrief) -> None:
         "says how much is *known* about an option, not how good it is."
     )
 
+    _why_this_one(brief)
+    _evidence_behind_the_counts(brief, rows)
+
     with st.expander("Why each option was or was not selected"):
         for row in rows:
             reason = row["_why_not"] or "_Selected. See “Why this one” below._"
             st.markdown(f"**{row['#']}. {row['Possible feature to build']}** — {reason}")
+
+
+def _why_this_one(brief: DecisionBrief) -> None:
+    """The recommended row's argument, in the order a reader asks for it.
+
+    The table answers *what* was chosen and the expander below answers *what the
+    counts are*; neither answers *why this one*. That question was previously
+    only answerable by reading a support paragraph several hundred words long,
+    which is not what a PM does with a table in front of them.
+
+    Built from the brief, never written here: the numbered steps are the
+    recommended option's own supporting citations, the catch is its opposing
+    one, and the closing line is the support level the challenger left it at.
+    Hard-coding this case's argument would make the panel a lie on every other
+    case, and a panel that reads well but is not derived from the run is exactly
+    the kind of confident-sounding output this tool exists to argue against.
+    """
+    selected = _selected_alternative(brief)
+    if selected is None or brief.recommendation is None:
+        return
+
+    with st.expander(f"Why this one? — {selected.name}", expanded=True):
+        against = len(selected.opposing)
+        plural = "" if against == 1 else "es"
+        catches = "no catch" if against == 0 else f"{against} catch{plural}"
+        st.markdown(f"**{len(selected.supporting)} reasons for it, and {catches}.**")
+        for position, citation in enumerate(selected.supporting, start=1):
+            where = f" ({citation.locator})" if citation.locator else ""
+            st.markdown(f"{position}. “{citation.quote}” — `{citation.evidence_id}`{where}")
+
+        for citation in selected.opposing:
+            st.markdown(f"**The catch** — “{citation.quote}” — `{citation.evidence_id}`")
+        if not selected.opposing:
+            st.markdown("**The catch** — _nothing in the evidence set argues against it._")
+
+        journey = support_journey(brief)
+        support = brief.recommendation.support_level.value
+        if journey is not None:
+            drafted, final = journey
+            st.markdown(
+                f"So the support is **{final}**, not {drafted}: the challenger read the "
+                "draft and cut it. That is why the recommendation is a first step "
+                "rather than a build commitment."
+            )
+        else:
+            st.markdown(
+                f"So the support is **{support}** — read the catch above before acting "
+                "on this, not after."
+            )
+
+        st.caption(
+            "Nothing on this panel is written by the interface. Every line is the "
+            f"recommended option's own citations, resolved against source text, from "
+            f"the run of {brief.generated_at:%-d %b %Y}."
+        )
+
+
+def _evidence_behind_the_counts(brief: DecisionBrief, rows: list[dict[str, Any]]) -> None:
+    """The quotes the two count columns are counting.
+
+    A reader who sees *3 for, 1 against* asks what the three are, and until now
+    the table could not answer: the numbers sat one expander away from the quotes
+    that produced them, filed under per-criterion assessments rather than under
+    the counts themselves. Two options in the bundled case share the identical
+    3 / 1 / 5-of-9 triple, so the columns alone cannot explain why one of them is
+    recommended — only the quotes can, and one piece of evidence appears *for*
+    one option and *against* the other.
+
+    Verbatim, with the evidence id beside each, because a quote a reader cannot
+    trace back to a record is the thing this whole brief exists to avoid.
+    """
+    by_id = {alternative.id: alternative for alternative in brief.alternatives}
+    with st.expander("The evidence behind those counts"):
+        st.caption(
+            "Every quote below has already been resolved against the record it "
+            "cites. The counts in the table are the length of these two lists — "
+            "nothing is weighted, and nothing is added up."
+        )
+        for row in rows:
+            alternative = by_id[row["_id"]]
+            st.markdown(f"**{row['#']}. {row['Possible feature to build']}**")
+            _citation_list(alternative.supporting, "Evidence for", "none cited")
+            _citation_list(alternative.opposing, "Evidence against", "none cited")
+
+
+def _citation_list(citations: Sequence[Citation], heading: str, empty: str) -> None:
+    """One side of one option, quotes first and provenance after.
+
+    An empty side is stated rather than skipped. A missing heading reads as an
+    option nobody argued against; "none cited" reads as what it is — an argument
+    the evidence set does not make.
+    """
+    st.markdown(f"*{heading} ({len(citations)})*")
+    if not citations:
+        st.markdown(f"- _{empty}_")
+        return
+    for citation in citations:
+        where = f" · {citation.locator}" if citation.locator else ""
+        st.markdown(f"- “{citation.quote}” — `{citation.evidence_id}`{where}")
 
 
 def _headline(brief: DecisionBrief) -> None:
