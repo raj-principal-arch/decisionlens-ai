@@ -235,7 +235,7 @@ class GapImpact(StrEnum):
 
 
 class Dimension(StrEnum):
-    """The nine dimensions opportunities are compared across.
+    """The 9 dimensions opportunities are compared across.
 
     Reported independently. They are never combined into a composite score:
     collapsing nine partially-evidenced dimensions into one number manufactures
