@@ -1,0 +1,267 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1040" viewBox="0 0 1900 1040" role="img" aria-label="A complete DecisionLens architecture diagram. Evidence files are read by a connector into fifty-six citable records. An orchestrator runs seven AI stages in fixed order — relevance, classification, contradictions, missing evidence, alternatives, recommendation and challenger — each wrapped in the same code gate. All seven read the raw evidence directly. After the last stage the challenger's corrections are applied, the support ceiling is enforced, deterministic validation runs, and the brief is written with exit code two when blocked.">
+  <style>
+    text { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+    .box{fill:#FFFFFF;stroke:#DFE3E9;stroke-width:1.2}
+    .box-e{fill:#EBF5F2;stroke:#1B6D60;stroke-width:1.4}
+    .box-f{fill:#FBF0EB;stroke:#B0451F;stroke-width:1.4}
+    .box-a{fill:#FFFFFF;stroke:#5B4BD6;stroke-width:1.4}
+    .h1{fill:#14171D;font-size:32px;font-weight:700;letter-spacing:-.5px}
+    .h2{fill:#7E8595;font-size:14.5px}
+    .t{fill:#14171D;font-size:16px;font-weight:700}
+    .ts{fill:#4B505C;font-size:12px}
+    .tm{fill:#7E8595;font-family:'SF Mono', Menlo, Consolas, monospace;font-size:11px}
+    .tmi{fill:#14171D;font-family:'SF Mono', Menlo, Consolas, monospace;font-size:12px;font-weight:600}
+    .cap{fill:#7E8595;font-family:'SF Mono', Menlo, Consolas, monospace;font-size:10.5px;letter-spacing:1.5px}
+    .te{fill:#1B6D60;font-size:12px;font-weight:700}
+    .tf{fill:#B0451F;font-size:12px;font-weight:700}
+    .tfb{fill:#B0451F;font-size:13px;font-weight:800}
+    .ta{fill:#5B4BD6;font-family:'SF Mono', Menlo, Consolas, monospace;font-size:10.5px;font-weight:700;letter-spacing:.8px}
+    .num{fill:#14171D;font-family:'SF Mono', Menlo, Consolas, monospace;font-size:13px;font-weight:700}
+    .ln{stroke:#98A0AF;stroke-width:1.8;fill:none}
+    .bus{stroke:#1B6D60;stroke-width:2.6;fill:none}
+    .lnf{stroke:#B0451F;stroke-width:2.2;fill:none}
+  </style>
+  <rect x="0" y="0" width="1900" height="1040" fill="#FBFBFC"/>
+  <defs>
+    <marker id="w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#98A0AF"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1B6D60"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#B0451F"/></marker>
+  </defs>
+
+  <text x="44" y="44" class="h1">DecisionLens — architecture</text>
+  <text x="44" y="70" class="h2">One orchestrator · seven AI stages · a code gate around every one · all figures from the recorded run of the bundled case</text>
+
+  <rect x="1360" y="20" width="500" height="58" rx="8" class="box"/>
+  <rect x="1378" y="36" width="14" height="14" rx="3" class="box-a"/>
+  <text x="1400" y="48" class="ts">AI — a model call</text>
+  <rect x="1530" y="36" width="14" height="14" rx="3" class="box-e"/>
+  <text x="1552" y="48" class="ts">code only — no model</text>
+  <rect x="1378" y="57" width="14" height="14" rx="3" class="box-f"/>
+  <text x="1400" y="69" class="ts">the challenger, and what it blocks</text>
+
+  <!-- ============ INPUT ROW ============ -->
+  <text x="44" y="116" class="cap">INPUT · NO MODEL</text>
+
+  <rect x="44" y="128" width="300" height="100" rx="10" class="box"/>
+  <text x="64" y="156" class="t">data/&lt;case&gt;/</text>
+  <text x="64" y="178" class="ts">9 evidence files + case_manifest.json</text>
+  <text x="64" y="197" class="ts">8 evidence types, declared by a human</text>
+  <text x="64" y="217" class="tm">CSV · Markdown · JSON</text>
+
+  <line x1="352" y1="178" x2="404" y2="178" class="ln" marker-end="url(#w)"/>
+
+  <rect x="414" y="128" width="330" height="100" rx="10" class="box-e"/>
+  <text x="434" y="156" class="t">Connector</text>
+  <text x="434" y="176" class="tm">connectors/local_files.py</text>
+  <text x="434" y="197" class="ts">CSV row → 1 record · MD file → 1 record</text>
+  <text x="434" y="217" class="te">retrieves, never interprets</text>
+
+  <line x1="752" y1="178" x2="804" y2="178" class="ln" marker-end="url(#w)"/>
+
+  <rect x="814" y="128" width="330" height="100" rx="10" class="box-e"/>
+  <text x="834" y="156" class="t">56 citable records</text>
+  <text x="834" y="176" class="tm">models.py · EvidenceRecord</text>
+  <text x="834" y="197" class="ts">id = sha256(path :: locator :: text)</text>
+  <text x="834" y="217" class="tm">EV-7ee8d3af · verbatim text + metadata</text>
+
+  <rect x="1290" y="128" width="570" height="100" rx="10" class="box"/>
+  <text x="1310" y="156" class="t">ModelProvider — the swap point</text>
+  <text x="1310" y="176" class="tm">llm/cached_provider.py   ·   llm/anthropic_provider.py</text>
+  <text x="1310" y="197" class="ts">Every AI stage calls through this one boundary.</text>
+  <text x="1310" y="217" class="ts">Cached replay is offline and free; live is a two-line .env change.</text>
+
+  <!-- evidence bus -->
+  <polyline points="979,232 979,272" class="bus"/>
+  <line x1="44" y1="272" x2="1860" y2="272" class="bus"/>
+  <text x="44" y="263" class="te">RAW EVIDENCE BUS — all 56 records, unmodified. Every stage below reads them directly; none works from an earlier stage's summary.</text>
+
+  <!-- ============ ORCHESTRATOR ============ -->
+  <rect x="32" y="300" width="1836" height="392" rx="14" fill="none" stroke="#98A0AF" stroke-width="1.5" stroke-dasharray="9 6"/>
+  <rect x="48" y="290" width="620" height="20" rx="4" fill="#FBFBFC"/>
+  <text x="56" y="306" class="tm">ORCHESTRATOR — orchestrator.py · one process · fixed order · never parallel</text>
+
+  <!-- stage boxes: w=216, gap=32 -->
+  <g>
+    <rect x="48" y="332" width="216" height="196" rx="10" class="box-a"/>
+    <rect x="204" y="344" width="48" height="18" rx="4" fill="#F0EEFC" stroke="#5B4BD6" stroke-width="1"/>
+    <text x="214" y="357" class="ta">AI</text>
+    <text x="66" y="358" class="tm">STAGE 1</text>
+    <text x="66" y="381" class="t">Relevance</text>
+    <text x="66" y="401" class="tm">skills/relevance.py</text>
+    <text x="66" y="417" class="tm">RELEVANCE_V1</text>
+    <text x="66" y="443" class="ts">What bears on the question?</text>
+    <text x="66" y="461" class="ts">Silence means keep.</text>
+    <text x="66" y="491" class="num">56 kept · 0 excluded</text>
+    <text x="66" y="514" class="tm">9,504 → 1,257 tokens</text>
+
+    <rect x="296" y="332" width="216" height="196" rx="10" class="box-a"/>
+    <rect x="452" y="344" width="48" height="18" rx="4" fill="#F0EEFC" stroke="#5B4BD6" stroke-width="1"/>
+    <text x="462" y="357" class="ta">AI</text>
+    <text x="314" y="358" class="tm">STAGE 2</text>
+    <text x="314" y="381" class="t">Classification</text>
+    <text x="314" y="401" class="tm">skills/classification.py</text>
+    <text x="314" y="417" class="tm">CLASSIFICATION_V2</text>
+    <text x="314" y="443" class="ts">Fact / assumption / opinion,</text>
+    <text x="314" y="461" class="ts">3 constraint kinds.</text>
+    <text x="314" y="477" class="te">age computed in code</text>
+    <text x="314" y="503" class="num">37 claims</text>
+    <text x="314" y="521" class="tm">11,011 → 11,693 tokens</text>
+
+    <rect x="544" y="332" width="216" height="196" rx="10" class="box-a"/>
+    <rect x="700" y="344" width="48" height="18" rx="4" fill="#F0EEFC" stroke="#5B4BD6" stroke-width="1"/>
+    <text x="710" y="357" class="ta">AI</text>
+    <text x="562" y="358" class="tm">STAGE 3</text>
+    <text x="562" y="381" class="t">Contradictions</text>
+    <text x="562" y="401" class="tm">skills/contradictions.py</text>
+    <text x="562" y="417" class="tm">CONTRADICTIONS_V2</text>
+    <text x="562" y="443" class="ts">Both sides, plus what</text>
+    <text x="562" y="461" class="ts">would settle it.</text>
+    <text x="562" y="477" class="te">never picks a winner</text>
+    <text x="562" y="503" class="num">9 conflicts</text>
+    <text x="562" y="521" class="tm">10,253 → 4,849 tokens</text>
+
+    <rect x="792" y="332" width="216" height="196" rx="10" class="box-a"/>
+    <rect x="948" y="344" width="48" height="18" rx="4" fill="#F0EEFC" stroke="#5B4BD6" stroke-width="1"/>
+    <text x="958" y="357" class="ta">AI</text>
+    <text x="810" y="358" class="tm">STAGE 4</text>
+    <text x="810" y="381" class="t">Missing evidence</text>
+    <text x="810" y="401" class="tm">skills/missing_evidence.py</text>
+    <text x="810" y="417" class="tm">MISSING_EVIDENCE_V1</text>
+    <text x="810" y="443" class="ts">What is absent, and</text>
+    <text x="810" y="461" class="ts">what it costs.</text>
+    <text x="810" y="477" class="te">regex finds blank fields</text>
+    <text x="810" y="503" class="num">18 gaps + 1 by code</text>
+    <text x="810" y="521" class="tm">9,934 → 4,540 tokens</text>
+
+    <rect x="1040" y="332" width="216" height="196" rx="10" class="box-a"/>
+    <rect x="1196" y="344" width="48" height="18" rx="4" fill="#F0EEFC" stroke="#5B4BD6" stroke-width="1"/>
+    <text x="1206" y="357" class="ta">AI</text>
+    <text x="1058" y="358" class="tm">STAGE 5</text>
+    <text x="1058" y="381" class="t">Alternatives</text>
+    <text x="1058" y="401" class="tm">skills/alternatives.py</text>
+    <text x="1058" y="417" class="tm">ALTERNATIVES_V1</text>
+    <text x="1058" y="443" class="ts">11 options × your 9 criteria.</text>
+    <text x="1058" y="464" class="tfb">non-AI + do-nothing</text>
+    <text x="1058" y="480" class="tfb">REQUIRED</text>
+    <text x="1058" y="503" class="num">99 cells · 55 / 44</text>
+    <text x="1058" y="521" class="tm">11,985 → 19,902 tokens</text>
+
+    <rect x="1288" y="332" width="216" height="196" rx="10" class="box-a"/>
+    <rect x="1444" y="344" width="48" height="18" rx="4" fill="#F0EEFC" stroke="#5B4BD6" stroke-width="1"/>
+    <text x="1454" y="357" class="ta">AI</text>
+    <text x="1306" y="358" class="tm">STAGE 6</text>
+    <text x="1306" y="381" class="t">Recommendation</text>
+    <text x="1306" y="401" class="tm">skills/recommendation.py</text>
+    <text x="1306" y="417" class="tm">RECOMMENDATION_V1</text>
+    <text x="1306" y="443" class="ts">Picks one, states support,</text>
+    <text x="1306" y="461" class="ts">designs the experiment.</text>
+    <text x="1306" y="477" class="ts">It recommends; it does not decide.</text>
+    <text x="1306" y="503" class="num">ALT-04 · moderate</text>
+    <text x="1306" y="521" class="tm">20,325 → 10,355 tokens</text>
+
+    <rect x="1536" y="332" width="216" height="196" rx="10" class="box-f"/>
+    <rect x="1692" y="344" width="48" height="18" rx="4" fill="#F0EEFC" stroke="#5B4BD6" stroke-width="1"/>
+    <text x="1702" y="357" class="ta">AI</text>
+    <text x="1554" y="358" class="tm">STAGE 7</text>
+    <text x="1554" y="381" class="t">Challenger</text>
+    <text x="1554" y="401" class="tm">skills/challenger.py</text>
+    <text x="1554" y="417" class="tm">CHALLENGER_V1</text>
+    <text x="1554" y="443" class="ts">8 fixed attacks on the draft.</text>
+    <text x="1554" y="464" class="tfb">can ONLY lower</text>
+    <text x="1554" y="480" class="tfb">confidence</text>
+    <text x="1554" y="503" class="num">1 fails · 6 concerns</text>
+    <text x="1554" y="521" class="tm">→ low · 25,591 → 9,594</text>
+  </g>
+
+  <!-- bus taps -->
+  <g>
+    <line x1="156"  y1="272" x2="156"  y2="326" class="bus" marker-end="url(#g)"/>
+    <line x1="404"  y1="272" x2="404"  y2="326" class="bus" marker-end="url(#g)"/>
+    <line x1="652"  y1="272" x2="652"  y2="326" class="bus" marker-end="url(#g)"/>
+    <line x1="900"  y1="272" x2="900"  y2="326" class="bus" marker-end="url(#g)"/>
+    <line x1="1148" y1="272" x2="1148" y2="326" class="bus" marker-end="url(#g)"/>
+    <line x1="1396" y1="272" x2="1396" y2="326" class="bus" marker-end="url(#g)"/>
+    <line x1="1644" y1="272" x2="1644" y2="326" class="bus" marker-end="url(#g)"/>
+  </g>
+
+  <!-- sequence arrows, now with room to be seen -->
+  <g>
+    <line x1="268" y1="430" x2="290" y2="430" class="ln" marker-end="url(#w)"/>
+    <line x1="516" y1="430" x2="538" y2="430" class="ln" marker-end="url(#w)"/>
+    <line x1="764" y1="430" x2="786" y2="430" class="ln" marker-end="url(#w)"/>
+    <line x1="1012" y1="430" x2="1034" y2="430" class="ln" marker-end="url(#w)"/>
+    <line x1="1260" y1="430" x2="1282" y2="430" class="ln" marker-end="url(#w)"/>
+    <line x1="1508" y1="430" x2="1530" y2="430" class="lnf" marker-end="url(#r)"/>
+    <text x="1494" y="418" class="tf">the draft</text>
+  </g>
+
+  <!-- the code gate -->
+  <rect x="48" y="552" width="1704" height="122" rx="10" class="box-e"/>
+  <text x="66" y="578" class="cap">THE SAME CODE GATE AROUND ALL SEVEN — skills/base.py · no model, none of it optional</text>
+  <text x="66" y="608" class="tmi">render versioned prompt  ▸  call provider  ▸  parse strict → repair keys &amp; enums → strict  ▸  repair mislabelled citations  ▸  violations()  ▸  refine()</text>
+  <text x="66" y="634" class="ts">Every citation must quote text that exists in the record it names. Each stage adds its own hard rules — stage 5 rejects an option set with no non-AI option; stage 7 rejects an answer that skips one of the eight questions.</text>
+  <text x="66" y="656" class="tf">A rejected response is retried ONCE with the problem quoted back, then the stage fails. A failed stage degrades the brief and never aborts the run.</text>
+
+  <!-- ============ AFTER THE LAST MODEL CALL ============ -->
+  <text x="44" y="734" class="cap">AFTER THE LAST MODEL CALL · NO MODEL FROM HERE ON</text>
+
+  <rect x="44" y="748" width="330" height="112" rx="10" class="box-f"/>
+  <text x="64" y="776" class="t">1 · Apply corrections</text>
+  <text x="64" y="795" class="tm">orchestrator.py · apply_challenge</text>
+  <text x="64" y="819" class="ts">Relabels the claims the challenger</text>
+  <text x="64" y="837" class="ts">reclassified — before any check runs.</text>
+  <text x="64" y="855" class="tf">order matters</text>
+
+  <line x1="382" y1="804" x2="426" y2="804" class="ln" marker-end="url(#w)"/>
+
+  <rect x="436" y="748" width="330" height="112" rx="10" class="box-f"/>
+  <text x="456" y="776" class="t">2 · Support ceiling</text>
+  <text x="456" y="795" class="tm">validation.py · enforce_support_ceiling</text>
+  <text x="456" y="819" class="ts">The ONLY place in the system that</text>
+  <text x="456" y="837" class="ts">lowers confidence. Weakest wins.</text>
+  <text x="456" y="856" class="num">moderate → low</text>
+
+  <line x1="774" y1="804" x2="818" y2="804" class="ln" marker-end="url(#w)"/>
+
+  <rect x="828" y="748" width="330" height="112" rx="10" class="box-e"/>
+  <text x="848" y="776" class="t">3 · Deterministic checks</text>
+  <text x="848" y="795" class="tm">validation.py · provenance.py</text>
+  <text x="848" y="819" class="ts">Does every quote exist in the record</text>
+  <text x="848" y="837" class="ts">it cites? Plus 10 structural rules.</text>
+  <text x="848" y="856" class="num">1,451 / 1,451 resolved</text>
+
+  <line x1="1166" y1="804" x2="1210" y2="804" class="ln" marker-end="url(#w)"/>
+
+  <rect x="1220" y="748" width="330" height="112" rx="10" class="box"/>
+  <text x="1240" y="776" class="t">4 · Render</text>
+  <text x="1240" y="795" class="tm">report.py · ui.py</text>
+  <text x="1240" y="819" class="ts">Markdown + JSON, and the browser view.</text>
+  <text x="1240" y="837" class="ts">Run trace pins model, prompt version</text>
+  <text x="1240" y="855" class="ts">and content fingerprint per stage.</text>
+
+  <line x1="1558" y1="804" x2="1602" y2="804" class="ln" marker-end="url(#w)"/>
+
+  <rect x="1612" y="748" width="248" height="112" rx="10" class="box-f"/>
+  <text x="1632" y="776" class="t">5 · Exit</text>
+  <text x="1632" y="795" class="tm">cli.py</text>
+  <text x="1632" y="822" class="num">exit 2</text>
+  <text x="1632" y="842" class="ts">blocked, not crashed —</text>
+  <text x="1632" y="858" class="ts">1 error, 23 warnings</text>
+
+  <!-- outcome strip -->
+  <rect x="44" y="896" width="1816" height="126" rx="10" class="box"/>
+  <line x1="1090" y1="916" x2="1090" y2="1002" stroke="#DFE3E9" stroke-width="1"/>
+
+  <text x="66" y="922" class="cap">WHAT COMES OUT</text>
+  <text x="66" y="950" class="t">out/&lt;case&gt;.md   ·   out/&lt;case&gt;.json   ·   make ui</text>
+  <text x="66" y="972" class="ts">The brief leads with the checks, then the eleven options, then the reasoning. The PM's decision has its own section, rendered empty in every brief.</text>
+  <text x="66" y="996" class="tf">On this case the brief blocks itself, and the error is left standing in the repository.</text>
+
+  <text x="1120" y="922" class="cap">DELIBERATELY ABSENT</text>
+  <text x="1120" y="950" class="ts">No vector database · no agent framework · no multi-agent topology · no chat interface.</text>
+  <text x="1120" y="972" class="ts">A PM who cannot follow what the tool did cannot verify it — decision D8.</text>
+  <text x="1120" y="996" class="tm">98,603 tokens in · 62,190 out · replays offline in ~0.15s · recorded from claude-opus-5</text>
+</svg>
